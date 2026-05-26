@@ -81,8 +81,6 @@ const approvals = [
   { initials: "YT", color: "#10b981", name: "Yuki Tanaka",    role: "Tomorrow 11am",           detail: "Interviewer conflict detected · 3 alternative slots proposed by Reschedule Agent",  actions: ["View slots", "Auto pick"] },
 ];
 
-const CustomTooltip = null; // moved to FunnelChart.tsx
-
 export default function DashboardPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState("All Roles");

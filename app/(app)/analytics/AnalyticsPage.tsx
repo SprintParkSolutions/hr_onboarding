@@ -1,4 +1,5 @@
-﻿import "./AnalyticsPage.css";
+﻿"use client";
+import "./AnalyticsPage.css";
 import dynamic from "next/dynamic";
 
 // Lazy-load the heavy recharts bundle — only fetched when Analytics is visited
