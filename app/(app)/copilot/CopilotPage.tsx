@@ -1,7 +1,6 @@
-﻿import "./CopilotPage.css";
-import dynamic from "next/dynamic";
-
-const CopilotChat = dynamic(() => import("./CopilotChat"), { ssr: false });
+﻿"use client";
+import "./CopilotPage.css";
+import CopilotChat from "./CopilotChat";
 
 export default function CopilotPage() {
   return (
