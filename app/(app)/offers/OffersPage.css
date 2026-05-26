@@ -94,3 +94,37 @@
 
 @media (max-width: 900px) { .role-stats-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 600px) { .role-stats-grid { grid-template-columns: 1fr; } }
+
+/* ── Background Verification ─────────────────────────────── */
+.bgv-summary-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.bgv-summary-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+.bgv-pill-count { font-size: 18px; font-weight: 800; line-height: 1; }
+.bgv-pill-label { font-size: 12px; font-weight: 600; }
+
+.bgv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+.bgv-card { background: #fff; border: 1px solid #e8eef4; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; transition: box-shadow 0.2s; }
+.bgv-card:hover { box-shadow: 0 4px 20px rgba(128,178,255,0.14); }
+
+.bgv-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.bgv-candidate { display: flex; align-items: center; gap: 10px; }
+.bgv-name { font-size: 14px; font-weight: 700; color: #1a2a40; }
+.bgv-role { font-size: 11.5px; color: #8aaabb; margin-top: 2px; }
+
+.bgv-overall-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+.bgv-progress-row { display: flex; justify-content: space-between; align-items: center; }
+.bgv-progress-label { font-size: 11px; color: #8aaabb; font-weight: 600; }
+.bgv-progress-pct   { font-size: 12px; font-weight: 700; color: #1a2a40; }
+
+.bgv-bar-track { height: 6px; background: #f0f4f8; border-radius: 10px; overflow: hidden; }
+.bgv-bar-fill  { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+
+.bgv-checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.bgv-check-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+.bgv-footer { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; border-top: 1px solid #f4f7fa; }
+.bgv-meta { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #8aaabb; }
+
+@media (max-width: 1100px) { .bgv-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .bgv-grid { grid-template-columns: 1fr; } }

@@ -1,6 +1,6 @@
 ﻿"use client";
 import "./OffersPage.css";
-import { FileText, Send, Users, Calendar, Cpu, TrendingUp, Pencil, Check, X } from "lucide-react";
+import { FileText, Send, Users, Calendar, Cpu, TrendingUp, Pencil, Check, X, ShieldCheck, Clock, AlertTriangle, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 const initialOffers = [
@@ -71,6 +71,103 @@ const statusStyle: Record<string, { bg: string; text: string }> = {
   Declined: { bg: "rgba(255,200,216,0.5)",  text: "#c0506a" },
 };
 
+type BgvCheck = { label: string; status: "Verified" | "Pending" | "In Progress" | "Failed" };
+type BgvRecord = {
+  initials: string; color: string; name: string; role: string;
+  agency: string; initiatedDate: string; expectedDate: string;
+  overallStatus: "Clear" | "Pending" | "In Progress" | "Action Required";
+  checks: BgvCheck[];
+};
+
+const bgvRecords: BgvRecord[] = [
+  {
+    initials: "MG", color: "#2563eb", name: "Marco Greco", role: "DevOps Engineer",
+    agency: "AuthBridge", initiatedDate: "19 May 2026", expectedDate: "26 May 2026",
+    overallStatus: "Clear",
+    checks: [
+      { label: "Identity",        status: "Verified"    },
+      { label: "Education",       status: "Verified"    },
+      { label: "Employment",      status: "Verified"    },
+      { label: "Criminal Record", status: "Verified"    },
+      { label: "Address",         status: "Verified"    },
+      { label: "Reference",       status: "Verified"    },
+    ],
+  },
+  {
+    initials: "YT", color: "#10b981", name: "Yuki Tanaka", role: "Frontend Engineer",
+    agency: "KPMG BGV", initiatedDate: "20 May 2026", expectedDate: "27 May 2026",
+    overallStatus: "In Progress",
+    checks: [
+      { label: "Identity",        status: "Verified"    },
+      { label: "Education",       status: "Verified"    },
+      { label: "Employment",      status: "In Progress" },
+      { label: "Criminal Record", status: "Pending"     },
+      { label: "Address",         status: "Pending"     },
+      { label: "Reference",       status: "In Progress" },
+    ],
+  },
+  {
+    initials: "AL", color: "#ef4444", name: "Aisha Levi", role: "Data Scientist",
+    agency: "AuthBridge", initiatedDate: "21 May 2026", expectedDate: "28 May 2026",
+    overallStatus: "Action Required",
+    checks: [
+      { label: "Identity",        status: "Verified"    },
+      { label: "Education",       status: "Failed"      },
+      { label: "Employment",      status: "Verified"    },
+      { label: "Criminal Record", status: "Verified"    },
+      { label: "Address",         status: "Pending"     },
+      { label: "Reference",       status: "Verified"    },
+    ],
+  },
+  {
+    initials: "DS", color: "#8b5cf6", name: "Divya Sharma", role: "Product Designer",
+    agency: "First Advantage", initiatedDate: "18 May 2026", expectedDate: "25 May 2026",
+    overallStatus: "Clear",
+    checks: [
+      { label: "Identity",        status: "Verified"    },
+      { label: "Education",       status: "Verified"    },
+      { label: "Employment",      status: "Verified"    },
+      { label: "Criminal Record", status: "Verified"    },
+      { label: "Address",         status: "Verified"    },
+      { label: "Reference",       status: "Verified"    },
+    ],
+  },
+  {
+    initials: "SJ", color: "#0891b2", name: "Suresh Joshi", role: "DevOps Engineer",
+    agency: "KPMG BGV", initiatedDate: "22 May 2026", expectedDate: "29 May 2026",
+    overallStatus: "Pending",
+    checks: [
+      { label: "Identity",        status: "Pending"     },
+      { label: "Education",       status: "Pending"     },
+      { label: "Employment",      status: "Pending"     },
+      { label: "Criminal Record", status: "Pending"     },
+      { label: "Address",         status: "Pending"     },
+      { label: "Reference",       status: "Pending"     },
+    ],
+  },
+];
+
+const bgvOverallStyle: Record<string, { bg: string; text: string; border: string }> = {
+  "Clear":           { bg: "rgba(110,200,160,0.12)", text: "#1a7a50", border: "rgba(110,200,160,0.4)"  },
+  "In Progress":     { bg: "rgba(128,178,255,0.12)", text: "#2a5090", border: "rgba(128,178,255,0.4)"  },
+  "Pending":         { bg: "rgba(240,192,96,0.14)",  text: "#806020", border: "rgba(240,192,96,0.45)"  },
+  "Action Required": { bg: "rgba(224,112,144,0.12)", text: "#a03050", border: "rgba(224,112,144,0.4)"  },
+};
+
+const bgvCheckStyle: Record<string, { bg: string; text: string }> = {
+  "Verified":    { bg: "rgba(110,200,160,0.15)", text: "#1a7a50" },
+  "In Progress": { bg: "rgba(128,178,255,0.15)", text: "#2a5090" },
+  "Pending":     { bg: "rgba(240,192,96,0.18)",  text: "#806020" },
+  "Failed":      { bg: "rgba(224,112,144,0.15)", text: "#a03050" },
+};
+
+function BgvCheckIcon({ status }: { status: BgvCheck["status"] }) {
+  if (status === "Verified")    return <CheckCircle2 size={13} color="#1a7a50" />;
+  if (status === "Failed")      return <XCircle      size={13} color="#a03050" />;
+  if (status === "In Progress") return <RefreshCw    size={13} color="#2a5090" />;
+  return <Clock size={13} color="#806020" />;
+}
+
 export default function OffersPage() {
   const [offers, setOffers] = useState(initialOffers);
   // editingBand: index of the row being edited, or null
@@ -104,6 +201,98 @@ export default function OffersPage() {
           <p className="page-sub">142 offers generated · 89 accepted this quarter</p>
         </div>
         <button className="btn-primary">+ Generate offer</button>
+      </div>
+
+      {/* ── Background Verification Status ── */}
+      <div className="section-heading">
+        <ShieldCheck size={16} color="#9E74D0" />
+        <span>Background Verification</span>
+        <span className="section-sub">
+          {bgvRecords.filter(b => b.overallStatus === "Clear").length} cleared ·{" "}
+          {bgvRecords.filter(b => b.overallStatus === "Action Required").length} need attention
+        </span>
+      </div>
+
+      {/* BGV summary pills */}
+      <div className="bgv-summary-row">
+        {(["Clear", "In Progress", "Pending", "Action Required"] as const).map((s) => {
+          const count = bgvRecords.filter(b => b.overallStatus === s).length;
+          const st = bgvOverallStyle[s];
+          return (
+            <div key={s} className="bgv-summary-pill" style={{ background: st.bg, border: `1px solid ${st.border}`, color: st.text }}>
+              <span className="bgv-pill-count">{count}</span>
+              <span className="bgv-pill-label">{s}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* BGV cards */}
+      <div className="bgv-grid">
+        {bgvRecords.map((b) => {
+          const st = bgvOverallStyle[b.overallStatus];
+          const verifiedCount = b.checks.filter(c => c.status === "Verified").length;
+          const pct = Math.round((verifiedCount / b.checks.length) * 100);
+          return (
+            <div key={b.name} className="bgv-card">
+              {/* Card header */}
+              <div className="bgv-card-header">
+                <div className="bgv-candidate">
+                  <div className="avatar" style={{ background: b.color }}>{b.initials}</div>
+                  <div>
+                    <div className="bgv-name">{b.name}</div>
+                    <div className="bgv-role">{b.role}</div>
+                  </div>
+                </div>
+                <span className="bgv-overall-badge" style={{ background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
+                  {b.overallStatus === "Clear"           && <CheckCircle2 size={12} />}
+                  {b.overallStatus === "In Progress"     && <RefreshCw    size={12} />}
+                  {b.overallStatus === "Pending"         && <Clock        size={12} />}
+                  {b.overallStatus === "Action Required" && <AlertTriangle size={12} />}
+                  {b.overallStatus}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="bgv-progress-row">
+                <span className="bgv-progress-label">{verifiedCount}/{b.checks.length} checks complete</span>
+                <span className="bgv-progress-pct">{pct}%</span>
+              </div>
+              <div className="bgv-bar-track">
+                <div
+                  className="bgv-bar-fill"
+                  style={{
+                    width: `${pct}%`,
+                    background: b.overallStatus === "Clear" ? "#6ec8a0"
+                      : b.overallStatus === "Action Required" ? "#e07090"
+                      : b.overallStatus === "In Progress" ? "#80B2FF"
+                      : "#f0c060",
+                  }}
+                />
+              </div>
+
+              {/* Check pills */}
+              <div className="bgv-checks">
+                {b.checks.map((c) => {
+                  const cs = bgvCheckStyle[c.status];
+                  return (
+                    <span key={c.label} className="bgv-check-pill" style={{ background: cs.bg, color: cs.text }}>
+                      <BgvCheckIcon status={c.status} />
+                      {c.label}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Footer meta */}
+              <div className="bgv-footer">
+                <span className="bgv-meta"><ShieldCheck size={11} /> {b.agency}</span>
+                <span className="bgv-meta"><Calendar size={11} /> Initiated {b.initiatedDate}</span>
+                <span className="bgv-meta"><Clock size={11} /> Due {b.expectedDate}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Offers Table ── */}
