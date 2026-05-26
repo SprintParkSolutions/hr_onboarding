@@ -1,8 +1,9 @@
 ﻿"use client";
 import "./OffersPage.css";
-import { FileText, Send, Users, Calendar, Cpu, TrendingUp } from "lucide-react";
+import { FileText, Send, Users, Calendar, Cpu, TrendingUp, Pencil, Check, X } from "lucide-react";
+import { useState } from "react";
 
-const offers = [
+const initialOffers = [
   { initials: "RK", color: "#f59e0b", name: "Rohan Kapoor",   role: "Product Designer",        band: "₹28L – ₹32L", equity: "0.05%", bonus: "₹2L", status: "Sent",     sentDate: "20 May 2026" },
   { initials: "SM", color: "#8b5cf6", name: "Sarah Mitchell",  role: "Senior Backend Engineer", band: "₹42L – ₹48L", equity: "0.1%",  bonus: "₹4L", status: "Draft",    sentDate: "—" },
   { initials: "MG", color: "#2563eb", name: "Marco Greco",     role: "DevOps Engineer",         band: "₹36L – ₹40L", equity: "0.08%", bonus: "₹3L", status: "Accepted", sentDate: "18 May 2026" },
@@ -71,6 +72,30 @@ const statusStyle: Record<string, { bg: string; text: string }> = {
 };
 
 export default function OffersPage() {
+  const [offers, setOffers] = useState(initialOffers);
+  // editingBand: index of the row being edited, or null
+  const [editingBand, setEditingBand] = useState<number | null>(null);
+  const [bandDraft, setBandDraft] = useState("");
+
+  function startEdit(index: number) {
+    setEditingBand(index);
+    setBandDraft(offers[index].band);
+  }
+
+  function commitEdit(index: number) {
+    const trimmed = bandDraft.trim();
+    if (trimmed) {
+      setOffers((prev) =>
+        prev.map((o, i) => (i === index ? { ...o, band: trimmed } : o))
+      );
+    }
+    setEditingBand(null);
+  }
+
+  function cancelEdit() {
+    setEditingBand(null);
+  }
+
   return (
     <div className="offers">
       <div className="page-header">
@@ -88,11 +113,63 @@ export default function OffersPage() {
             <tr><th>Candidate</th><th>Role</th><th>Compensation Band</th><th>Equity</th><th>Joining Bonus</th><th>Status</th><th>Sent</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {offers.map((o) => (
+            {offers.map((o, i) => (
               <tr key={o.name}>
                 <td><div className="cand-cell"><div className="avatar" style={{ background: o.color }}>{o.initials}</div><span className="cand-name">{o.name}</span></div></td>
                 <td className="role-cell">{o.role}</td>
-                <td className="band-cell">{o.band}</td>
+                <td style={{ fontWeight: 600, color: "var(--text)" }}>
+                  {editingBand === i ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <input
+                        value={bandDraft}
+                        autoFocus
+                        onChange={(e) => setBandDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitEdit(i);
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                        style={{
+                          width: 140,
+                          padding: "4px 8px",
+                          border: "1.5px solid #9E74D0",
+                          borderRadius: 6,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          outline: "none",
+                          boxShadow: "0 0 0 3px rgba(158,116,208,0.2)",
+                        }}
+                      />
+                      <button
+                        onClick={() => commitEdit(i)}
+                        title="Save"
+                        style={{ display:"flex", alignItems:"center", justifyContent:"center", width:26, height:26, border:"none", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", cursor:"pointer" }}
+                      ><Check size={13} /></button>
+                      <button
+                        onClick={cancelEdit}
+                        title="Cancel"
+                        style={{ display:"flex", alignItems:"center", justifyContent:"center", width:26, height:26, border:"none", borderRadius:6, background:"rgba(239,68,68,0.12)", color:"#ef4444", cursor:"pointer" }}
+                      ><X size={13} /></button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => startEdit(i)}
+                      title="Click to edit"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        cursor: "pointer",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                        border: "1.5px dashed #9E74D0",
+                        background: "rgba(158,116,208,0.07)",
+                      }}
+                    >
+                      <span>{o.band}</span>
+                      <Pencil size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
+                    </div>
+                  )}
+                </td>
                 <td>{o.equity}</td>
                 <td>{o.bonus}</td>
                 <td><span className="status-badge" style={{ background: statusStyle[o.status].bg, color: statusStyle[o.status].text }}>{o.status}</span></td>

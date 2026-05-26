@@ -13,6 +13,49 @@
 .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; flex-shrink: 0; }
 .cand-name { font-weight: 600; color: var(--text); }
 .band-cell { font-weight: 600; color: var(--text); }
+
+/* Editable compensation band */
+.band-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1.5px dashed #b8a0e0;
+  background: rgba(158,116,208,0.06);
+  transition: background 0.15s, border-color 0.15s;
+}
+.band-display:hover { background: rgba(128,178,255,0.18); border-color: #9E74D0; }
+.band-edit-icon { color: #9E74D0; opacity: 1; flex-shrink: 0; }
+.band-edit-row { display: flex; align-items: center; gap: 4px; }
+.band-input {
+  width: 130px;
+  padding: 4px 8px;
+  border: 1.5px solid #9E74D0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(158,116,208,0.15);
+}
+.band-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.band-confirm { background: rgba(16,185,129,0.15); color: #10b981; }
+.band-confirm:hover { background: rgba(16,185,129,0.3); }
+.band-cancel { background: rgba(239,68,68,0.12); color: #ef4444; }
+.band-cancel:hover { background: rgba(239,68,68,0.25); }
 .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .date-cell { color: var(--muted); font-size: 12px; }
 .row-actions { display: flex; gap: 6px; align-items: center; }
