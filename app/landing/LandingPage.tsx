@@ -378,26 +378,24 @@ export default function LandingPage() {
         </div>
         <div className="lp-hero-inner">
           <h1 className="lp-hero-h1">
-            Hire smarter.<br />
-            <span className="lp-hero-gradient">Move 5× faster.</span>
+            Finding great talent is hard.<br />
+            <span className="lp-hero-gradient">Hiring them shouldn't be.</span>
           </h1>
           <p className="lp-hero-sub">
-            SprintPark AI HR automates your entire recruitment lifecycle —
-            from resume screening to offer letters — so your team can focus
-            on what matters: finding the right people.
+            SprintPark AI HR automates your entire recruitment lifecycle — from resume screening to offer letters — so your team can spend less time managing hiring tasks and more time choosing the right people.
           </p>
           <div className="lp-hero-cta">
             <Link href="/login" className="lp-btn-primary lp-btn-lg">
-              Start hiring smarter <ArrowRight size={16} />
+              Start Hiring Smarter <ArrowRight size={16} />
             </Link>
             <a href="#how-it-works" className="lp-btn-outline lp-btn-lg">
-              See how it works
+              See How It Works
             </a>
           </div>
           <div className="lp-hero-trust">
-            {["No credit card required", "Free 14-day trial", "Setup in 5 minutes"].map(t => (
+            {["Free 14-day trial", "Setup in 5 minutes"].map(t => (
               <span key={t} className="lp-trust-item">
-                <CheckCircle size={13} color="#70b890" />
+                <CheckCircle size={13} color="#8DB89A" />
                 {t}
               </span>
             ))}
