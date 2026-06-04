@@ -407,133 +407,91 @@ export default function LandingPage() {
           <div className="lp-blob lp-blob-1" />
           <div className="lp-blob lp-blob-2" />
           <div className="lp-blob lp-blob-3" />
-          {/* HR AI illustration */}
-          <svg className="lp-hero-svg" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            {/* ── Grid dots ── */}
-            {Array.from({length:10}).map((_,row)=>Array.from({length:16}).map((_,col)=>(
-              <circle key={`${row}-${col}`} cx={col*60+30} cy={row*60+30} r="1.5" fill="#9B7485" opacity="0.12"/>
+          {/* Clean HR AI illustration — right side only, minimal */}
+          <svg className="lp-hero-svg" viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* ── Subtle dot grid — far right only ── */}
+            {Array.from({length:8}).map((_,row)=>Array.from({length:7}).map((_,col)=>(
+              <circle key={`${row}-${col}`} cx={col*55+560} cy={row*65+40} r="1.8" fill="#9B7485" opacity="0.1"/>
             )))}
 
-            {/* ── Connection lines between nodes ── */}
-            <line x1="180" y1="160" x2="340" y2="220" stroke="#9B7485" strokeWidth="1.2" strokeDasharray="6 4" opacity="0.25"/>
-            <line x1="340" y1="220" x2="500" y2="160" stroke="#E8806A" strokeWidth="1.2" strokeDasharray="6 4" opacity="0.25"/>
-            <line x1="500" y1="160" x2="660" y2="220" stroke="#8DB89A" strokeWidth="1.2" strokeDasharray="6 4" opacity="0.25"/>
-            <line x1="340" y1="220" x2="340" y2="380" stroke="#9B7485" strokeWidth="1" strokeDasharray="5 4" opacity="0.2"/>
-            <line x1="500" y1="160" x2="500" y2="380" stroke="#E8806A" strokeWidth="1" strokeDasharray="5 4" opacity="0.2"/>
-            <line x1="660" y1="220" x2="660" y2="380" stroke="#8DB89A" strokeWidth="1" strokeDasharray="5 4" opacity="0.2"/>
-            <line x1="180" y1="160" x2="180" y2="380" stroke="#D8D9B0" strokeWidth="1" strokeDasharray="5 4" opacity="0.2"/>
+            {/* ── Main dashboard card ── */}
+            <rect x="480" y="60" width="340" height="200" rx="16" fill="white" opacity="0.88"/>
+            <rect x="480" y="60" width="340" height="200" rx="16" stroke="#E2D4CC" strokeWidth="1.2" fill="none"/>
+            {/* Card header bar */}
+            <rect x="480" y="60" width="340" height="38" rx="16" fill="rgba(155,116,133,0.07)"/>
+            <rect x="480" y="82" width="340" height="16" fill="rgba(155,116,133,0.07)"/>
+            <circle cx="500" cy="79" r="5" fill="rgba(232,128,106,0.5)"/>
+            <circle cx="516" cy="79" r="5" fill="rgba(216,217,176,0.7)"/>
+            <circle cx="532" cy="79" r="5" fill="rgba(141,184,154,0.6)"/>
+            <text x="650" y="83" textAnchor="middle" fontSize="10" fill="#A8919A" fontWeight="600" fontFamily="sans-serif">AI Recruitment Dashboard</text>
 
-            {/* ── Central AI brain ── */}
-            <circle cx="450" cy="295" r="52" fill="white" opacity="0.6"/>
-            <circle cx="450" cy="295" r="52" stroke="#9B7485" strokeWidth="1.5" fill="none" opacity="0.4"/>
-            <circle cx="450" cy="295" r="38" fill="rgba(155,116,133,0.08)" stroke="#9B7485" strokeWidth="1" opacity="0.5"/>
-            {/* AI brain lines */}
-            <path d="M430 285 Q450 270 470 285 Q480 295 470 305 Q450 320 430 305 Q420 295 430 285Z" stroke="#9B7485" strokeWidth="1.2" fill="rgba(155,116,133,0.12)" opacity="0.7"/>
-            <line x1="435" y1="290" x2="465" y2="290" stroke="#9B7485" strokeWidth="1" opacity="0.5"/>
-            <line x1="437" y1="297" x2="463" y2="297" stroke="#9B7485" strokeWidth="1" opacity="0.5"/>
-            <circle cx="450" cy="295" r="5" fill="#9B7485" opacity="0.6"/>
-            {/* Pulse rings */}
-            <circle cx="450" cy="295" r="60" stroke="#9B7485" strokeWidth="0.8" fill="none" opacity="0.15" strokeDasharray="4 6"/>
-            <circle cx="450" cy="295" r="70" stroke="#9B7485" strokeWidth="0.6" fill="none" opacity="0.1" strokeDasharray="3 8"/>
+            {/* Stat boxes */}
+            <rect x="492" y="108" width="72" height="50" rx="8" fill="rgba(155,116,133,0.07)"/>
+            <text x="528" y="128" textAnchor="middle" fontSize="18" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">42</text>
+            <text x="528" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Open roles</text>
 
-            {/* ── Candidate card (left) ── */}
-            <rect x="60" y="130" width="110" height="75" rx="10" fill="white" opacity="0.75"/>
-            <rect x="60" y="130" width="110" height="75" rx="10" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <circle cx="85" cy="155" r="14" fill="rgba(155,116,133,0.2)"/>
-            <circle cx="85" cy="155" r="10" fill="#9B7485" opacity="0.6"/>
-            <text x="85" y="159" textAnchor="middle" fontSize="8" fill="white" fontWeight="700">PR</text>
-            <rect x="103" y="147" width="55" height="5" rx="2.5" fill="#E2D4CC"/>
-            <rect x="103" y="156" width="40" height="4" rx="2" fill="#F0E8EC"/>
-            <rect x="75" y="175" width="85" height="3" rx="1.5" fill="rgba(155,116,133,0.15)"/>
-            <rect x="75" y="181" width="65" height="3" rx="1.5" fill="rgba(155,116,133,0.1)"/>
-            {/* AI match badge */}
-            <rect x="100" y="162" width="58" height="18" rx="9" fill="rgba(141,184,154,0.3)" stroke="#8DB89A" strokeWidth="0.8"/>
-            <text x="129" y="175" textAnchor="middle" fontSize="8" fill="#4a7a5a" fontWeight="700">94% Match</text>
+            <rect x="574" y="108" width="72" height="50" rx="8" fill="rgba(232,128,106,0.07)"/>
+            <text x="610" y="128" textAnchor="middle" fontSize="18" fill="#E8806A" fontWeight="800" fontFamily="sans-serif">1,284</text>
+            <text x="610" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Candidates</text>
 
-            {/* ── Resume card (far left) ── */}
-            <rect x="20" y="240" width="100" height="120" rx="8" fill="white" opacity="0.6"/>
-            <rect x="20" y="240" width="100" height="120" rx="8" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="30" y="255" width="80" height="4" rx="2" fill="#D8C8CC"/>
-            <rect x="30" y="264" width="60" height="3" rx="1.5" fill="#E8DDE0"/>
-            <rect x="30" y="272" width="70" height="3" rx="1.5" fill="#E8DDE0"/>
-            <rect x="30" y="284" width="80" height="3" rx="1.5" fill="rgba(155,116,133,0.15)"/>
-            <rect x="30" y="292" width="55" height="3" rx="1.5" fill="rgba(155,116,133,0.1)"/>
-            <rect x="30" y="300" width="65" height="3" rx="1.5" fill="rgba(155,116,133,0.1)"/>
-            <rect x="30" y="312" width="75" height="3" rx="1.5" fill="rgba(155,116,133,0.08)"/>
-            <rect x="30" y="320" width="50" height="3" rx="1.5" fill="rgba(155,116,133,0.08)"/>
-            <text x="60" y="349" textAnchor="middle" fontSize="7.5" fill="#9B7485" fontWeight="600">Resume</text>
+            <rect x="656" y="108" width="72" height="50" rx="8" fill="rgba(141,184,154,0.1)"/>
+            <text x="692" y="128" textAnchor="middle" fontSize="18" fill="#8DB89A" fontWeight="800" fontFamily="sans-serif">91%</text>
+            <text x="692" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">AI accuracy</text>
 
-            {/* ── Interview screen (top center) ── */}
-            <rect x="370" y="60" width="160" height="100" rx="10" fill="white" opacity="0.72"/>
-            <rect x="370" y="60" width="160" height="100" rx="10" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="370" y="60" width="160" height="20" rx="10" fill="rgba(155,116,133,0.08)"/>
-            <circle cx="383" cy="70" r="4" fill="rgba(232,128,106,0.4)"/>
-            <circle cx="396" cy="70" r="4" fill="rgba(216,217,176,0.6)"/>
-            <circle cx="409" cy="70" r="4" fill="rgba(141,184,154,0.4)"/>
-            <text x="480" y="73" textAnchor="middle" fontSize="7" fill="#A8919A" fontWeight="600">Live Interview</text>
-            {/* Video call faces */}
-            <rect x="378" y="85" width="65" height="65" rx="6" fill="rgba(155,116,133,0.08)" stroke="#E2D4CC" strokeWidth="0.8"/>
-            <circle cx="410" cy="105" r="12" fill="rgba(155,116,133,0.25)"/>
-            <rect x="397" y="120" width="26" height="18" rx="5" fill="rgba(155,116,133,0.15)"/>
-            <rect x="452" y="85" width="65" height="65" rx="6" fill="rgba(232,128,106,0.06)" stroke="#E2D4CC" strokeWidth="0.8"/>
-            <circle cx="484" cy="105" r="12" fill="rgba(232,128,106,0.25)"/>
-            <rect x="471" y="120" width="26" height="18" rx="5" fill="rgba(232,128,106,0.12)"/>
-            {/* AI transcript pill */}
-            <rect x="378" y="153" width="144" height="14" rx="7" fill="rgba(141,184,154,0.2)" stroke="#8DB89A" strokeWidth="0.8"/>
-            <circle cx="390" cy="160" r="4" fill="#8DB89A" opacity="0.7"/>
-            <rect x="398" y="157" width="60" height="3" rx="1.5" fill="rgba(74,48,64,0.2)"/>
-            <rect x="398" y="162" width="45" height="2.5" rx="1.25" fill="rgba(74,48,64,0.12)"/>
+            <rect x="738" y="108" width="72" height="50" rx="8" fill="rgba(125,85,104,0.07)"/>
+            <text x="774" y="128" textAnchor="middle" fontSize="18" fill="#7D5568" fontWeight="800" fontFamily="sans-serif">18d</text>
+            <text x="774" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Avg hire time</text>
 
-            {/* ── Pipeline funnel (right side) ── */}
-            <rect x="720" y="130" width="130" height="160" rx="10" fill="white" opacity="0.65"/>
-            <rect x="720" y="130" width="130" height="160" rx="10" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <text x="785" y="150" textAnchor="middle" fontSize="8" fill="#7E6070" fontWeight="700">Hiring Pipeline</text>
+            {/* Funnel bars */}
             {[
-              {label:"Sourced", w:100, color:"#9B7485", y:160},
-              {label:"Screened", w:75, color:"#E8806A", y:178},
-              {label:"Interviewed", w:52, color:"#D8D9B0", y:196},
-              {label:"Offered", w:35, color:"#8DB89A", y:214},
-              {label:"Hired", w:22, color:"#7D5568", y:232},
-            ].map(({label,w,color,y})=>(
+              {label:"Sourced",    pct:100, color:"#9B7485", y:172},
+              {label:"Screened",   pct:62,  color:"#E8806A", y:186},
+              {label:"Interviewed",pct:38,  color:"#D8D9B0", y:200},
+              {label:"Offered",    pct:20,  color:"#8DB89A", y:214},
+              {label:"Hired",      pct:11,  color:"#7D5568", y:228},
+            ].map(({label,pct,color,y})=>(
               <g key={label}>
-                <text x="730" y={y+8} fontSize="7" fill="#A8919A">{label}</text>
-                <rect x="772" y={y} width={w*0.52} height="9" rx="4.5" fill={color} opacity="0.65"/>
+                <text x="496" y={y+8} fontSize="8.5" fill="#A8919A" fontFamily="sans-serif">{label}</text>
+                <rect x="552" y={y} width="240" height="9" rx="4.5" fill="rgba(226,212,204,0.4)"/>
+                <rect x="552" y={y} width={240*pct/100} height="9" rx="4.5" fill={color} opacity="0.75"/>
+                <text x="800" y={y+8} fontSize="8" fill="#7E6070" fontFamily="sans-serif">{pct}%</text>
               </g>
             ))}
-            <text x="785" y="280" textAnchor="middle" fontSize="7.5" fill="#8DB89A" fontWeight="600">7 hired this month</text>
 
-            {/* ── Offer letter card (bottom right) ── */}
-            <rect x="680" y="380" width="120" height="90" rx="8" fill="white" opacity="0.65"/>
-            <rect x="680" y="380" width="120" height="90" rx="8" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="690" y="393" width="100" height="4" rx="2" fill="#D8C8CC"/>
-            <rect x="690" y="402" width="75" height="3" rx="1.5" fill="#E8DDE0"/>
-            <rect x="690" y="410" width="85" height="3" rx="1.5" fill="#E8DDE0"/>
-            <rect x="690" y="421" width="100" height="3" rx="1.5" fill="rgba(155,116,133,0.12)"/>
-            <rect x="690" y="429" width="70" height="3" rx="1.5" fill="rgba(155,116,133,0.08)"/>
-            <rect x="695" y="441" width="80" height="18" rx="9" fill="rgba(141,184,154,0.25)" stroke="#8DB89A" strokeWidth="0.8"/>
-            <text x="735" y="454" textAnchor="middle" fontSize="7.5" fill="#4a7a5a" fontWeight="700">Offer Sent ✓</text>
+            {/* ── Floating card 1 — AI matched ── */}
+            <rect x="530" y="285" width="175" height="56" rx="12" fill="white" opacity="0.95"/>
+            <rect x="530" y="285" width="175" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="543" y="298" width="28" height="28" rx="8" fill="rgba(141,184,154,0.2)"/>
+            <circle cx="557" cy="308" r="7" fill="rgba(141,184,154,0.5)"/>
+            <path d="M553 308l3 3 5-5" stroke="#4a7a5a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="578" y="307" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">BGV Cleared</text>
+            <text x="578" y="320" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Marco G. · All checks passed</text>
+            <rect x="578" y="327" width="55" height="8" rx="4" fill="rgba(141,184,154,0.25)"/>
+            <text x="605" y="334" textAnchor="middle" fontSize="7" fill="#4a7a5a" fontWeight="600" fontFamily="sans-serif">3 mins ago</text>
 
-            {/* ── BGV shield (bottom left) ── */}
-            <path d="M120 410 L100 418 L100 438 Q100 455 120 463 Q140 455 140 438 L140 418 Z" fill="rgba(141,184,154,0.2)" stroke="#8DB89A" strokeWidth="1.2" opacity="0.8"/>
-            <path d="M111 438 L117 444 L131 430" stroke="#8DB89A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
-            <text x="120" y="472" textAnchor="middle" fontSize="7" fill="#4a7a5a" fontWeight="600">BGV Clear</text>
+            {/* ── Floating card 2 — Offer accepted ── */}
+            <rect x="650" y="358" width="170" height="56" rx="12" fill="white" opacity="0.95"/>
+            <rect x="650" y="358" width="170" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="663" y="371" width="28" height="28" rx="8" fill="rgba(232,128,106,0.12)"/>
+            <path d="M671 385l3 4 6-7" stroke="#c05a40" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="698" y="380" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">Offer Accepted</text>
+            <text x="698" y="393" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Priya S. · ₹38L · Jun 9</text>
+            <rect x="698" y="400" width="62" height="8" rx="4" fill="rgba(232,128,106,0.15)"/>
+            <text x="729" y="407" textAnchor="middle" fontSize="7" fill="#c05a40" fontWeight="600" fontFamily="sans-serif">Just now</text>
 
-            {/* ── Analytics sparkline (bottom center) ── */}
-            <rect x="300" y="430" width="200" height="80" rx="10" fill="white" opacity="0.6"/>
-            <rect x="300" y="430" width="200" height="80" rx="10" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <text x="400" y="448" textAnchor="middle" fontSize="8" fill="#7E6070" fontWeight="700">Hiring Trends</text>
-            <polyline points="315,490 335,478 355,483 375,468 395,472 415,458 435,462 455,448 475,453 490,443" stroke="#E8806A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.8"/>
-            <polyline points="315,495 335,488 355,491 375,480 395,484 415,475 435,478 455,468 475,472 490,464" stroke="#8DB89A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6"/>
+            {/* ── Floating card 3 — AI Score ── */}
+            <rect x="480" y="375" width="155" height="56" rx="12" fill="white" opacity="0.95"/>
+            <rect x="480" y="375" width="155" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="493" y="388" width="28" height="28" rx="8" fill="rgba(155,116,133,0.1)"/>
+            <text x="507" y="406" textAnchor="middle" fontSize="11" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">94%</text>
+            <text x="528" y="397" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">AI Match Score</text>
+            <text x="528" y="410" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Sarah M. · Senior Backend</text>
+            <rect x="528" y="418" width="50" height="8" rx="4" fill="rgba(155,116,133,0.12)"/>
+            <text x="553" y="425" textAnchor="middle" fontSize="7" fill="#7D5568" fontWeight="600" fontFamily="sans-serif">Shortlisted</text>
 
-            {/* ── Floating score badges ── */}
-            <rect x="250" y="110" width="70" height="26" rx="13" fill="rgba(155,116,133,0.15)" stroke="#9B7485" strokeWidth="0.8"/>
-            <text x="285" y="127" textAnchor="middle" fontSize="8.5" fill="#7D5568" fontWeight="700">AI Score: 91%</text>
-
-            <rect x="560" y="340" width="80" height="26" rx="13" fill="rgba(232,128,106,0.12)" stroke="#E8806A" strokeWidth="0.8"/>
-            <text x="600" y="357" textAnchor="middle" fontSize="8.5" fill="#c05a40" fontWeight="700">18 days avg hire</text>
-
-            <rect x="200" y="490" width="88" height="26" rx="13" fill="rgba(216,217,176,0.4)" stroke="#B8CDAA" strokeWidth="0.8"/>
-            <text x="244" y="507" textAnchor="middle" fontSize="8.5" fill="#6a7a30" fontWeight="700">5× faster screen</text>
+            {/* ── Soft connection lines between cards ── */}
+            <line x1="617" y1="260" x2="617" y2="285" stroke="#E2D4CC" strokeWidth="1" strokeDasharray="4 3" opacity="0.6"/>
+            <line x1="735" y1="260" x2="735" y2="358" stroke="#E2D4CC" strokeWidth="1" strokeDasharray="4 3" opacity="0.4"/>
           </svg>
         </div>
         <div className="lp-hero-inner">
