@@ -334,15 +334,47 @@ function FadeIn({ children, className = "", delay = 0 }: { children: React.React
 
 /* ── Component ────────────────────────────────────────── */
 const navLinks = ["Features", "How it works", "Results", "Testimonials", "Contact"];
+
+// Map nav labels to section IDs
+const sectionIds: Record<string, string> = {
+  "Features":     "features",
+  "How it works": "how-it-works",
+  "Results":      "results",
+  "Testimonials": "testimonials",
+};
+
 export default function LandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled]     = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Track which section is in view
+  useEffect(() => {
+    const ids = Object.values(sectionIds);
+    const observers: IntersectionObserver[] = [];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { threshold: 0.35, rootMargin: "-60px 0px -40% 0px" }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, []);
+
+  function scrollToSection(id: string) {
+    const el = document.getElementById(id);
+    if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); setMobileMenu(false); }
+  }
 
   return (
     <div className="lp-root">
@@ -357,8 +389,8 @@ export default function LandingPage() {
           <nav className="lp-nav-links">
             {navLinks.map(l => (
               l === "Contact"
-                ? <Link key={l} href="/contact" className="lp-nav-link">{l}</Link>
-                : <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-nav-link">{l}</a>
+                ? <Link key={l} href="/contact" className={`lp-nav-link ${activeSection === "contact" ? "lp-nav-link-active" : ""}`}>{l}</Link>
+                : <button key={l} onClick={() => scrollToSection(sectionIds[l])} className={`lp-nav-link lp-nav-link-btn ${activeSection === sectionIds[l] ? "lp-nav-link-active" : ""}`}>{l}</button>
             ))}
           </nav>
 
@@ -390,7 +422,7 @@ export default function LandingPage() {
               {navLinks.map(l => (
                 l === "Contact"
                   ? <Link key={l} href="/contact" className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{l}</Link>
-                  : <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{l}</a>
+                  : <button key={l} className="lp-mobile-link lp-nav-link-btn" onClick={() => scrollToSection(sectionIds[l])}>{l}</button>
               ))}
             </nav>
             <div className="lp-mobile-actions">
@@ -536,20 +568,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Results ── */}
-      <section className="lp-section lp-section-alt" id="results">
-        <div className="lp-section-inner">
-          <FadeIn>
-            <div className="lp-section-badge">Results</div>
-            <h2 className="lp-section-h2">Numbers that speak for themselves</h2>
-            <p className="lp-section-sub">Real outcomes from teams using SprintPark AI HR across their full recruitment lifecycle.</p>
-          </FadeIn>
-          <div className="lp-results-grid">
-            {stats.map((s, i) => <StatCard key={s.label} s={s} delay={i * 120} />)}
-          </div>
-        </div>
-      </section>
-
       {/* ── Features ── */}
       <section className="lp-section" id="features">
         <div className="lp-section-inner">
@@ -615,8 +633,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Results ── */}
+      <section className="lp-section" id="results">
+        <div className="lp-section-inner">
+          <FadeIn>
+            <div className="lp-section-badge">Results</div>
+            <h2 className="lp-section-h2">Numbers that speak for themselves</h2>
+            <p className="lp-section-sub">Real outcomes from teams using SprintPark AI HR across their full recruitment lifecycle.</p>
+          </FadeIn>
+          <div className="lp-results-grid">
+            {stats.map((s, i) => <StatCard key={s.label} s={s} delay={i * 120} />)}
+          </div>
+        </div>
+      </section>
+
       {/* ── Testimonials ── */}
-      <section className="lp-section" id="testimonials">
+      <section className="lp-section lp-section-alt" id="testimonials">
         <div className="lp-section-inner">
           <FadeIn>
             <div className="lp-section-badge">Testimonials</div>

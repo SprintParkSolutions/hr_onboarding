@@ -21,6 +21,20 @@
 .lp-nav-links { display: flex; align-items: center; gap: 28px; flex: 1; }
 .lp-nav-link { font-size: 14px; font-weight: 500; color: #7E6070; text-decoration: none; transition: color 0.15s; }
 .lp-nav-link:hover { color: #9B7485; }
+.lp-nav-link-btn { background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+.lp-nav-link-active {
+  color: #9B7485 !important;
+  font-weight: 700 !important;
+  position: relative;
+}
+.lp-nav-link-active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #9B7485, #E8806A);
+}
 .lp-nav-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .lp-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
 
