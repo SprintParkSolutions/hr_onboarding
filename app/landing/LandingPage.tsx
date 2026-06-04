@@ -1,10 +1,10 @@
 "use client";
 import "./LandingPage.css";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bot, Sparkles, ArrowRight, CheckCircle, Star, ChevronRight,
-  TrendingUp, Award, Menu, X,
+  TrendingUp, Award, Menu, X, Clock, Target, Zap, BarChart2,
 } from "lucide-react";
 
 /* ── Feature SVG illustrations ────────────────────────── */
@@ -172,10 +172,42 @@ const features = [
 ];
 
 const stats = [
-  { value: "18 days",  label: "Avg time to hire",       sub: "↓ 4 days vs industry avg" },
-  { value: "91%",      label: "AI shortlist accuracy",   sub: "Matches validated by hiring managers" },
-  { value: "89%",      label: "Offer acceptance rate",   sub: "↑ 8% since AI offer generation" },
-  { value: "5× faster",label: "Resume screening speed",  sub: "vs manual review" },
+  {
+    icon: Clock,
+    value: 18, suffix: " days", prefix: "",
+    label: "Avg time to hire",
+    sub: "↓ 4 days vs industry average",
+    color: "#8B6474",
+    bg: "rgba(139,100,116,0.08)",
+    bar: 56,
+  },
+  {
+    icon: Target,
+    value: 91, suffix: "%", prefix: "",
+    label: "AI shortlist accuracy",
+    sub: "Validated by hiring managers",
+    color: "#E8806A",
+    bg: "rgba(232,128,106,0.08)",
+    bar: 91,
+  },
+  {
+    icon: TrendingUp,
+    value: 89, suffix: "%", prefix: "",
+    label: "Offer acceptance rate",
+    sub: "↑ 8% since AI offer generation",
+    color: "#8DB89A",
+    bg: "rgba(141,184,154,0.1)",
+    bar: 89,
+  },
+  {
+    icon: Zap,
+    value: 5, suffix: "×", prefix: "",
+    label: "Faster resume screening",
+    sub: "vs manual review process",
+    color: "#6B4A58",
+    bg: "rgba(107,74,88,0.08)",
+    bar: 80,
+  },
 ];
 
 const testimonials = [
@@ -212,9 +244,68 @@ const steps = [
   { n: "04", title: "Offer & onboard",     desc: "Generate AI-drafted offer letters, track BGV, and hand off to onboarding — all from one platform." },
 ];
 
-const navLinks = ["Features", "How it works", "Results", "Testimonials"];
+/* ── Hooks ────────────────────────────────────────────── */
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+function useCounter(target: number, active: boolean, duration = 1400) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let start: number | null = null;
+    const step = (ts: number) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.round(ease * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [active, target, duration]);
+  return val;
+}
+
+function StatCard({ s, delay }: { s: typeof stats[0]; delay: number }) {
+  const { ref, visible } = useInView();
+  const count = useCounter(s.value, visible);
+  return (
+    <div ref={ref} className="lp-result-card" style={{ animationDelay: `${delay}ms` , opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
+      <div className="lp-result-icon" style={{ background: s.bg }}>
+        <s.icon size={20} color={s.color} />
+      </div>
+      <div className="lp-result-number" style={{ color: s.color }}>
+        {s.prefix}{count}{s.suffix}
+      </div>
+      <div className="lp-result-label">{s.label}</div>
+      <div className="lp-result-bar-track">
+        <div className="lp-result-bar-fill" style={{ width: visible ? `${s.bar}%` : "0%", background: s.color, transition: `width 1.2s ease ${delay + 200}ms` }} />
+      </div>
+      <div className="lp-result-sub">{s.sub}</div>
+    </div>
+  );
+}
+
+function FadeIn({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, visible } = useInView();
+  return (
+    <div ref={ref} className={className} style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(28px)", transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
 
 /* ── Component ────────────────────────────────────────── */
+const navLinks = ["Features", "How it works", "Results", "Testimonials"];
 export default function LandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -286,10 +377,6 @@ export default function LandingPage() {
           <div className="lp-blob lp-blob-3" />
         </div>
         <div className="lp-hero-inner">
-          <div className="lp-hero-badge">
-            <Sparkles size={13} color="#9a50b0" />
-            <span>AI-powered recruitment · End-to-end automation</span>
-          </div>
           <h1 className="lp-hero-h1">
             Hire smarter.<br />
             <span className="lp-hero-gradient">Move 5× faster.</span>
@@ -378,34 +465,39 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Stats bar ── */}
-      <section className="lp-stats" id="results">
-        <div className="lp-stats-inner">
-          {stats.map(s => (
-            <div key={s.label} className="lp-stat-item">
-              <div className="lp-stat-value">{s.value}</div>
-              <div className="lp-stat-label">{s.label}</div>
-              <div className="lp-stat-sub">{s.sub}</div>
-            </div>
-          ))}
+      {/* ── Results ── */}
+      <section className="lp-section lp-section-alt" id="results">
+        <div className="lp-section-inner">
+          <FadeIn>
+            <div className="lp-section-badge">Results</div>
+            <h2 className="lp-section-h2">Numbers that speak for themselves</h2>
+            <p className="lp-section-sub">Real outcomes from teams using SprintPark AI HR across their full recruitment lifecycle.</p>
+          </FadeIn>
+          <div className="lp-results-grid">
+            {stats.map((s, i) => <StatCard key={s.label} s={s} delay={i * 120} />)}
+          </div>
         </div>
       </section>
 
       {/* ── Features ── */}
       <section className="lp-section" id="features">
         <div className="lp-section-inner">
-          <div className="lp-section-badge">Features</div>
-          <h2 className="lp-section-h2">Everything your recruiting team needs</h2>
-          <p className="lp-section-sub">Eight AI agents working in parallel — so your team handles decisions, not busywork.</p>
+          <FadeIn>
+            <div className="lp-section-badge">Features</div>
+            <h2 className="lp-section-h2">Everything your recruiting team needs</h2>
+            <p className="lp-section-sub">Eight AI agents working in parallel — so your team handles decisions, not busywork.</p>
+          </FadeIn>
           <div className="lp-features-grid">
-            {features.map(f => (
-              <div key={f.title} className="lp-feature-card">
-                <div className="lp-feature-icon" style={{ background: f.bg }}>
-                  <f.Img />
+            {features.map((f, i) => (
+              <FadeIn key={f.title} delay={i * 60}>
+                <div className="lp-feature-card">
+                  <div className="lp-feature-icon" style={{ background: f.bg }}>
+                    <f.Img />
+                  </div>
+                  <h3 className="lp-feature-title">{f.title}</h3>
+                  <p className="lp-feature-desc">{f.desc}</p>
                 </div>
-                <h3 className="lp-feature-title">{f.title}</h3>
-                <p className="lp-feature-desc">{f.desc}</p>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -414,19 +506,22 @@ export default function LandingPage() {
       {/* ── How it works ── */}
       <section className="lp-section lp-section-alt" id="how-it-works">
         <div className="lp-section-inner">
-          <div className="lp-section-badge">How it works</div>
-          <h2 className="lp-section-h2">From job post to first day — in one platform</h2>
-          <p className="lp-section-sub">A streamlined workflow that replaces five tools with one.</p>
+          <FadeIn>
+            <div className="lp-section-badge">How it works</div>
+            <h2 className="lp-section-h2">From job post to first day — in one platform</h2>
+            <p className="lp-section-sub">A streamlined workflow that replaces five tools with one.</p>
+          </FadeIn>
           <div className="lp-steps">
             {steps.map((s, i) => (
-              <div key={s.n} className="lp-step">
-                <div className="lp-step-number">{s.n}</div>
-                {i < steps.length - 1 && <div className="lp-step-connector" />}
-                <div className="lp-step-body">
-                  <h3 className="lp-step-title">{s.title}</h3>
-                  <p className="lp-step-desc">{s.desc}</p>
+              <FadeIn key={s.n} delay={i * 120}>
+                <div className="lp-step">
+                  <div className="lp-step-number">{s.n}</div>
+                  <div className="lp-step-body">
+                    <h3 className="lp-step-title">{s.title}</h3>
+                    <p className="lp-step-desc">{s.desc}</p>
+                  </div>
                 </div>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -435,28 +530,32 @@ export default function LandingPage() {
       {/* ── Testimonials ── */}
       <section className="lp-section" id="testimonials">
         <div className="lp-section-inner">
-          <div className="lp-section-badge">Testimonials</div>
-          <h2 className="lp-section-h2">Trusted by recruiting teams</h2>
-          <p className="lp-section-sub">Hear from the people who use SprintPark AI HR every day.</p>
+          <FadeIn>
+            <div className="lp-section-badge">Testimonials</div>
+            <h2 className="lp-section-h2">Trusted by recruiting teams</h2>
+            <p className="lp-section-sub">Hear from the people who use SprintPark AI HR every day.</p>
+          </FadeIn>
           <div className="lp-testimonials">
-            {testimonials.map(t => (
-              <div key={t.name} className="lp-testimonial-card">
-                <div className="lp-testimonial-stars">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} size={14} color="#8B6474" fill="#8B6474" />
-                  ))}
-                </div>
-                <p className="lp-testimonial-text">"{t.text}"</p>
-                <div className="lp-testimonial-author">
-                  <div className="lp-testimonial-avatar" style={{ background: `linear-gradient(135deg, ${t.color}, #E8806A)` }}>
-                    {t.initials}
+            {testimonials.map((t, i) => (
+              <FadeIn key={t.name} delay={i * 100}>
+                <div className="lp-testimonial-card">
+                  <div className="lp-testimonial-stars">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} size={14} color="#8B6474" fill="#8B6474" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="lp-testimonial-name">{t.name}</div>
-                    <div className="lp-testimonial-role">{t.role}</div>
+                  <p className="lp-testimonial-text">"{t.text}"</p>
+                  <div className="lp-testimonial-author">
+                    <div className="lp-testimonial-avatar" style={{ background: `linear-gradient(135deg, ${t.color}, #E8806A)` }}>
+                      {t.initials}
+                    </div>
+                    <div>
+                      <div className="lp-testimonial-name">{t.name}</div>
+                      <div className="lp-testimonial-role">{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>
