@@ -115,59 +115,75 @@ function IconCopilotChat() {
 const features = [
   {
     Img: IconCopilot,
-    color: "#8B6474",
-    bg: "rgba(139,100,116,0.1)",
+    color: "#9B7485",
+    bg: "rgba(155,116,133,0.1)",
     title: "AI Interview Copilot",
-    desc: "Cognitive load during interviews is a well-documented barrier to fair, consistent evaluation. Our Copilot uses real-time transcription and NLP to surface follow-up questions, flag unanswered competencies, and generate structured feedback instantly — so every interviewer operates at expert level regardless of experience.",
+    tagline: "Never miss a great answer again",
+    desc: "Real-time transcription and smart follow-up suggestions during live interviews.",
+    bullets: ["Auto-transcribes every interview", "Suggests follow-up questions instantly", "Scores candidates right after the call"],
   },
   {
     Img: IconPipeline,
     color: "#E8806A",
     bg: "rgba(232,128,106,0.1)",
     title: "Candidate Pipeline",
-    desc: "Traditional ATS tools fragment candidate data across stages. SprintPark's pipeline gives a single, live view of every applicant — with AI match scores, dimension-level skill breakdowns, interview history, and communication logs — enabling data-driven decisions at every stage rather than relying on recency bias.",
+    tagline: "Every candidate, one clean view",
+    desc: "A single dashboard for all applicants across every stage and role.",
+    bullets: ["AI match scores per candidate", "Skill breakdowns at a glance", "One-click interview scheduling"],
   },
   {
     Img: IconScreener,
-    color: "#6B4A58",
-    bg: "rgba(107,74,88,0.08)",
+    color: "#7D5568",
+    bg: "rgba(125,85,104,0.08)",
     title: "Resume Screener Agent",
-    desc: "Human resume screening is slow, inconsistent, and vulnerable to unconscious bias. Our agent applies a uniform, job-specific scoring model to every application — parsing experience, skills, and education against your defined criteria — and delivers a ranked shortlist with evidence-based rationale in minutes.",
+    tagline: "Shortlist 100 CVs in 35 minutes",
+    desc: "Automatically scores and ranks every applicant so you only review the best.",
+    bullets: ["Reads every resume instantly", "Ranks by fit, not by order received", "Explains why each candidate scored"],
   },
   {
     Img: IconSchedule,
     color: "#8DB89A",
-    bg: "rgba(141,184,154,0.12)",
+    bg: "rgba(141,184,154,0.1)",
     title: "Smart Scheduling",
-    desc: "Interview scheduling accounts for up to 30% of recruiter time in high-volume hiring. Our scheduling agent reads calendar availability across interviewers, detects conflicts before they happen, proposes optimised slots, and dispatches calendar invites with joining links — eliminating multi-day email chains entirely.",
+    tagline: "Zero back-and-forth emails",
+    desc: "Detects conflicts and books interview slots automatically for all parties.",
+    bullets: ["Reads all interviewer calendars", "Detects conflicts before they happen", "Sends calendar invites with join links"],
   },
   {
     Img: IconOffer,
-    color: "#8B6474",
-    bg: "rgba(139,100,116,0.1)",
+    color: "#9B7485",
+    bg: "rgba(155,116,133,0.1)",
     title: "Offer Generation",
-    desc: "Compensation decisions made without market data lead to either offer rejections or margin leakage. SprintPark grounds every offer in real-time benchmarks, role-specific bands, and internal equity data — then generates a compliant, personalised offer letter ready for one-click review and dispatch.",
+    tagline: "Right offer, first time",
+    desc: "AI suggests pay bands based on live market data, then drafts the offer letter.",
+    bullets: ["Market-benchmarked compensation", "One-click offer letter drafting", "Tracks acceptance in real time"],
   },
   {
     Img: IconBGV,
-    color: "#6B4A58",
-    bg: "rgba(107,74,88,0.08)",
+    color: "#7D5568",
+    bg: "rgba(125,85,104,0.08)",
     title: "BGV Tracking",
-    desc: "Background verification failures after joining are costly and reputationally damaging. Our BGV module orchestrates checks across identity, education, employment history, address, criminal records, and references — with automated agency coordination, real-time status tracking, and instant alerts on discrepancies.",
+    tagline: "Know before day one",
+    desc: "Runs background checks automatically and alerts you the moment anything flags.",
+    bullets: ["Identity, education & employment checks", "Live status dashboard per candidate", "Instant alerts on any discrepancy"],
   },
   {
     Img: IconAnalytics,
     color: "#E8806A",
     bg: "rgba(232,128,106,0.1)",
     title: "Real-time Analytics",
-    desc: "Recruitment quality is invisible without measurement. SprintPark's analytics layer tracks hiring funnel conversion at every stage, time-to-hire by role and department, offer acceptance rates, AI shortlist accuracy, interviewer calibration, and cost-per-hire — giving leadership the data to improve continuously.",
+    tagline: "See exactly where hiring slows down",
+    desc: "Tracks every stage of your funnel so you know what to fix and when.",
+    bullets: ["Funnel drop-off by stage & role", "Time-to-hire and cost-per-hire trends", "AI accuracy scores over time"],
   },
   {
     Img: IconCopilotChat,
     color: "#8DB89A",
-    bg: "rgba(141,184,154,0.12)",
+    bg: "rgba(141,184,154,0.1)",
     title: "HR Copilot Chat",
-    desc: "HR teams spend significant time answering repetitive policy questions and manually comparing candidates. Our conversational copilot is grounded on your actual policy documents, candidate corpus, and historical hiring data — enabling anyone to get accurate answers, generate summaries, and surface insights through natural language.",
+    tagline: "Ask HR anything, get instant answers",
+    desc: "Chat with an AI trained on your policies, job data, and candidate history.",
+    bullets: ["Answers policy questions instantly", "Compares candidates side by side", "Summarises interview feedback on demand"],
   },
 ];
 
@@ -505,11 +521,28 @@ export default function LandingPage() {
             {features.map((f, i) => (
               <FadeIn key={f.title} delay={i * 60}>
                 <div className="lp-feature-card">
-                  <div className="lp-feature-icon" style={{ background: f.bg }}>
-                    <f.Img />
+                  {/* Front face */}
+                  <div className="lp-feature-front">
+                    <div className="lp-feature-icon" style={{ background: f.bg }}>
+                      <f.Img />
+                    </div>
+                    <div className="lp-feature-tag" style={{ color: f.color }}>{f.tagline}</div>
+                    <h3 className="lp-feature-title">{f.title}</h3>
+                    <p className="lp-feature-desc">{f.desc}</p>
                   </div>
-                  <h3 className="lp-feature-title">{f.title}</h3>
-                  <p className="lp-feature-desc">{f.desc}</p>
+                  {/* Hover face */}
+                  <div className="lp-feature-back" style={{ borderTop: `3px solid ${f.color}` }}>
+                    <div className="lp-feature-back-title" style={{ color: f.color }}>{f.title}</div>
+                    <ul className="lp-feature-bullets">
+                      {f.bullets.map(b => (
+                        <li key={b} className="lp-feature-bullet">
+                          <span className="lp-bullet-dot" style={{ background: f.color }} />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="lp-feature-back-cta" style={{ color: f.color }}>Learn more →</div>
+                  </div>
                 </div>
               </FadeIn>
             ))}
