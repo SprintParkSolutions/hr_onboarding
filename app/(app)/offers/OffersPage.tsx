@@ -297,6 +297,7 @@ export default function OffersPage() {
 
       {/* ── Offers Table ── */}
       <div className="card">
+        <div className="table-scroll">
         <table className="offers-table">
           <thead>
             <tr><th>Candidate</th><th>Role</th><th>Compensation Band</th><th>Equity</th><th>Joining Bonus</th><th>Status</th><th>Sent</th><th>Actions</th></tr>
@@ -373,6 +374,7 @@ export default function OffersPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ── Hired by Role ── */}
@@ -403,6 +405,7 @@ export default function OffersPage() {
         <span className="section-sub">CTC, joining date & technology stack</span>
       </div>
       <div className="card">
+        <div className="table-scroll">
         <table className="hired-table">
           <thead>
             <tr>
@@ -443,6 +446,7 @@ export default function OffersPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

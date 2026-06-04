@@ -139,6 +139,7 @@ export default function CandidatesPage() {
 
       <div className={`cand-layout ${selected ? "panel-open" : ""}`}>
         <div className="card">
+          <div className="table-scroll">
           <table className="cand-table">
             <thead>
               <tr>
@@ -194,6 +195,7 @@ export default function CandidatesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Detail Panel */}

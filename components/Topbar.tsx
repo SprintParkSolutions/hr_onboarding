@@ -3,12 +3,12 @@ import { Search, Bell, X, CheckCircle, Calendar, Users, Briefcase, AlertCircle }
 import { useState } from "react";
 
 const notifications = [
-  { id: 1, icon: "check",    title: "Sarah Mitchell shortlisted",  desc: "AI match score 94% · Resume Screener Agent",       time: "2 min ago",  unread: true  },
-  { id: 2, icon: "calendar", title: "Interview rescheduled",       desc: "Yuki Tanaka · Tomorrow 11am · Conflict resolved",  time: "15 min ago", unread: true  },
-  { id: 3, icon: "alert",    title: "Offer approval pending",      desc: "Rohan Kapoor · Product Designer · ₹28L–32L",       time: "1 hr ago",   unread: true  },
-  { id: 4, icon: "users",    title: "12 new applications",         desc: "Senior Backend Engineer · Last 24 hours",          time: "3 hrs ago",  unread: false },
-  { id: 5, icon: "check",    title: "Background check complete",   desc: "Marco Greco · All checks passed",                  time: "5 hrs ago",  unread: false },
-  { id: 6, icon: "briefcase",title: "New job posted",              desc: "DevOps Engineer · Bangalore · Urgent",             time: "1 day ago",  unread: false },
+  { id: 1, icon: "check",     title: "Sarah Mitchell shortlisted",  desc: "AI match score 94% · Resume Screener Agent",      time: "2 min ago",  unread: true  },
+  { id: 2, icon: "calendar",  title: "Interview rescheduled",       desc: "Yuki Tanaka · Tomorrow 11am · Conflict resolved", time: "15 min ago", unread: true  },
+  { id: 3, icon: "alert",     title: "Offer approval pending",      desc: "Rohan Kapoor · Product Designer · ₹28L–32L",      time: "1 hr ago",   unread: true  },
+  { id: 4, icon: "users",     title: "12 new applications",         desc: "Senior Backend Engineer · Last 24 hours",         time: "3 hrs ago",  unread: false },
+  { id: 5, icon: "check",     title: "Background check complete",   desc: "Marco Greco · All checks passed",                 time: "5 hrs ago",  unread: false },
+  { id: 6, icon: "briefcase", title: "New job posted",              desc: "DevOps Engineer · Bangalore · Urgent",            time: "1 day ago",  unread: false },
 ];
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -20,8 +20,8 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Topbar() {
-  const [notifOpen, setNotifOpen]   = useState(false);
-  const [notifs,    setNotifs]      = useState(notifications);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs,    setNotifs]    = useState(notifications);
   const unreadCount = notifs.filter(n => n.unread).length;
 
   function markAllRead() {
@@ -35,24 +35,26 @@ export default function Topbar() {
       borderBottom: "1px solid rgba(224,200,240,0.5)",
       backdropFilter: "blur(12px)",
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 32px", position: "relative", zIndex: 50,
+      padding: "0 16px 0 20px",
+      position: "relative", zIndex: 50,
     }}>
-      {/* Search */}
-      <div style={{
+      {/* Search — hides on very small screens */}
+      <div className="topbar-search" style={{
         display: "flex", alignItems: "center", gap: 8,
         background: "rgba(255,255,255,0.6)",
-        borderRadius: 10, padding: "7px 12px", width: 280,
+        borderRadius: 10, padding: "7px 12px",
+        width: "min(280px, 45vw)",
         border: "1px solid rgba(224,200,240,0.6)",
         backdropFilter: "blur(4px)",
       }}>
-        <Search size={14} color="#c0a0d0" />
+        <Search size={14} color="#c0a0d0" style={{ flexShrink: 0 }} />
         <input
           placeholder="Search candidates, jobs..."
-          style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, color: "#3a1a58", width: "100%" }}
+          style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, color: "#3a1a58", width: "100%", minWidth: 0 }}
         />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
         {/* Bell */}
         <div style={{ position: "relative" }}>
           <button
@@ -71,11 +73,11 @@ export default function Topbar() {
             )}
           </button>
 
-          {/* Notification panel */}
           {notifOpen && (
             <div style={{
-              position: "absolute", top: 40, right: 0, width: 360,
-              background: "rgba(255,255,255,0.88)",
+              position: "fixed", top: 56, right: 12,
+              width: "min(360px, calc(100vw - 24px))",
+              background: "rgba(255,255,255,0.92)",
               border: "1px solid rgba(224,200,240,0.6)",
               borderRadius: 14,
               boxShadow: "0 8px 32px rgba(192,128,208,0.2)",
@@ -101,8 +103,7 @@ export default function Topbar() {
                   </button>
                 </div>
               </div>
-
-              <div style={{ maxHeight: 380, overflowY: "auto" }}>
+              <div style={{ maxHeight: "min(380px, 60vh)", overflowY: "auto" }}>
                 {notifs.map(n => (
                   <div
                     key={n.id}
@@ -111,7 +112,7 @@ export default function Topbar() {
                       display: "flex", gap: 12, padding: "12px 16px",
                       borderBottom: "1px solid rgba(237,224,255,0.5)",
                       background: n.unread ? "rgba(192,128,208,0.06)" : "transparent",
-                      cursor: "pointer", transition: "background 0.15s",
+                      cursor: "pointer",
                     }}
                   >
                     <div style={{
@@ -121,18 +122,17 @@ export default function Topbar() {
                     }}>
                       {iconMap[n.icon]}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: n.unread ? 600 : 500, color: "#3a1a58" }}>{n.title}</span>
                         {n.unread && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#c080d0", flexShrink: 0, marginTop: 4 }} />}
                       </div>
-                      <div style={{ fontSize: 11.5, color: "#9a80b0", marginTop: 2 }}>{n.desc}</div>
+                      <div style={{ fontSize: 11.5, color: "#9a80b0", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.desc}</div>
                       <div style={{ fontSize: 11, color: "#c0a8d0", marginTop: 3 }}>{n.time}</div>
                     </div>
                   </div>
                 ))}
               </div>
-
               <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(224,200,240,0.4)", textAlign: "center" }}>
                 <button style={{ fontSize: 12, color: "#c080d0", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
                   View all notifications
@@ -149,11 +149,10 @@ export default function Topbar() {
           borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center",
           color: "white", fontWeight: 700, fontSize: 12, cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(192,128,208,0.4)",
+          boxShadow: "0 2px 8px rgba(192,128,208,0.4)", flexShrink: 0,
         }}>PR</div>
       </div>
 
-      {/* Click-outside overlay */}
       {notifOpen && <div onClick={() => setNotifOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />}
     </header>
   );
