@@ -13,7 +13,7 @@ const contactMethods = [
     color: "#9B7485",
     bg: "rgba(155,116,133,0.1)",
     title: "Email us",
-    detail: "hello@sprintpark.ai",
+    detail: "hello@recruitai.app",
     sub: "We respond within 4 business hours",
   },
   {
@@ -71,8 +71,17 @@ export default function ContactPage() {
       {/* Nav */}
       <header className="cp-nav">
         <Link href="/landing" className="cp-logo">
-          <div className="cp-logo-icon"><Bot size={18} color="white" /></div>
-          <span className="cp-logo-text">SprintPark AI HR</span>
+          <div className="cp-logo-icon" style={{ background: "linear-gradient(135deg, #0EA5E9, #6366F1)" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="7" r="3" fill="white" opacity="0.95"/>
+                <path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.95"/>
+                <circle cx="19" cy="9" r="2" fill="white" opacity="0.85"/>
+                <line x1="17.2" y1="8" x2="15" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                <line x1="17.2" y1="10" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                <line x1="21" y1="9" x2="22.5" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+              </svg>
+            </div>
+          <span className="cp-logo-text">Recruit<span style={{ color: "#0EA5E9" }}>AI</span></span>
         </Link>
         <Link href="/landing" className="cp-back">
           <ArrowLeft size={14} /> Back to home
@@ -163,7 +172,7 @@ export default function ContactPage() {
             <div className="cp-info-card">
               <h3 className="cp-info-title">Book a live demo</h3>
               <p className="cp-info-text">
-                See SprintPark AI HR in action with a 30-minute personalised walkthrough. We'll show you how it fits your team's workflow.
+                See RecruitAI in action with a 30-minute personalised walkthrough. We'll show you how it fits your team's workflow.
               </p>
               <Link href="/login" className="cp-btn-outline">Book a demo →</Link>
             </div>
@@ -173,7 +182,7 @@ export default function ContactPage() {
               <p className="cp-info-text">
                 Need custom integrations, SSO, dedicated support, or volume pricing? Our enterprise team will design a plan around your needs.
               </p>
-              <a href="mailto:enterprise@sprintpark.ai" className="cp-btn-outline">Talk to sales →</a>
+              <a href="mailto:enterprise@recruitai.app" className="cp-btn-outline">Talk to sales →</a>
             </div>
 
             <div className="cp-social-card">
@@ -194,7 +203,7 @@ export default function ContactPage() {
       </main>
 
       <footer className="cp-footer">
-        <span>© 2026 SprintPark Technologies · <Link href="/landing" style={{ color: "#9B7485" }}>Home</Link> · <Link href="/login" style={{ color: "#9B7485" }}>Sign in</Link></span>
+        <span>© 2026 RecruitAI · <Link href="/landing" style={{ color: "#9B7485" }}>Home</Link> · <Link href="/login" style={{ color: "#9B7485" }}>Sign in</Link></span>
       </footer>
     </div>
   );
