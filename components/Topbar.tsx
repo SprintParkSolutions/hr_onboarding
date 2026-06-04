@@ -1,6 +1,7 @@
 ﻿"use client";
-import { Search, Bell, X, CheckCircle, Calendar, Users, Briefcase, AlertCircle } from "lucide-react";
+import { Search, Bell, X, CheckCircle, Calendar, Users, Briefcase, AlertCircle, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const notifications = [
   { id: 1, icon: "check",     title: "Sarah Mitchell shortlisted",  desc: "AI match score 94% · Resume Screener Agent",      time: "2 min ago",  unread: true  },
@@ -20,9 +21,16 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Topbar() {
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifs, setNotifs]       = useState(notifications);
+  const [notifOpen, setNotifOpen]       = useState(false);
+  const [profileOpen, setProfileOpen]   = useState(false);
+  const [notifs, setNotifs]             = useState(notifications);
   const unreadCount = notifs.filter(n => n.unread).length;
+  const router = useRouter();
+
+  function handleLogout() {
+    setProfileOpen(false);
+    router.push("/login");
+  }
 
   return (
     <header style={{ height: 56, flexShrink: 0, background: "rgba(255,255,255,0.85)", borderBottom: "1px solid rgba(221,208,200,0.6)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px 0 20px", position: "relative", zIndex: 50 }}>
@@ -72,10 +80,42 @@ export default function Topbar() {
           )}
         </div>
 
-        <div style={{ width: 34, height: 34, background: "linear-gradient(135deg, #8B6474, #E8806A)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 12, cursor: "pointer", boxShadow: "0 2px 8px rgba(139,100,116,0.35)", flexShrink: 0 }}>PR</div>
+        <div style={{ position: "relative" }}>
+          <div
+            onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
+            style={{ width: 34, height: 34, background: "linear-gradient(135deg, #8B6474, #E8806A)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: 12, cursor: "pointer", boxShadow: "0 2px 8px rgba(139,100,116,0.35)", flexShrink: 0 }}
+          >PR</div>
+
+          {profileOpen && (
+            <div style={{ position: "fixed", top: 56, right: 12, width: 200, background: "rgba(255,255,255,0.97)", border: "1px solid rgba(221,208,200,0.6)", borderRadius: 14, boxShadow: "0 8px 32px rgba(139,100,116,0.15)", zIndex: 100, overflow: "hidden" }}>
+              <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid rgba(221,208,200,0.4)", background: "linear-gradient(90deg, rgba(216,217,176,0.3), rgba(244,169,153,0.25))" }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "#3D2B32" }}>Priya Rao</div>
+                <div style={{ fontSize: 11.5, color: "#A08890", marginTop: 2 }}>HR Manager</div>
+              </div>
+              <div style={{ padding: "6px 0" }}>
+                <button
+                  onClick={() => setProfileOpen(false)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#3D2B32", textAlign: "left" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(216,217,176,0.3)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                >
+                  <User size={15} color="#8B6474" /> My Profile
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#C0392B", textAlign: "left" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(232,128,106,0.1)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                >
+                  <LogOut size={15} color="#C0392B" /> Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {notifOpen && <div onClick={() => setNotifOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />}
+      {(notifOpen || profileOpen) && <div onClick={() => { setNotifOpen(false); setProfileOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 49 }} />}
     </header>
   );
 }
