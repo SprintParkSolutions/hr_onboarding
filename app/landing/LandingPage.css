@@ -1,6 +1,12 @@
 ﻿/* Root */
 .lp-root {
   min-height: 100vh;
+  background:
+    radial-gradient(ellipse 65% 55% at 85% 35%, rgba(244,169,153,0.42) 0%, transparent 58%),
+    radial-gradient(ellipse 60% 50% at 12% 18%, rgba(184,205,170,0.48) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 48% 88%, rgba(216,217,176,0.38) 0%, transparent 58%),
+    linear-gradient(148deg, #EDE6DE 0%, #F4EDE5 45%, #E9E7F0 100%);
+  background-attachment: fixed;
   color: #4A3040;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -113,8 +119,8 @@
 .lp-result-sub { font-size: 11.5px; color: #A8919A; line-height: 1.4; font-style: italic; }
 
 /* Sections */
-.lp-section { padding: 80px clamp(16px, 4vw, 48px); background: #F5F0EB; }
-.lp-section-alt { background: rgba(216,217,176,0.15); }
+.lp-section { padding: 80px clamp(16px, 4vw, 48px); }
+.lp-section-alt { background: rgba(216,217,176,0.18); }
 .lp-section-inner { max-width: 1100px; margin: 0 auto; }
 .lp-section-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; background: rgba(155,116,133,0.1); border: 1px solid rgba(155,116,133,0.22); font-size: 12px; font-weight: 700; color: #7D5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
 .lp-section-h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 900; color: #4A3040; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.2; }
@@ -167,7 +173,7 @@
 .lp-cta-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 
 /* Footer */
-.lp-footer { padding: 52px clamp(16px, 4vw, 48px) 28px; border-top: 1px solid rgba(221,208,200,0.5); background: #F5F0EB; }
+.lp-footer { padding: 52px clamp(16px, 4vw, 48px) 28px; border-top: 1px solid rgba(221,208,200,0.5); }
 .lp-footer-inner { max-width: 1100px; margin: 0 auto 36px; display: grid; grid-template-columns: 1fr auto; gap: 48px; }
 .lp-footer-brand { display: flex; flex-direction: column; gap: 12px; max-width: 300px; }
 .lp-footer-tagline { font-size: 13px; color: #A8919A; line-height: 1.6; }
