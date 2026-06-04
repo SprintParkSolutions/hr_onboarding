@@ -51,15 +51,15 @@
 /* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-hero { min-height: 100vh; padding: 100px clamp(16px, 4vw, 48px) 80px; display: flex; align-items: center; justify-content: center; gap: 60px; flex-wrap: wrap; position: relative; overflow: hidden; }
 .lp-hero-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.lp-hero-svg {
-  position: absolute;
-  top: 0; right: 0;
-  width: 60%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0.9;
+
+/* Hero visual — right side SVG illustration */
+.lp-hero-visual {
+  flex: 1; min-width: 300px; max-width: 540px;
+  position: relative; z-index: 1;
+  filter: drop-shadow(0 20px 48px rgba(155,116,133,0.18));
+  animation: lp-float 5s ease-in-out infinite;
 }
-@media (max-width: 900px) { .lp-hero-svg { display: none; } }
+@keyframes lp-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .lp-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; pointer-events: none; }
 .lp-blob-1 { width: 500px; height: 500px; background: #B8CDAA; top: -100px; left: -80px; }
 .lp-blob-2 { width: 400px; height: 400px; background: #F4A999; top: 60px; right: -60px; }

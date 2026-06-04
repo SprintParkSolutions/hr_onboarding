@@ -407,93 +407,9 @@ export default function LandingPage() {
           <div className="lp-blob lp-blob-1" />
           <div className="lp-blob lp-blob-2" />
           <div className="lp-blob lp-blob-3" />
-          {/* Clean HR AI illustration — right side only, minimal */}
-          <svg className="lp-hero-svg" viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            {/* ── Subtle dot grid — far right only ── */}
-            {Array.from({length:8}).map((_,row)=>Array.from({length:7}).map((_,col)=>(
-              <circle key={`${row}-${col}`} cx={col*55+560} cy={row*65+40} r="1.8" fill="#9B7485" opacity="0.1"/>
-            )))}
-
-            {/* ── Main dashboard card ── */}
-            <rect x="480" y="60" width="340" height="200" rx="16" fill="white" opacity="0.88"/>
-            <rect x="480" y="60" width="340" height="200" rx="16" stroke="#E2D4CC" strokeWidth="1.2" fill="none"/>
-            {/* Card header bar */}
-            <rect x="480" y="60" width="340" height="38" rx="16" fill="rgba(155,116,133,0.07)"/>
-            <rect x="480" y="82" width="340" height="16" fill="rgba(155,116,133,0.07)"/>
-            <circle cx="500" cy="79" r="5" fill="rgba(232,128,106,0.5)"/>
-            <circle cx="516" cy="79" r="5" fill="rgba(216,217,176,0.7)"/>
-            <circle cx="532" cy="79" r="5" fill="rgba(141,184,154,0.6)"/>
-            <text x="650" y="83" textAnchor="middle" fontSize="10" fill="#A8919A" fontWeight="600" fontFamily="sans-serif">AI Recruitment Dashboard</text>
-
-            {/* Stat boxes */}
-            <rect x="492" y="108" width="72" height="50" rx="8" fill="rgba(155,116,133,0.07)"/>
-            <text x="528" y="128" textAnchor="middle" fontSize="18" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">42</text>
-            <text x="528" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Open roles</text>
-
-            <rect x="574" y="108" width="72" height="50" rx="8" fill="rgba(232,128,106,0.07)"/>
-            <text x="610" y="128" textAnchor="middle" fontSize="18" fill="#E8806A" fontWeight="800" fontFamily="sans-serif">1,284</text>
-            <text x="610" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Candidates</text>
-
-            <rect x="656" y="108" width="72" height="50" rx="8" fill="rgba(141,184,154,0.1)"/>
-            <text x="692" y="128" textAnchor="middle" fontSize="18" fill="#8DB89A" fontWeight="800" fontFamily="sans-serif">91%</text>
-            <text x="692" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">AI accuracy</text>
-
-            <rect x="738" y="108" width="72" height="50" rx="8" fill="rgba(125,85,104,0.07)"/>
-            <text x="774" y="128" textAnchor="middle" fontSize="18" fill="#7D5568" fontWeight="800" fontFamily="sans-serif">18d</text>
-            <text x="774" y="145" textAnchor="middle" fontSize="8" fill="#A8919A" fontFamily="sans-serif">Avg hire time</text>
-
-            {/* Funnel bars */}
-            {[
-              {label:"Sourced",    pct:100, color:"#9B7485", y:172},
-              {label:"Screened",   pct:62,  color:"#E8806A", y:186},
-              {label:"Interviewed",pct:38,  color:"#D8D9B0", y:200},
-              {label:"Offered",    pct:20,  color:"#8DB89A", y:214},
-              {label:"Hired",      pct:11,  color:"#7D5568", y:228},
-            ].map(({label,pct,color,y})=>(
-              <g key={label}>
-                <text x="496" y={y+8} fontSize="8.5" fill="#A8919A" fontFamily="sans-serif">{label}</text>
-                <rect x="552" y={y} width="240" height="9" rx="4.5" fill="rgba(226,212,204,0.4)"/>
-                <rect x="552" y={y} width={240*pct/100} height="9" rx="4.5" fill={color} opacity="0.75"/>
-                <text x="800" y={y+8} fontSize="8" fill="#7E6070" fontFamily="sans-serif">{pct}%</text>
-              </g>
-            ))}
-
-            {/* ── Floating card 1 — AI matched ── */}
-            <rect x="530" y="285" width="175" height="56" rx="12" fill="white" opacity="0.95"/>
-            <rect x="530" y="285" width="175" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="543" y="298" width="28" height="28" rx="8" fill="rgba(141,184,154,0.2)"/>
-            <circle cx="557" cy="308" r="7" fill="rgba(141,184,154,0.5)"/>
-            <path d="M553 308l3 3 5-5" stroke="#4a7a5a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <text x="578" y="307" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">BGV Cleared</text>
-            <text x="578" y="320" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Marco G. · All checks passed</text>
-            <rect x="578" y="327" width="55" height="8" rx="4" fill="rgba(141,184,154,0.25)"/>
-            <text x="605" y="334" textAnchor="middle" fontSize="7" fill="#4a7a5a" fontWeight="600" fontFamily="sans-serif">3 mins ago</text>
-
-            {/* ── Floating card 2 — Offer accepted ── */}
-            <rect x="650" y="358" width="170" height="56" rx="12" fill="white" opacity="0.95"/>
-            <rect x="650" y="358" width="170" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="663" y="371" width="28" height="28" rx="8" fill="rgba(232,128,106,0.12)"/>
-            <path d="M671 385l3 4 6-7" stroke="#c05a40" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <text x="698" y="380" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">Offer Accepted</text>
-            <text x="698" y="393" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Priya S. · ₹38L · Jun 9</text>
-            <rect x="698" y="400" width="62" height="8" rx="4" fill="rgba(232,128,106,0.15)"/>
-            <text x="729" y="407" textAnchor="middle" fontSize="7" fill="#c05a40" fontWeight="600" fontFamily="sans-serif">Just now</text>
-
-            {/* ── Floating card 3 — AI Score ── */}
-            <rect x="480" y="375" width="155" height="56" rx="12" fill="white" opacity="0.95"/>
-            <rect x="480" y="375" width="155" height="56" rx="12" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
-            <rect x="493" y="388" width="28" height="28" rx="8" fill="rgba(155,116,133,0.1)"/>
-            <text x="507" y="406" textAnchor="middle" fontSize="11" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">94%</text>
-            <text x="528" y="397" fontSize="10" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">AI Match Score</text>
-            <text x="528" y="410" fontSize="9" fill="#A8919A" fontFamily="sans-serif">Sarah M. · Senior Backend</text>
-            <rect x="528" y="418" width="50" height="8" rx="4" fill="rgba(155,116,133,0.12)"/>
-            <text x="553" y="425" textAnchor="middle" fontSize="7" fill="#7D5568" fontWeight="600" fontFamily="sans-serif">Shortlisted</text>
-
-            {/* ── Soft connection lines between cards ── */}
-            <line x1="617" y1="260" x2="617" y2="285" stroke="#E2D4CC" strokeWidth="1" strokeDasharray="4 3" opacity="0.6"/>
-            <line x1="735" y1="260" x2="735" y2="358" stroke="#E2D4CC" strokeWidth="1" strokeDasharray="4 3" opacity="0.4"/>
-          </svg>
         </div>
+
+        {/* Left — text */}
         <div className="lp-hero-inner">
           <h1 className="lp-hero-h1">
             Finding great talent is hard.<br />
@@ -520,64 +436,103 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Hero dashboard preview */}
-        <div className="lp-hero-preview">
-          <div className="lp-preview-card lp-preview-main">
-            <div className="lp-preview-header">
-              <div className="lp-preview-dot" style={{ background: "#e07090" }} />
-              <div className="lp-preview-dot" style={{ background: "#f0c060" }} />
-              <div className="lp-preview-dot" style={{ background: "#70b890" }} />
-              <span className="lp-preview-title">AI Recruitment Dashboard</span>
-            </div>
-            <div className="lp-preview-stats">
-              {[["42", "Open roles"], ["1,284", "Candidates"], ["94", "AI shortlisted"], ["18d", "Avg hire time"]].map(([v, l]) => (
-                <div key={l} className="lp-preview-stat">
-                  <div className="lp-preview-stat-val">{v}</div>
-                  <div className="lp-preview-stat-label">{l}</div>
-                </div>
-              ))}
-            </div>
-            <div className="lp-preview-funnel">
-              {[["Sourced", 100, "#8B6474"], ["Screened", 62, "#E8806A"], ["Interviewed", 28, "#F4A999"], ["Offered", 11, "#D8D9B0"], ["Hired", 7, "#8DB89A"]].map(([stage, w, color]) => (
-                <div key={stage as string} className="lp-preview-funnel-row">
-                  <span className="lp-preview-funnel-label">{stage}</span>
-                  <div className="lp-preview-funnel-track">
-                    <div className="lp-preview-funnel-bar" style={{ width: `${w}%`, background: color as string }} />
-                  </div>
-                  <span className="lp-preview-funnel-val">{w}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Right — dashboard illustration */}
+        <div className="lp-hero-visual">
+          <svg viewBox="0 0 460 480" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "auto" }}>
+            {/* Subtle dot grid */}
+            {Array.from({length:6}).map((_,row)=>Array.from({length:8}).map((_,col)=>(
+              <circle key={`${row}-${col}`} cx={col*58+14} cy={row*72+14} r="1.8" fill="#9B7485" opacity="0.12"/>
+            )))}
 
-          {/* Floating cards */}
-          <div className="lp-float-card lp-float-1">
-            <div className="lp-float-icon" style={{ background: "rgba(192,128,208,0.15)" }}>
-              <Sparkles size={14} color="#9a50b0" />
-            </div>
-            <div>
-              <div className="lp-float-title">AI matched</div>
-              <div className="lp-float-sub">Sarah M. · 94% score</div>
-            </div>
-          </div>
-          <div className="lp-float-card lp-float-2">
-            <div className="lp-float-icon" style={{ background: "rgba(112,184,144,0.15)" }}>
-              <CheckCircle size={14} color="#3a8060" />
-            </div>
-            <div>
-              <div className="lp-float-title">BGV cleared</div>
-              <div className="lp-float-sub">Marco G. · All checks passed</div>
-            </div>
-          </div>
-          <div className="lp-float-card lp-float-3">
-            <div className="lp-float-icon" style={{ background: "rgba(232,160,200,0.15)" }}>
-              <TrendingUp size={14} color="#a05080" />
-            </div>
-            <div>
-              <div className="lp-float-title">Offer accepted</div>
-              <div className="lp-float-sub">₹38L · Joining Jun 2</div>
-            </div>
-          </div>
+            {/* ── Main dashboard card ── */}
+            <rect x="10" y="20" width="440" height="210" rx="16" fill="white" opacity="0.92"/>
+            <rect x="10" y="20" width="440" height="210" rx="16" stroke="#E2D4CC" strokeWidth="1.2" fill="none"/>
+            {/* Header */}
+            <rect x="10" y="20" width="440" height="40" rx="16" fill="rgba(155,116,133,0.06)"/>
+            <rect x="10" y="44" width="440" height="16" fill="rgba(155,116,133,0.06)"/>
+            <circle cx="32" cy="40" r="5" fill="rgba(232,128,106,0.55)"/>
+            <circle cx="48" cy="40" r="5" fill="rgba(216,217,176,0.8)"/>
+            <circle cx="64" cy="40" r="5" fill="rgba(141,184,154,0.7)"/>
+            <text x="230" y="44" textAnchor="middle" fontSize="11" fill="#A8919A" fontWeight="600" fontFamily="sans-serif">AI Recruitment Dashboard</text>
+
+            {/* 4 stat boxes */}
+            <rect x="22"  y="72" width="96" height="58" rx="10" fill="rgba(155,116,133,0.07)"/>
+            <text x="70"  y="96"  textAnchor="middle" fontSize="22" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">42</text>
+            <text x="70"  y="118" textAnchor="middle" fontSize="9"  fill="#A8919A" fontFamily="sans-serif">Open roles</text>
+
+            <rect x="128" y="72" width="96" height="58" rx="10" fill="rgba(232,128,106,0.07)"/>
+            <text x="176" y="96"  textAnchor="middle" fontSize="22" fill="#E8806A" fontWeight="800" fontFamily="sans-serif">1,284</text>
+            <text x="176" y="118" textAnchor="middle" fontSize="9"  fill="#A8919A" fontFamily="sans-serif">Candidates</text>
+
+            <rect x="234" y="72" width="96" height="58" rx="10" fill="rgba(141,184,154,0.1)"/>
+            <text x="282" y="96"  textAnchor="middle" fontSize="22" fill="#8DB89A" fontWeight="800" fontFamily="sans-serif">91%</text>
+            <text x="282" y="118" textAnchor="middle" fontSize="9"  fill="#A8919A" fontFamily="sans-serif">AI accuracy</text>
+
+            <rect x="340" y="72" width="96" height="58" rx="10" fill="rgba(125,85,104,0.07)"/>
+            <text x="388" y="96"  textAnchor="middle" fontSize="22" fill="#7D5568" fontWeight="800" fontFamily="sans-serif">18d</text>
+            <text x="388" y="118" textAnchor="middle" fontSize="9"  fill="#A8919A" fontFamily="sans-serif">Avg hire time</text>
+
+            {/* Funnel bars */}
+            {[
+              {label:"Sourced",    pct:100, color:"#9B7485", y:148},
+              {label:"Screened",   pct:62,  color:"#E8806A", y:163},
+              {label:"Interviewed",pct:38,  color:"#D8D9B0", y:178},
+              {label:"Offered",    pct:20,  color:"#8DB89A", y:193},
+              {label:"Hired",      pct:11,  color:"#7D5568", y:208},
+            ].map(({label,pct,color,y})=>(
+              <g key={label}>
+                <text x="26" y={y+9} fontSize="9" fill="#A8919A" fontFamily="sans-serif">{label}</text>
+                <rect x="88" y={y} width="330" height="11" rx="5.5" fill="rgba(226,212,204,0.45)"/>
+                <rect x="88" y={y} width={330*pct/100} height="11" rx="5.5" fill={color} opacity="0.8"/>
+                <text x="426" y={y+9} fontSize="8.5" fill="#7E6070" fontFamily="sans-serif">{pct}%</text>
+              </g>
+            ))}
+
+            {/* ── Notification card row ── */}
+            {/* Card A — BGV */}
+            <rect x="10"  y="250" width="210" height="68" rx="14" fill="white" opacity="0.94"/>
+            <rect x="10"  y="250" width="210" height="68" rx="14" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="24"  y="264" width="34" height="34" rx="10" fill="rgba(141,184,154,0.18)"/>
+            <path d="M30 281l5 5 10-10" stroke="#4a7a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="66"  y="275" fontSize="11" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">BGV Cleared</text>
+            <text x="66"  y="289" fontSize="9.5" fill="#A8919A" fontFamily="sans-serif">Marco G. · All checks passed</text>
+            <rect x="66"  y="296" width="62" height="14" rx="7" fill="rgba(141,184,154,0.2)"/>
+            <text x="97"  y="307" textAnchor="middle" fontSize="8" fill="#4a7a5a" fontWeight="600" fontFamily="sans-serif">✓ 3 mins ago</text>
+
+            {/* Card B — Offer */}
+            <rect x="240" y="250" width="210" height="68" rx="14" fill="white" opacity="0.94"/>
+            <rect x="240" y="250" width="210" height="68" rx="14" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="254" y="264" width="34" height="34" rx="10" fill="rgba(232,128,106,0.14)"/>
+            <path d="M260 280l4 5 8-8" stroke="#c05a40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <text x="296" y="275" fontSize="11" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">Offer Accepted</text>
+            <text x="296" y="289" fontSize="9.5" fill="#A8919A" fontFamily="sans-serif">Priya S. · ₹38L · Jun 9</text>
+            <rect x="296" y="296" width="62" height="14" rx="7" fill="rgba(232,128,106,0.15)"/>
+            <text x="327" y="307" textAnchor="middle" fontSize="8" fill="#c05a40" fontWeight="600" fontFamily="sans-serif">Just now</text>
+
+            {/* Card C — AI Score */}
+            <rect x="90"  y="338" width="280" height="68" rx="14" fill="white" opacity="0.94"/>
+            <rect x="90"  y="338" width="280" height="68" rx="14" stroke="#E2D4CC" strokeWidth="1" fill="none"/>
+            <rect x="106" y="352" width="34" height="34" rx="10" fill="rgba(155,116,133,0.12)"/>
+            <text x="123" y="374" textAnchor="middle" fontSize="13" fill="#9B7485" fontWeight="800" fontFamily="sans-serif">94%</text>
+            <text x="150" y="362" fontSize="11" fill="#4A3040" fontWeight="700" fontFamily="sans-serif">AI Match Score</text>
+            <text x="150" y="376" fontSize="9.5" fill="#A8919A" fontFamily="sans-serif">Sarah M. · Senior Backend Eng.</text>
+            <rect x="150" y="384" width="70" height="14" rx="7" fill="rgba(155,116,133,0.12)"/>
+            <text x="185" y="395" textAnchor="middle" fontSize="8" fill="#7D5568" fontWeight="600" fontFamily="sans-serif">Shortlisted ✓</text>
+
+            {/* Connector lines */}
+            <line x1="115" y1="318" x2="115" y2="338" stroke="#E2D4CC" strokeWidth="1.2" strokeDasharray="4 3" opacity="0.7"/>
+            <line x1="345" y1="318" x2="345" y2="338" stroke="#E2D4CC" strokeWidth="1.2" strokeDasharray="4 3" opacity="0.5"/>
+
+            {/* Bottom metric pills */}
+            <rect x="30"  y="426" width="120" height="28" rx="14" fill="rgba(155,116,133,0.12)" stroke="#C8B0BC" strokeWidth="0.8"/>
+            <text x="90"  y="444" textAnchor="middle" fontSize="10" fill="#7D5568" fontWeight="700" fontFamily="sans-serif">18 days avg hire</text>
+
+            <rect x="170" y="426" width="120" height="28" rx="14" fill="rgba(141,184,154,0.15)" stroke="#A8C8B0" strokeWidth="0.8"/>
+            <text x="230" y="444" textAnchor="middle" fontSize="10" fill="#4a7a5a" fontWeight="700" fontFamily="sans-serif">91% AI accuracy</text>
+
+            <rect x="310" y="426" width="120" height="28" rx="14" fill="rgba(232,128,106,0.12)" stroke="#E8B0A0" strokeWidth="0.8"/>
+            <text x="370" y="444" textAnchor="middle" fontSize="10" fill="#c05a40" fontWeight="700" fontFamily="sans-serif">5× faster screen</text>
+          </svg>
         </div>
       </section>
 
