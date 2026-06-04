@@ -11,38 +11,38 @@ import {
 function IconCopilot() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="6" width="22" height="16" rx="4" fill="#e8d0ff" />
-      <rect x="6" y="10" width="10" height="2" rx="1" fill="#c080d0" />
-      <rect x="6" y="14" width="7" height="2" rx="1" fill="#d8b0f0" />
-      <circle cx="21" cy="10" r="4" fill="#c080d0" />
+      <rect x="3" y="6" width="22" height="16" rx="4" fill="#F2E8EC" />
+      <rect x="6" y="10" width="10" height="2" rx="1" fill="#8B6474" />
+      <rect x="6" y="14" width="7" height="2" rx="1" fill="#E8806A" />
+      <circle cx="21" cy="10" r="4" fill="#8B6474" />
       <path d="M19.5 10l1 1 2-2" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="14" cy="23" r="1.5" fill="#c080d0" />
-      <rect x="13" y="22" width="2" height="2" rx="0" fill="#e8d0ff" />
+      <circle cx="14" cy="23" r="1.5" fill="#8B6474" />
+      <rect x="13" y="22" width="2" height="2" rx="0" fill="#F2E8EC" />
     </svg>
   );
 }
 function IconPipeline() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <circle cx="6" cy="14" r="3.5" fill="#e8a0c8" />
-      <circle cx="14" cy="8" r="3.5" fill="#c080d0" />
-      <circle cx="14" cy="20" r="3.5" fill="#d8b0f0" />
-      <circle cx="22" cy="14" r="3.5" fill="#9a50b0" />
-      <line x1="9" y1="12" x2="11.5" y2="9.5" stroke="#c080d0" strokeWidth="1.5" />
-      <line x1="9" y1="16" x2="11.5" y2="18.5" stroke="#d8b0f0" strokeWidth="1.5" />
-      <line x1="16.5" y1="9.5" x2="19" y2="12" stroke="#9a50b0" strokeWidth="1.5" />
-      <line x1="16.5" y1="18.5" x2="19" y2="16" stroke="#9a50b0" strokeWidth="1.5" />
+      <circle cx="6" cy="14" r="3.5" fill="#F4A999" />
+      <circle cx="14" cy="8" r="3.5" fill="#8B6474" />
+      <circle cx="14" cy="20" r="3.5" fill="#D8D9B0" />
+      <circle cx="22" cy="14" r="3.5" fill="#6B4A58" />
+      <line x1="9" y1="12" x2="11.5" y2="9.5" stroke="#8B6474" strokeWidth="1.5" />
+      <line x1="9" y1="16" x2="11.5" y2="18.5" stroke="#D8D9B0" strokeWidth="1.5" />
+      <line x1="16.5" y1="9.5" x2="19" y2="12" stroke="#6B4A58" strokeWidth="1.5" />
+      <line x1="16.5" y1="18.5" x2="19" y2="16" stroke="#6B4A58" strokeWidth="1.5" />
     </svg>
   );
 }
 function IconScreener() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="5" y="4" width="18" height="22" rx="3" fill="#f0e0ff" />
-      <rect x="8" y="8" width="12" height="1.8" rx="0.9" fill="#c080d0" />
-      <rect x="8" y="12" width="9" height="1.8" rx="0.9" fill="#d8b0f0" />
-      <rect x="8" y="16" width="10" height="1.8" rx="0.9" fill="#d8b0f0" />
-      <circle cx="20" cy="20" r="5" fill="#c080d0" />
+      <rect x="5" y="4" width="18" height="22" rx="3" fill="#FDF5F0" />
+      <rect x="8" y="8" width="12" height="1.8" rx="0.9" fill="#8B6474" />
+      <rect x="8" y="12" width="9" height="1.8" rx="0.9" fill="#E8806A" />
+      <rect x="8" y="16" width="10" height="1.8" rx="0.9" fill="#D8D9B0" />
+      <circle cx="20" cy="20" r="5" fill="#8B6474" />
       <path d="M18 20l1.5 1.5 2.5-2.5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -50,25 +50,25 @@ function IconScreener() {
 function IconSchedule() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="4" y="6" width="20" height="18" rx="3" fill="#ede0ff" />
-      <rect x="4" y="6" width="20" height="6" rx="3" fill="#d8b0f0" />
-      <circle cx="10" cy="4" r="1.5" fill="#c080d0" />
-      <circle cx="18" cy="4" r="1.5" fill="#c080d0" />
-      <rect x="8" y="16" width="4" height="4" rx="1" fill="#c080d0" />
-      <rect x="16" y="16" width="4" height="4" rx="1" fill="#e8a0c8" opacity="0.5" />
-      <rect x="8" y="14" width="4" height="1.5" rx="0.5" fill="#d8b0f0" />
+      <rect x="4" y="6" width="20" height="18" rx="3" fill="#F5F0EB" />
+      <rect x="4" y="6" width="20" height="6" rx="3" fill="#D8D9B0" />
+      <circle cx="10" cy="4" r="1.5" fill="#8B6474" />
+      <circle cx="18" cy="4" r="1.5" fill="#8B6474" />
+      <rect x="8" y="16" width="4" height="4" rx="1" fill="#8B6474" />
+      <rect x="16" y="16" width="4" height="4" rx="1" fill="#E8806A" opacity="0.5" />
+      <rect x="8" y="14" width="4" height="1.5" rx="0.5" fill="#B8CDAA" />
     </svg>
   );
 }
 function IconOffer() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="4" y="5" width="20" height="18" rx="3" fill="#f5e8ff" />
-      <path d="M4 10h20" stroke="#e0c8f0" strokeWidth="1" />
-      <rect x="7" y="13" width="6" height="1.5" rx="0.7" fill="#c080d0" />
-      <rect x="7" y="16.5" width="8" height="1.5" rx="0.7" fill="#d8b0f0" />
-      <rect x="7" y="20" width="5" height="1.5" rx="0.7" fill="#d8b0f0" />
-      <circle cx="20" cy="8" r="3" fill="#9a50b0" />
+      <rect x="4" y="5" width="20" height="18" rx="3" fill="#FDF5F0" />
+      <path d="M4 10h20" stroke="#DDD0C8" strokeWidth="1" />
+      <rect x="7" y="13" width="6" height="1.5" rx="0.7" fill="#8B6474" />
+      <rect x="7" y="16.5" width="8" height="1.5" rx="0.7" fill="#E8806A" />
+      <rect x="7" y="20" width="5" height="1.5" rx="0.7" fill="#D8D9B0" />
+      <circle cx="20" cy="8" r="3" fill="#6B4A58" />
       <path d="M18.8 8l.8.8 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -76,38 +76,37 @@ function IconOffer() {
 function IconBGV() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" fill="#ede0ff" />
-      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" stroke="#c080d0" strokeWidth="1.2" fill="none" />
-      <path d="M10 14l2.5 2.5 5-5" stroke="#9a50b0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" fill="#F2E8EC" />
+      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" stroke="#8B6474" strokeWidth="1.2" fill="none" />
+      <path d="M10 14l2.5 2.5 5-5" stroke="#6B4A58" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 function IconAnalytics() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="18" width="4" height="7" rx="1.5" fill="#c080d0" />
-      <rect x="9" y="13" width="4" height="12" rx="1.5" fill="#d8b0f0" />
-      <rect x="15" y="8" width="4" height="17" rx="1.5" fill="#9a50b0" />
-      <rect x="21" y="11" width="4" height="14" rx="1.5" fill="#e8a0c8" />
-      <polyline points="5,17 11,11 17,6 23,9" stroke="#3a1a58" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <circle cx="5" cy="17" r="1.5" fill="#3a1a58" />
-      <circle cx="11" cy="11" r="1.5" fill="#3a1a58" />
-      <circle cx="17" cy="6" r="1.5" fill="#3a1a58" />
-      <circle cx="23" cy="9" r="1.5" fill="#3a1a58" />
+      <rect x="3" y="18" width="4" height="7" rx="1.5" fill="#8B6474" />
+      <rect x="9" y="13" width="4" height="12" rx="1.5" fill="#E8806A" />
+      <rect x="15" y="8" width="4" height="17" rx="1.5" fill="#6B4A58" />
+      <rect x="21" y="11" width="4" height="14" rx="1.5" fill="#F4A999" />
+      <polyline points="5,17 11,11 17,6 23,9" stroke="#3D2B32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="5" cy="17" r="1.5" fill="#3D2B32" />
+      <circle cx="11" cy="11" r="1.5" fill="#3D2B32" />
+      <circle cx="17" cy="6" r="1.5" fill="#3D2B32" />
+      <circle cx="23" cy="9" r="1.5" fill="#3D2B32" />
     </svg>
   );
 }
 function IconCopilotChat() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="5" width="16" height="11" rx="3" fill="#ede0ff" />
-      <rect x="5" y="8" width="8" height="1.5" rx="0.7" fill="#c080d0" />
-      <rect x="5" y="11" width="5" height="1.5" rx="0.7" fill="#d8b0f0" />
-      <path d="M8 16l-2 2.5h5L8 16z" fill="#ede0ff" />
-      <rect x="10" y="13" width="15" height="10" rx="3" fill="#c080d0" />
+      <rect x="3" y="5" width="16" height="11" rx="3" fill="#F2E8EC" />
+      <rect x="5" y="8" width="8" height="1.5" rx="0.7" fill="#8B6474" />
+      <rect x="5" y="11" width="5" height="1.5" rx="0.7" fill="#E8806A" />
+      <path d="M8 16l-2 2.5h5L8 16z" fill="#F2E8EC" />
+      <rect x="10" y="13" width="15" height="10" rx="3" fill="#8B6474" />
       <rect x="12" y="16" width="7" height="1.5" rx="0.7" fill="white" opacity="0.8" />
       <rect x="12" y="19" width="5" height="1.5" rx="0.7" fill="white" opacity="0.5" />
-      <path d="M22 23l2 2" stroke="#c080d0" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -116,57 +115,57 @@ function IconCopilotChat() {
 const features = [
   {
     Img: IconCopilot,
-    color: "#c080d0",
-    bg: "rgba(192,128,208,0.1)",
+    color: "#8B6474",
+    bg: "rgba(139,100,116,0.1)",
     title: "AI Interview Copilot",
     desc: "Cognitive load during interviews is a well-documented barrier to fair, consistent evaluation. Our Copilot uses real-time transcription and NLP to surface follow-up questions, flag unanswered competencies, and generate structured feedback instantly — so every interviewer operates at expert level regardless of experience.",
   },
   {
     Img: IconPipeline,
-    color: "#e8a0c8",
-    bg: "rgba(232,160,200,0.1)",
+    color: "#E8806A",
+    bg: "rgba(232,128,106,0.1)",
     title: "Candidate Pipeline",
     desc: "Traditional ATS tools fragment candidate data across stages. SprintPark's pipeline gives a single, live view of every applicant — with AI match scores, dimension-level skill breakdowns, interview history, and communication logs — enabling data-driven decisions at every stage rather than relying on recency bias.",
   },
   {
     Img: IconScreener,
-    color: "#9a50b0",
-    bg: "rgba(154,80,176,0.08)",
+    color: "#6B4A58",
+    bg: "rgba(107,74,88,0.08)",
     title: "Resume Screener Agent",
     desc: "Human resume screening is slow, inconsistent, and vulnerable to unconscious bias. Our agent applies a uniform, job-specific scoring model to every application — parsing experience, skills, and education against your defined criteria — and delivers a ranked shortlist with evidence-based rationale in minutes.",
   },
   {
     Img: IconSchedule,
-    color: "#b870d8",
-    bg: "rgba(184,112,216,0.1)",
+    color: "#8DB89A",
+    bg: "rgba(141,184,154,0.12)",
     title: "Smart Scheduling",
     desc: "Interview scheduling accounts for up to 30% of recruiter time in high-volume hiring. Our scheduling agent reads calendar availability across interviewers, detects conflicts before they happen, proposes optimised slots, and dispatches calendar invites with joining links — eliminating multi-day email chains entirely.",
   },
   {
     Img: IconOffer,
-    color: "#c080d0",
-    bg: "rgba(192,128,208,0.1)",
+    color: "#8B6474",
+    bg: "rgba(139,100,116,0.1)",
     title: "Offer Generation",
     desc: "Compensation decisions made without market data lead to either offer rejections or margin leakage. SprintPark grounds every offer in real-time benchmarks, role-specific bands, and internal equity data — then generates a compliant, personalised offer letter ready for one-click review and dispatch.",
   },
   {
     Img: IconBGV,
-    color: "#9a50b0",
-    bg: "rgba(154,80,176,0.08)",
+    color: "#6B4A58",
+    bg: "rgba(107,74,88,0.08)",
     title: "BGV Tracking",
     desc: "Background verification failures after joining are costly and reputationally damaging. Our BGV module orchestrates checks across identity, education, employment history, address, criminal records, and references — with automated agency coordination, real-time status tracking, and instant alerts on discrepancies.",
   },
   {
     Img: IconAnalytics,
-    color: "#7a40a0",
-    bg: "rgba(122,64,160,0.08)",
+    color: "#E8806A",
+    bg: "rgba(232,128,106,0.1)",
     title: "Real-time Analytics",
     desc: "Recruitment quality is invisible without measurement. SprintPark's analytics layer tracks hiring funnel conversion at every stage, time-to-hire by role and department, offer acceptance rates, AI shortlist accuracy, interviewer calibration, and cost-per-hire — giving leadership the data to improve continuously.",
   },
   {
     Img: IconCopilotChat,
-    color: "#e8a0c8",
-    bg: "rgba(232,160,200,0.1)",
+    color: "#8DB89A",
+    bg: "rgba(141,184,154,0.12)",
     title: "HR Copilot Chat",
     desc: "HR teams spend significant time answering repetitive policy questions and manually comparing candidates. Our conversational copilot is grounded on your actual policy documents, candidate corpus, and historical hiring data — enabling anyone to get accurate answers, generate summaries, and surface insights through natural language.",
   },
@@ -184,7 +183,7 @@ const testimonials = [
     name: "Priya Rajan",
     role: "Head of Talent Acquisition · Acme Inc",
     initials: "PR",
-    color: "#c080d0",
+    color: "#8B6474",
     rating: 5,
     text: "SprintPark cut our time-to-hire from 32 days to 18. The AI copilot during interviews is a game-changer — our interviewers actually enjoy the process now.",
   },
@@ -192,7 +191,7 @@ const testimonials = [
     name: "Arjun Krishnan",
     role: "Engineering Lead · Acme Inc",
     initials: "AK",
-    color: "#9a50b0",
+    color: "#6B4A58",
     rating: 5,
     text: "Resume screening used to eat half my week. Now I get a ranked shortlist with skill breakdowns in my inbox before my morning standup. I just review and approve.",
   },
@@ -200,7 +199,7 @@ const testimonials = [
     name: "Sneha Mehta",
     role: "HR Business Partner · Acme Inc",
     initials: "SM",
-    color: "#e8a0c8",
+    color: "#8DB89A",
     rating: 5,
     text: "The BGV tracking alone saved us from two bad hires. Real-time status on every check, instant alerts on failures — we've never had this level of visibility before.",
   },
@@ -336,7 +335,7 @@ export default function LandingPage() {
               ))}
             </div>
             <div className="lp-preview-funnel">
-              {[["Sourced", 100, "#c080d0"], ["Screened", 62, "#d8b0f0"], ["Interviewed", 28, "#e8a0c8"], ["Offered", 11, "#f0c8e0"], ["Hired", 7, "#c080d0"]].map(([stage, w, color]) => (
+              {[["Sourced", 100, "#8B6474"], ["Screened", 62, "#E8806A"], ["Interviewed", 28, "#F4A999"], ["Offered", 11, "#D8D9B0"], ["Hired", 7, "#8DB89A"]].map(([stage, w, color]) => (
                 <div key={stage as string} className="lp-preview-funnel-row">
                   <span className="lp-preview-funnel-label">{stage}</span>
                   <div className="lp-preview-funnel-track">
@@ -444,12 +443,12 @@ export default function LandingPage() {
               <div key={t.name} className="lp-testimonial-card">
                 <div className="lp-testimonial-stars">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} size={14} color="#d8a0e0" fill="#d8a0e0" />
+                    <Star key={i} size={14} color="#8B6474" fill="#8B6474" />
                   ))}
                 </div>
                 <p className="lp-testimonial-text">"{t.text}"</p>
                 <div className="lp-testimonial-author">
-                  <div className="lp-testimonial-avatar" style={{ background: `linear-gradient(135deg, ${t.color}, #e8a0c8)` }}>
+                  <div className="lp-testimonial-avatar" style={{ background: `linear-gradient(135deg, ${t.color}, #E8806A)` }}>
                     {t.initials}
                   </div>
                   <div>
