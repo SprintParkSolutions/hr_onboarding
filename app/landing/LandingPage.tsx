@@ -3,68 +3,172 @@ import "./LandingPage.css";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
-  Bot, Sparkles, Users, BarChart2, FileText, ShieldCheck,
-  Calendar, ArrowRight, CheckCircle, Star, ChevronRight,
-  Zap, TrendingUp, Clock, Award, Menu, X,
+  Bot, Sparkles, ArrowRight, CheckCircle, Star, ChevronRight,
+  TrendingUp, Award, Menu, X,
 } from "lucide-react";
+
+/* ── Feature SVG illustrations ────────────────────────── */
+function IconCopilot() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="6" width="22" height="16" rx="4" fill="#e8d0ff" />
+      <rect x="6" y="10" width="10" height="2" rx="1" fill="#c080d0" />
+      <rect x="6" y="14" width="7" height="2" rx="1" fill="#d8b0f0" />
+      <circle cx="21" cy="10" r="4" fill="#c080d0" />
+      <path d="M19.5 10l1 1 2-2" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="14" cy="23" r="1.5" fill="#c080d0" />
+      <rect x="13" y="22" width="2" height="2" rx="0" fill="#e8d0ff" />
+    </svg>
+  );
+}
+function IconPipeline() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="6" cy="14" r="3.5" fill="#e8a0c8" />
+      <circle cx="14" cy="8" r="3.5" fill="#c080d0" />
+      <circle cx="14" cy="20" r="3.5" fill="#d8b0f0" />
+      <circle cx="22" cy="14" r="3.5" fill="#9a50b0" />
+      <line x1="9" y1="12" x2="11.5" y2="9.5" stroke="#c080d0" strokeWidth="1.5" />
+      <line x1="9" y1="16" x2="11.5" y2="18.5" stroke="#d8b0f0" strokeWidth="1.5" />
+      <line x1="16.5" y1="9.5" x2="19" y2="12" stroke="#9a50b0" strokeWidth="1.5" />
+      <line x1="16.5" y1="18.5" x2="19" y2="16" stroke="#9a50b0" strokeWidth="1.5" />
+    </svg>
+  );
+}
+function IconScreener() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="5" y="4" width="18" height="22" rx="3" fill="#f0e0ff" />
+      <rect x="8" y="8" width="12" height="1.8" rx="0.9" fill="#c080d0" />
+      <rect x="8" y="12" width="9" height="1.8" rx="0.9" fill="#d8b0f0" />
+      <rect x="8" y="16" width="10" height="1.8" rx="0.9" fill="#d8b0f0" />
+      <circle cx="20" cy="20" r="5" fill="#c080d0" />
+      <path d="M18 20l1.5 1.5 2.5-2.5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconSchedule() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="6" width="20" height="18" rx="3" fill="#ede0ff" />
+      <rect x="4" y="6" width="20" height="6" rx="3" fill="#d8b0f0" />
+      <circle cx="10" cy="4" r="1.5" fill="#c080d0" />
+      <circle cx="18" cy="4" r="1.5" fill="#c080d0" />
+      <rect x="8" y="16" width="4" height="4" rx="1" fill="#c080d0" />
+      <rect x="16" y="16" width="4" height="4" rx="1" fill="#e8a0c8" opacity="0.5" />
+      <rect x="8" y="14" width="4" height="1.5" rx="0.5" fill="#d8b0f0" />
+    </svg>
+  );
+}
+function IconOffer() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="5" width="20" height="18" rx="3" fill="#f5e8ff" />
+      <path d="M4 10h20" stroke="#e0c8f0" strokeWidth="1" />
+      <rect x="7" y="13" width="6" height="1.5" rx="0.7" fill="#c080d0" />
+      <rect x="7" y="16.5" width="8" height="1.5" rx="0.7" fill="#d8b0f0" />
+      <rect x="7" y="20" width="5" height="1.5" rx="0.7" fill="#d8b0f0" />
+      <circle cx="20" cy="8" r="3" fill="#9a50b0" />
+      <path d="M18.8 8l.8.8 1.5-1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconBGV() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" fill="#ede0ff" />
+      <path d="M14 3L5 7v7c0 5 4 9.5 9 11 5-1.5 9-6 9-11V7L14 3z" stroke="#c080d0" strokeWidth="1.2" fill="none" />
+      <path d="M10 14l2.5 2.5 5-5" stroke="#9a50b0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconAnalytics() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="18" width="4" height="7" rx="1.5" fill="#c080d0" />
+      <rect x="9" y="13" width="4" height="12" rx="1.5" fill="#d8b0f0" />
+      <rect x="15" y="8" width="4" height="17" rx="1.5" fill="#9a50b0" />
+      <rect x="21" y="11" width="4" height="14" rx="1.5" fill="#e8a0c8" />
+      <polyline points="5,17 11,11 17,6 23,9" stroke="#3a1a58" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="5" cy="17" r="1.5" fill="#3a1a58" />
+      <circle cx="11" cy="11" r="1.5" fill="#3a1a58" />
+      <circle cx="17" cy="6" r="1.5" fill="#3a1a58" />
+      <circle cx="23" cy="9" r="1.5" fill="#3a1a58" />
+    </svg>
+  );
+}
+function IconCopilotChat() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="5" width="16" height="11" rx="3" fill="#ede0ff" />
+      <rect x="5" y="8" width="8" height="1.5" rx="0.7" fill="#c080d0" />
+      <rect x="5" y="11" width="5" height="1.5" rx="0.7" fill="#d8b0f0" />
+      <path d="M8 16l-2 2.5h5L8 16z" fill="#ede0ff" />
+      <rect x="10" y="13" width="15" height="10" rx="3" fill="#c080d0" />
+      <rect x="12" y="16" width="7" height="1.5" rx="0.7" fill="white" opacity="0.8" />
+      <rect x="12" y="19" width="5" height="1.5" rx="0.7" fill="white" opacity="0.5" />
+      <path d="M22 23l2 2" stroke="#c080d0" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 /* ── Data ─────────────────────────────────────────────── */
 const features = [
   {
-    icon: Bot,
+    Img: IconCopilot,
     color: "#c080d0",
-    bg: "rgba(192,128,208,0.12)",
+    bg: "rgba(192,128,208,0.1)",
     title: "AI Interview Copilot",
-    desc: "Real-time transcription, smart follow-up suggestions, and instant feedback scoring — so interviewers stay focused on the conversation, not note-taking.",
+    desc: "Cognitive load during interviews is a well-documented barrier to fair, consistent evaluation. Our Copilot uses real-time transcription and NLP to surface follow-up questions, flag unanswered competencies, and generate structured feedback instantly — so every interviewer operates at expert level regardless of experience.",
   },
   {
-    icon: Users,
+    Img: IconPipeline,
     color: "#e8a0c8",
-    bg: "rgba(232,160,200,0.12)",
+    bg: "rgba(232,160,200,0.1)",
     title: "Candidate Pipeline",
-    desc: "Unified view of every candidate across all stages. AI match scores, skill breakdowns, and one-click interview scheduling built right in.",
+    desc: "Traditional ATS tools fragment candidate data across stages. SprintPark's pipeline gives a single, live view of every applicant — with AI match scores, dimension-level skill breakdowns, interview history, and communication logs — enabling data-driven decisions at every stage rather than relying on recency bias.",
   },
   {
-    icon: Sparkles,
+    Img: IconScreener,
     color: "#9a50b0",
-    bg: "rgba(154,80,176,0.1)",
+    bg: "rgba(154,80,176,0.08)",
     title: "Resume Screener Agent",
-    desc: "Automatically parses and scores resumes against job requirements. Shortlists top candidates in minutes, not days.",
+    desc: "Human resume screening is slow, inconsistent, and vulnerable to unconscious bias. Our agent applies a uniform, job-specific scoring model to every application — parsing experience, skills, and education against your defined criteria — and delivers a ranked shortlist with evidence-based rationale in minutes.",
   },
   {
-    icon: Calendar,
-    color: "#d8b0f0",
-    bg: "rgba(216,176,240,0.12)",
+    Img: IconSchedule,
+    color: "#b870d8",
+    bg: "rgba(184,112,216,0.1)",
     title: "Smart Scheduling",
-    desc: "Detects interviewer conflicts, proposes alternative slots, and sends calendar invites — zero back-and-forth emails.",
+    desc: "Interview scheduling accounts for up to 30% of recruiter time in high-volume hiring. Our scheduling agent reads calendar availability across interviewers, detects conflicts before they happen, proposes optimised slots, and dispatches calendar invites with joining links — eliminating multi-day email chains entirely.",
   },
   {
-    icon: FileText,
+    Img: IconOffer,
     color: "#c080d0",
-    bg: "rgba(192,128,208,0.12)",
+    bg: "rgba(192,128,208,0.1)",
     title: "Offer Generation",
-    desc: "AI-suggested compensation bands based on market data. Generate, review, and send offer letters in one click.",
+    desc: "Compensation decisions made without market data lead to either offer rejections or margin leakage. SprintPark grounds every offer in real-time benchmarks, role-specific bands, and internal equity data — then generates a compliant, personalised offer letter ready for one-click review and dispatch.",
   },
   {
-    icon: ShieldCheck,
-    color: "#e8a0c8",
-    bg: "rgba(232,160,200,0.12)",
-    title: "BGV Tracking",
-    desc: "Automated background verification across identity, education, employment, and criminal checks — with real-time status updates.",
-  },
-  {
-    icon: BarChart2,
+    Img: IconBGV,
     color: "#9a50b0",
-    bg: "rgba(154,80,176,0.1)",
-    title: "Real-time Analytics",
-    desc: "Hiring funnel conversions, time-to-hire, offer acceptance rates, and AI accuracy — all in one dashboard.",
+    bg: "rgba(154,80,176,0.08)",
+    title: "BGV Tracking",
+    desc: "Background verification failures after joining are costly and reputationally damaging. Our BGV module orchestrates checks across identity, education, employment history, address, criminal records, and references — with automated agency coordination, real-time status tracking, and instant alerts on discrepancies.",
   },
   {
-    icon: Zap,
-    color: "#d8b0f0",
-    bg: "rgba(216,176,240,0.12)",
+    Img: IconAnalytics,
+    color: "#7a40a0",
+    bg: "rgba(122,64,160,0.08)",
+    title: "Real-time Analytics",
+    desc: "Recruitment quality is invisible without measurement. SprintPark's analytics layer tracks hiring funnel conversion at every stage, time-to-hire by role and department, offer acceptance rates, AI shortlist accuracy, interviewer calibration, and cost-per-hire — giving leadership the data to improve continuously.",
+  },
+  {
+    Img: IconCopilotChat,
+    color: "#e8a0c8",
+    bg: "rgba(232,160,200,0.1)",
     title: "HR Copilot Chat",
-    desc: "Ask anything — policy queries, candidate comparisons, interview summaries — grounded on your own data corpus.",
+    desc: "HR teams spend significant time answering repetitive policy questions and manually comparing candidates. Our conversational copilot is grounded on your actual policy documents, candidate corpus, and historical hiring data — enabling anyone to get accurate answers, generate summaries, and surface insights through natural language.",
   },
 ];
 
@@ -298,7 +402,7 @@ export default function LandingPage() {
             {features.map(f => (
               <div key={f.title} className="lp-feature-card">
                 <div className="lp-feature-icon" style={{ background: f.bg }}>
-                  <f.icon size={20} color={f.color} />
+                  <f.Img />
                 </div>
                 <h3 className="lp-feature-title">{f.title}</h3>
                 <p className="lp-feature-desc">{f.desc}</p>
