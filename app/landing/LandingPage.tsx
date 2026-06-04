@@ -175,26 +175,32 @@ const stats = [
   {
     icon: Clock,
     value: 18, suffix: " days", prefix: "",
-    label: "Avg time to hire",
-    sub: "↓ 4 days vs industry average",
-    color: "#8B6474",
-    bg: "rgba(139,100,116,0.08)",
+    label: "Average Time to Hire",
+    context: "From job post to accepted offer",
+    detail: "Our AI handles screening, scheduling, and follow-ups automatically — cutting the average hiring cycle from 32 days down to 18.",
+    sub: "4 days faster than the industry average",
+    color: "#9B7485",
+    bg: "rgba(155,116,133,0.1)",
     bar: 56,
   },
   {
     icon: Target,
     value: 91, suffix: "%", prefix: "",
-    label: "AI shortlist accuracy",
-    sub: "Validated by hiring managers",
+    label: "AI Shortlist Accuracy",
+    context: "Candidates matched to the right roles",
+    detail: "Our Resume Screener scores every applicant against your job criteria — hiring managers confirm 91% of AI picks as genuinely qualified.",
+    sub: "Validated by hiring managers across 200+ roles",
     color: "#E8806A",
-    bg: "rgba(232,128,106,0.08)",
+    bg: "rgba(232,128,106,0.1)",
     bar: 91,
   },
   {
     icon: TrendingUp,
     value: 89, suffix: "%", prefix: "",
-    label: "Offer acceptance rate",
-    sub: "↑ 8% since AI offer generation",
+    label: "Offer Acceptance Rate",
+    context: "Candidates who say yes to offers",
+    detail: "AI-suggested compensation bands grounded in live market data mean offers land in the right range — fewer rejections, less negotiation.",
+    sub: "Up 8% since switching to AI offer generation",
     color: "#8DB89A",
     bg: "rgba(141,184,154,0.1)",
     bar: 89,
@@ -202,10 +208,12 @@ const stats = [
   {
     icon: Zap,
     value: 5, suffix: "×", prefix: "",
-    label: "Faster resume screening",
-    sub: "vs manual review process",
-    color: "#6B4A58",
-    bg: "rgba(107,74,88,0.08)",
+    label: "Faster Resume Screening",
+    context: "Compared to manual CV review",
+    detail: "What takes a recruiter 3 hours to screen manually, SprintPark's agent completes in under 35 minutes — with consistent, bias-free scoring.",
+    sub: "35 min vs 3 hrs for 100 applications",
+    color: "#7D5568",
+    bg: "rgba(125,85,104,0.08)",
     bar: 80,
   },
 ];
@@ -279,14 +287,18 @@ function StatCard({ s, delay }: { s: typeof stats[0]; delay: number }) {
   const { ref, visible } = useInView();
   const count = useCounter(s.value, visible);
   return (
-    <div ref={ref} className="lp-result-card" style={{ animationDelay: `${delay}ms` , opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
-      <div className="lp-result-icon" style={{ background: s.bg }}>
-        <s.icon size={20} color={s.color} />
+    <div ref={ref} className="lp-result-card" style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)", transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+        <div className="lp-result-icon" style={{ background: s.bg }}>
+          <s.icon size={20} color={s.color} />
+        </div>
+        <span className="lp-result-context">{s.context}</span>
       </div>
       <div className="lp-result-number" style={{ color: s.color }}>
         {s.prefix}{count}{s.suffix}
       </div>
       <div className="lp-result-label">{s.label}</div>
+      <p className="lp-result-detail">{s.detail}</p>
       <div className="lp-result-bar-track">
         <div className="lp-result-bar-fill" style={{ width: visible ? `${s.bar}%` : "0%", background: s.color, transition: `width 1.2s ease ${delay + 200}ms` }} />
       </div>
@@ -305,7 +317,7 @@ function FadeIn({ children, className = "", delay = 0 }: { children: React.React
 }
 
 /* ── Component ────────────────────────────────────────── */
-const navLinks = ["Features", "How it works", "Results", "Testimonials"];
+const navLinks = ["Features", "How it works", "Results", "Testimonials", "Contact"];
 export default function LandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -328,7 +340,9 @@ export default function LandingPage() {
 
           <nav className="lp-nav-links">
             {navLinks.map(l => (
-              <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-nav-link">{l}</a>
+              l === "Contact"
+                ? <Link key={l} href="/contact" className="lp-nav-link">{l}</Link>
+                : <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-nav-link">{l}</a>
             ))}
           </nav>
 
@@ -358,7 +372,9 @@ export default function LandingPage() {
             </div>
             <nav className="lp-mobile-nav">
               {navLinks.map(l => (
-                <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{l}</a>
+                l === "Contact"
+                  ? <Link key={l} href="/contact" className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{l}</Link>
+                  : <a key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`} className="lp-mobile-link" onClick={() => setMobileMenu(false)}>{l}</a>
               ))}
             </nav>
             <div className="lp-mobile-actions">
@@ -599,7 +615,7 @@ export default function LandingPage() {
             </div>
             <div className="lp-footer-col">
               <div className="lp-footer-col-title">Company</div>
-              {["About", "Blog", "Careers", "Contact"].map(l => <a key={l} className="lp-footer-link">{l}</a>)}
+              {["About", "Blog", "Careers", "Contact"].map(l => <a key={l} href={l === "Contact" ? "/contact" : "#"} className="lp-footer-link">{l}</a>)}
             </div>
             <div className="lp-footer-col">
               <div className="lp-footer-col-title">Legal</div>
