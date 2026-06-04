@@ -50,7 +50,16 @@
 
 /* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-hero { min-height: 100vh; padding: 100px clamp(16px, 4vw, 48px) 80px; display: flex; align-items: center; justify-content: center; gap: 60px; flex-wrap: wrap; position: relative; overflow: hidden; }
-.lp-hero-bg { position: absolute; inset: 0; pointer-events: none; }
+.lp-hero-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lp-hero-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  pointer-events: none;
+}
 .lp-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; pointer-events: none; }
 .lp-blob-1 { width: 500px; height: 500px; background: #B8CDAA; top: -100px; left: -80px; }
 .lp-blob-2 { width: 400px; height: 400px; background: #F4A999; top: 60px; right: -60px; }
