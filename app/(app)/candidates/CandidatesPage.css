@@ -80,13 +80,13 @@
 .dim-row { display: flex; align-items: center; gap: 8px; }
 .dim-label { width: 90px; font-size: 12px; color: var(--text-sm); flex-shrink: 0; }
 .dim-bar-wrap { flex: 1; height: 7px; background: rgba(221,208,200,0.4); border-radius: 4px; overflow: hidden; }
-.dim-bar { height: 100%; background: linear-gradient(90deg, #F4A999, #8B6474); border-radius: 4px; transition: width 0.5s ease; }
+.dim-bar { height: 100%; background: linear-gradient(90deg, #7EB8D4, #5A7FC1, #7B5EA7); border-radius: 4px; transition: width 0.5s ease; }
 .dim-score { width: 32px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text); }
 .skill-list { display: flex; flex-direction: column; gap: 8px; }
 .skill-row { display: flex; align-items: center; gap: 8px; }
 .skill-name { width: 120px; font-size: 12px; color: var(--text-sm); flex-shrink: 0; }
 .skill-bar-wrap { flex: 1; height: 7px; background: rgba(221,208,200,0.4); border-radius: 4px; overflow: hidden; }
-.skill-bar { height: 100%; background: linear-gradient(90deg, #D8D9B0, #F4A999); border-radius: 4px; transition: width 0.5s ease; }
+.skill-bar { height: 100%; background: linear-gradient(90deg, #74C8A8, #4EAFD4, #6E8FD8); border-radius: 4px; transition: width 0.5s ease; }
 .skill-pct { width: 32px; text-align: right; font-size: 11px; font-weight: 600; color: var(--text); }
 .exp-list { display: flex; flex-direction: column; gap: 12px; }
 .exp-row  { display: flex; align-items: flex-start; gap: 10px; }
