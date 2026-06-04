@@ -2,7 +2,7 @@
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SprintPark AI HR",
+  title: "RecruitAI — AI-Powered Recruiting",
   description: "AI-powered recruitment lifecycle platform",
 };
 

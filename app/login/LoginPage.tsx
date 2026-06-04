@@ -5,10 +5,23 @@ import { Bot, Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircl
 import Link from "next/link";
 
 const DEMO_CREDENTIALS = [
-  { email: "priya.r@sprintpark.ai", password: "sprintpark123", name: "Priya R.",  role: "Talent Acquisition", initials: "PR", color: "#9B7485" },
-  { email: "arjun.k@sprintpark.ai", password: "sprintpark123", name: "Arjun K.", role: "Engineering Lead",    initials: "AK", color: "#E8806A" },
-  { email: "admin@sprintpark.ai",   password: "admin123",      name: "Admin",    role: "Super Admin",         initials: "AD", color: "#8DB89A" },
+  { email: "priya.r@recruitai.app", password: "recruitai123", name: "Priya R.",  role: "Talent Acquisition", initials: "PR", color: "#0EA5E9" },
+  { email: "arjun.k@recruitai.app", password: "recruitai123", name: "Arjun K.", role: "Engineering Lead",    initials: "AK", color: "#6366F1" },
+  { email: "admin@recruitai.app",   password: "admin123",      name: "Admin",    role: "Super Admin",         initials: "AD", color: "#8DB89A" },
 ];
+
+function RecruitAILogo({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="9" cy="7" r="3" fill="white" opacity="0.95"/>
+      <path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.95"/>
+      <circle cx="19" cy="9" r="2" fill="white" opacity="0.85"/>
+      <line x1="17.2" y1="8" x2="15" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+      <line x1="17.2" y1="10" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+      <line x1="21" y1="9" x2="22.5" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+    </svg>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -70,8 +83,8 @@ export default function LoginPage() {
       {/* Top nav */}
       <header className="lp-auth-nav">
         <Link href="/landing" className="lp-auth-logo">
-          <div className="lp-auth-logo-icon"><Bot size={17} color="white" /></div>
-          <span className="lp-auth-logo-text">SprintPark AI HR</span>
+          <div className="lp-auth-logo-icon" style={{ background: "linear-gradient(135deg, #0EA5E9, #6366F1)" }}><RecruitAILogo size={17} /></div>
+          <span className="lp-auth-logo-text">Recruit<span style={{ color: "#0EA5E9" }}>AI</span></span>
         </Link>
         <Link href="/landing" className="lp-auth-nav-link">← Back to home</Link>
       </header>
@@ -226,7 +239,7 @@ export default function LoginPage() {
             <div className="lp-auth-success">
               <CheckCircle size={40} color="#8DB89A" />
               <h2 className="lp-auth-success-title">Account created!</h2>
-              <p className="lp-auth-success-text">Welcome to SprintPark AI HR. Check your email at <strong>{email}</strong> to verify your account.</p>
+              <p className="lp-auth-success-text">Welcome to RecruitAI. Check your email at <strong>{email}</strong> to verify your account.</p>
               <button className="lp-auth-btn" onClick={() => { setSignedUp(false); setTab("signin"); }}>
                 Sign in now <ArrowRight size={15} />
               </button>

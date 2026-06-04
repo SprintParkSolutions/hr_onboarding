@@ -226,7 +226,7 @@ const stats = [
     value: 5, suffix: "×", prefix: "",
     label: "Faster Resume Screening",
     context: "Compared to manual CV review",
-    detail: "What takes a recruiter 3 hours to screen manually, SprintPark's agent completes in under 35 minutes — with consistent, bias-free scoring.",
+    detail: "What takes a recruiter 3 hours to screen manually, RecruitAI's agent completes in under 35 minutes — with consistent, bias-free scoring.",
     sub: "35 min vs 3 hrs for 100 applications",
     color: "#7D5568",
     bg: "rgba(125,85,104,0.08)",
@@ -241,7 +241,7 @@ const testimonials = [
     initials: "PR",
     color: "#8B6474",
     rating: 5,
-    text: "SprintPark cut our time-to-hire from 32 days to 18. The AI copilot during interviews is a game-changer — our interviewers actually enjoy the process now.",
+    text: "RecruitAI cut our time-to-hire from 32 days to 18. The AI copilot during interviews is a game-changer — our interviewers actually enjoy the process now.",
   },
   {
     name: "Arjun Krishnan",
@@ -382,8 +382,17 @@ export default function LandingPage() {
       <header className={`lp-nav ${scrolled ? "lp-nav-scrolled" : ""}`}>
         <div className="lp-nav-inner">
           <Link href="/" className="lp-logo">
-            <div className="lp-logo-icon"><Bot size={20} color="white" /></div>
-            <span className="lp-logo-text">SprintPark AI HR</span>
+            <div className="lp-logo-icon" style={{ background: "linear-gradient(135deg, #0EA5E9, #6366F1)" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="7" r="3" fill="white" opacity="0.95"/>
+                <path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.95"/>
+                <circle cx="19" cy="9" r="2" fill="white" opacity="0.85"/>
+                <line x1="17.2" y1="8" x2="15" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                <line x1="17.2" y1="10" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                <line x1="21" y1="9" x2="22.5" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+              </svg>
+            </div>
+            <span className="lp-logo-text">Recruit<span style={{ color: "#0EA5E9" }}>AI</span></span>
           </Link>
 
           <nav className="lp-nav-links">
@@ -411,8 +420,17 @@ export default function LandingPage() {
           <div className="lp-mobile-menu" onClick={e => e.stopPropagation()}>
             <div className="lp-mobile-menu-header">
               <div className="lp-logo">
-                <div className="lp-logo-icon"><Bot size={18} color="white" /></div>
-                <span className="lp-logo-text">SprintPark AI HR</span>
+                <div className="lp-logo-icon" style={{ background: "linear-gradient(135deg, #0EA5E9, #6366F1)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <circle cx="9" cy="7" r="3" fill="white" opacity="0.95"/>
+                    <path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.95"/>
+                    <circle cx="19" cy="9" r="2" fill="white" opacity="0.85"/>
+                    <line x1="17.2" y1="8" x2="15" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                    <line x1="17.2" y1="10" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                    <line x1="21" y1="9" x2="22.5" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                  </svg>
+                </div>
+                <span className="lp-logo-text">Recruit<span style={{ color: "#0EA5E9" }}>AI</span></span>
               </div>
               <button onClick={() => setMobileMenu(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9a80b0" }}>
                 <X size={22} />
@@ -448,7 +466,7 @@ export default function LandingPage() {
             <span className="lp-hero-gradient">Hiring them shouldn't be.</span>
           </h1>
           <p className="lp-hero-sub">
-            SprintPark AI HR automates your entire recruitment lifecycle — from resume screening to offer letters — so your team can spend less time managing hiring tasks and more time choosing the right people.
+            RecruitAI automates your entire recruitment lifecycle — from resume screening to offer letters — so your team can spend less time managing hiring tasks and more time choosing the right people.
           </p>
           <div className="lp-hero-cta">
             <Link href="/login" className="lp-btn-primary lp-btn-lg">
@@ -639,7 +657,7 @@ export default function LandingPage() {
           <FadeIn>
             <div className="lp-section-badge">Results</div>
             <h2 className="lp-section-h2">Numbers that speak for themselves</h2>
-            <p className="lp-section-sub">Real outcomes from teams using SprintPark AI HR across their full recruitment lifecycle.</p>
+            <p className="lp-section-sub">Real outcomes from teams using RecruitAI across their full recruitment lifecycle.</p>
           </FadeIn>
           <div className="lp-results-grid">
             {stats.map((s, i) => <StatCard key={s.label} s={s} delay={i * 120} />)}
@@ -653,7 +671,7 @@ export default function LandingPage() {
           <FadeIn>
             <div className="lp-section-badge">Testimonials</div>
             <h2 className="lp-section-h2">Trusted by recruiting teams</h2>
-            <p className="lp-section-sub">Hear from the people who use SprintPark AI HR every day.</p>
+            <p className="lp-section-sub">Hear from the people who use RecruitAI every day.</p>
           </FadeIn>
           <div className="lp-testimonials">
             {testimonials.map((t, i) => (
@@ -691,7 +709,7 @@ export default function LandingPage() {
           <Award size={32} color="white" style={{ opacity: 0.9 }} />
           <h2 className="lp-cta-h2">Ready to transform your hiring?</h2>
           <p className="lp-cta-sub">
-            Join companies that hire faster, smarter, and with more confidence using SprintPark AI HR.
+            Join companies that hire faster, smarter, and with more confidence using RecruitAI.
           </p>
           <div className="lp-cta-actions">
             <Link href="/login" className="lp-btn-white">
@@ -709,8 +727,17 @@ export default function LandingPage() {
         <div className="lp-footer-inner">
           <div className="lp-footer-brand">
             <div className="lp-logo">
-              <div className="lp-logo-icon"><Bot size={16} color="white" /></div>
-              <span className="lp-logo-text">SprintPark AI HR</span>
+              <div className="lp-logo-icon" style={{ background: "linear-gradient(135deg, #0EA5E9, #6366F1)" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="9" cy="7" r="3" fill="white" opacity="0.95"/>
+                  <path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.95"/>
+                  <circle cx="19" cy="9" r="2" fill="white" opacity="0.85"/>
+                  <line x1="17.2" y1="8" x2="15" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                  <line x1="17.2" y1="10" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                  <line x1="21" y1="9" x2="22.5" y2="7" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.7"/>
+                </svg>
+              </div>
+              <span className="lp-logo-text">Recruit<span style={{ color: "#0EA5E9" }}>AI</span></span>
             </div>
             <p className="lp-footer-tagline">AI-powered recruitment lifecycle platform. From job posting to day one.</p>
           </div>
@@ -730,7 +757,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="lp-footer-bottom">
-          <span>© 2026 SprintPark Technologies. All rights reserved.</span>
+          <span>© 2026 RecruitAI. All rights reserved.</span>
           <span className="lp-footer-made">Made with ♥ for recruiting teams</span>
         </div>
       </footer>

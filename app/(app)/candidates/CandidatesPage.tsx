@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 import "./CandidatesPage.css";
 import { useState } from "react";
 import { Search, Filter, Star, X, Briefcase, Award, TrendingUp, CheckCircle, Mail, Send } from "lucide-react";
@@ -17,8 +17,8 @@ const initCandidates: Candidate[] = [
   {
     initials: "SM", color: "#8b5cf6", name: "Sarah Mitchell", role: "Senior Backend Engineer",
     score: 94, stage: "Interview", tags: ["Python","Kafka","AWS"], yoe: "8 yrs", email: "sarah.mitchell@email.com", interviewDone: false,
-    summary: "Highly experienced backend engineer with deep expertise in distributed systems. Strong match on all technical dimensions â€” particularly system design and communication. Recommended for fast-track hiring.",
-    experience: [{ company: "Stripe", title: "Staff Engineer", duration: "2021 â€“ Present" }, { company: "Flipkart", title: "Senior Backend Engineer", duration: "2018 â€“ 2021" }, { company: "Infosys", title: "Software Engineer", duration: "2016 â€“ 2018" }],
+    summary: "Highly experienced backend engineer with deep expertise in distributed systems. Strong match on all technical dimensions — particularly system design and communication. Recommended for fast-track hiring.",
+    experience: [{ company: "Stripe", title: "Staff Engineer", duration: "2021 – Present" }, { company: "Flipkart", title: "Senior Backend Engineer", duration: "2018 – 2021" }, { company: "Infosys", title: "Software Engineer", duration: "2016 – 2018" }],
     skills: [{ name: "Python", level: 95 }, { name: "Kafka", level: 90 }, { name: "AWS", level: 88 }, { name: "System Design", level: 92 }, { name: "PostgreSQL", level: 80 }],
     dimensions: [{ label: "Skills", score: 96 }, { label: "Experience", score: 94 }, { label: "Education", score: 88 }, { label: "Leadership", score: 90 }, { label: "Culture Fit", score: 92 }, { label: "Communication", score: 95 }],
   },
@@ -26,15 +26,15 @@ const initCandidates: Candidate[] = [
     initials: "RK", color: "#f59e0b", name: "Rohan Kapoor", role: "Product Designer",
     score: 88, stage: "Interview", tags: ["Figma","UX Research"], yoe: "5 yrs", email: "rohan.kapoor@email.com", interviewDone: true,
     summary: "Creative product designer with a strong portfolio in B2B SaaS. Excellent UX research skills and a collaborative working style.",
-    experience: [{ company: "Razorpay", title: "Senior Product Designer", duration: "2022 â€“ Present" }, { company: "Swiggy", title: "UI/UX Designer", duration: "2019 â€“ 2022" }],
+    experience: [{ company: "Razorpay", title: "Senior Product Designer", duration: "2022 – Present" }, { company: "Swiggy", title: "UI/UX Designer", duration: "2019 – 2022" }],
     skills: [{ name: "Figma", level: 97 }, { name: "UX Research", level: 88 }, { name: "Prototyping", level: 85 }, { name: "Design Systems", level: 82 }, { name: "User Testing", level: 80 }],
     dimensions: [{ label: "Skills", score: 92 }, { label: "Experience", score: 86 }, { label: "Education", score: 84 }, { label: "Leadership", score: 80 }, { label: "Culture Fit", score: 90 }, { label: "Communication", score: 88 }],
   },
   {
     initials: "YT", color: "#10b981", name: "Yuki Tanaka", role: "Frontend Engineer",
     score: 81, stage: "Interview", tags: ["React","TypeScript"], yoe: "4 yrs", email: "yuki.tanaka@email.com", interviewDone: false,
-    summary: "Solid frontend engineer with a focus on performance and accessibility. Good TypeScript fundamentals. Interview scheduled for today â€” technical round pending.",
-    experience: [{ company: "Atlassian", title: "Frontend Engineer", duration: "2022 â€“ Present" }, { company: "Zoho", title: "Junior Developer", duration: "2020 â€“ 2022" }],
+    summary: "Solid frontend engineer with a focus on performance and accessibility. Good TypeScript fundamentals. Interview scheduled for today — technical round pending.",
+    experience: [{ company: "Atlassian", title: "Frontend Engineer", duration: "2022 – Present" }, { company: "Zoho", title: "Junior Developer", duration: "2020 – 2022" }],
     skills: [{ name: "React", level: 90 }, { name: "TypeScript", level: 85 }, { name: "CSS/Tailwind", level: 82 }, { name: "Next.js", level: 78 }, { name: "Testing", level: 70 }],
     dimensions: [{ label: "Skills", score: 84 }, { label: "Experience", score: 80 }, { label: "Education", score: 78 }, { label: "Leadership", score: 72 }, { label: "Culture Fit", score: 85 }, { label: "Communication", score: 82 }],
   },
@@ -42,7 +42,7 @@ const initCandidates: Candidate[] = [
     initials: "AL", color: "#ef4444", name: "Aisha Levi", role: "Data Scientist",
     score: 76, stage: "Interview", tags: ["Python","ML","SQL"], yoe: "3 yrs", email: "aisha.levi@email.com", interviewDone: false,
     summary: "Promising data scientist with hands-on ML project experience. Needs further evaluation on leadership and communication dimensions.",
-    experience: [{ company: "Mu Sigma", title: "Data Scientist", duration: "2023 â€“ Present" }, { company: "TCS", title: "Data Analyst", duration: "2021 â€“ 2023" }],
+    experience: [{ company: "Mu Sigma", title: "Data Scientist", duration: "2023 – Present" }, { company: "TCS", title: "Data Analyst", duration: "2021 – 2023" }],
     skills: [{ name: "Python", level: 88 }, { name: "Machine Learning", level: 80 }, { name: "SQL", level: 85 }, { name: "TensorFlow", level: 72 }, { name: "Data Viz", level: 75 }],
     dimensions: [{ label: "Skills", score: 82 }, { label: "Experience", score: 74 }, { label: "Education", score: 80 }, { label: "Leadership", score: 65 }, { label: "Culture Fit", score: 76 }, { label: "Communication", score: 70 }],
   },
@@ -50,7 +50,7 @@ const initCandidates: Candidate[] = [
     initials: "MG", color: "#2563eb", name: "Marco Greco", role: "DevOps Engineer",
     score: 91, stage: "Interview", tags: ["Kubernetes","Terraform"], yoe: "6 yrs", email: "marco.greco@email.com", interviewDone: true,
     summary: "Highly capable DevOps engineer with strong cloud-native expertise. Excellent match on infrastructure skills.",
-    experience: [{ company: "Thoughtworks", title: "Senior DevOps Engineer", duration: "2021 â€“ Present" }, { company: "HCL", title: "DevOps Engineer", duration: "2018 â€“ 2021" }],
+    experience: [{ company: "Thoughtworks", title: "Senior DevOps Engineer", duration: "2021 – Present" }, { company: "HCL", title: "DevOps Engineer", duration: "2018 – 2021" }],
     skills: [{ name: "Kubernetes", level: 94 }, { name: "Terraform", level: 90 }, { name: "AWS", level: 88 }, { name: "CI/CD", level: 92 }, { name: "Docker", level: 95 }],
     dimensions: [{ label: "Skills", score: 94 }, { label: "Experience", score: 90 }, { label: "Education", score: 85 }, { label: "Leadership", score: 88 }, { label: "Culture Fit", score: 90 }, { label: "Communication", score: 86 }],
   },
@@ -58,7 +58,7 @@ const initCandidates: Candidate[] = [
     initials: "PS", color: "#0891b2", name: "Priya Sharma", role: "Product Manager",
     score: 85, stage: "Interview", tags: ["Roadmapping","Agile"], yoe: "7 yrs", email: "priya.sharma@email.com", interviewDone: false,
     summary: "Experienced product manager with a strong track record in B2C and B2B products. Final round interview scheduled with the CEO.",
-    experience: [{ company: "Meesho", title: "Senior Product Manager", duration: "2020 â€“ Present" }, { company: "OYO", title: "Product Manager", duration: "2017 â€“ 2020" }],
+    experience: [{ company: "Meesho", title: "Senior Product Manager", duration: "2020 – Present" }, { company: "OYO", title: "Product Manager", duration: "2017 – 2020" }],
     skills: [{ name: "Roadmapping", level: 90 }, { name: "Agile / Scrum", level: 88 }, { name: "Data Analysis", level: 78 }, { name: "Stakeholder Mgmt", level: 85 }, { name: "User Research", level: 80 }],
     dimensions: [{ label: "Skills", score: 88 }, { label: "Experience", score: 86 }, { label: "Education", score: 82 }, { label: "Leadership", score: 84 }, { label: "Culture Fit", score: 88 }, { label: "Communication", score: 90 }],
   },
@@ -102,8 +102,8 @@ export default function CandidatesPage() {
   function openEmail(c: Candidate) {
     setEmailModal({
       candidate: c,
-      subject: `Interview Schedule - ${c.role} at SprintPark`,
-      body: `Hi ${c.name.split(" ")[0]},\n\nWe are pleased to inform you that you have been shortlisted for the ${c.role} position at SprintPark. We would like to schedule an interview with you.\n\nInterview Details:\nâ€¢ Round: Technical Interview\nâ€¢ Duration: 60 minutes\nâ€¢ Mode: Video Call (Google Meet / Zoom)\nâ€¢ Proposed Date: Please confirm your availability for the slots below\n\nAvailable Slots:\n  - Monday, 26 May 2026 at 10:00 AM IST\n  - Tuesday, 27 May 2026 at 2:00 PM IST\n  - Wednesday, 28 May 2026 at 11:00 AM IST\n\nPlease reply with your preferred slot or suggest an alternative time that works for you.\n\nBest regards,\nPriya R.\nTalent Acquisition | SprintPark\npriya.r@sprintpark.ai`,
+      subject: `Interview Schedule - ${c.role} at RecruitAI`,
+      body: `Hi ${c.name.split(" ")[0]},\n\nWe are pleased to inform you that you have been shortlisted for the ${c.role} position at RecruitAI. We would like to schedule an interview with you.\n\nInterview Details:\n• Round: Technical Interview\n• Duration: 60 minutes\n• Mode: Video Call (Google Meet / Zoom)\n• Proposed Date: Please confirm your availability for the slots below\n\nAvailable Slots:\n  - Monday, 26 May 2026 at 10:00 AM IST\n  - Tuesday, 27 May 2026 at 2:00 PM IST\n  - Wednesday, 28 May 2026 at 11:00 AM IST\n\nPlease reply with your preferred slot or suggest an alternative time that works for you.\n\nBest regards,\nPriya R.\nTalent Acquisition | RecruitAI\npriya.r@RecruitAI.ai`,
     });
     setSent(false);
   }
@@ -119,8 +119,8 @@ export default function CandidatesPage() {
     <div className="candidates">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Candidates â€” Interview Stage</h1>
-          <p className="page-sub">{candidates.length} in interview Â· {doneCount} done Â· {candidates.length - doneCount} pending</p>
+          <h1 className="page-title">Candidates — Interview Stage</h1>
+          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {candidates.length - doneCount} pending</p>
         </div>
         <button className="btn-primary">+ Add candidate</button>
       </div>
@@ -132,8 +132,8 @@ export default function CandidatesPage() {
         </div>
         <button className="btn-outline"><Filter size={13} /> Filter</button>
         <div className="interview-legend">
-          <span className="legend-done">âœ“ Done ({doneCount})</span>
-          <span className="legend-pending">â—‹ Pending ({candidates.length - doneCount})</span>
+          <span className="legend-done">? Done ({doneCount})</span>
+          <span className="legend-pending">? Pending ({candidates.length - doneCount})</span>
         </div>
       </div>
 
@@ -179,7 +179,7 @@ export default function CandidatesPage() {
                     <label className="interview-check">
                       <input type="checkbox" checked={c.interviewDone} onChange={() => toggleDone(c.name)} />
                       <span className={`check-label ${c.interviewDone ? "done" : "pending"}`}>
-                        {c.interviewDone ? "âœ“ Done" : "â—‹ Pending"}
+                        {c.interviewDone ? "? Done" : "? Pending"}
                       </span>
                     </label>
                   </td>
@@ -215,9 +215,9 @@ export default function CandidatesPage() {
               <ScoreRing score={selected.score} />
               <div className="panel-score-info">
                 <div className="panel-score-label">AI Match Score</div>
-                <div className="panel-score-sub">{selected.yoe} experience Â· {selected.tags.length} key skills matched</div>
+                <div className="panel-score-sub">{selected.yoe} experience · {selected.tags.length} key skills matched</div>
                 <div className={`panel-score-verdict ${selected.score >= 85 ? "strong" : selected.score >= 75 ? "good" : "fair"}`}>
-                  {selected.score >= 85 ? "âœ“ Strong Match" : selected.score >= 75 ? "âœ“ Good Match" : "~ Fair Match"}
+                  {selected.score >= 85 ? "? Strong Match" : selected.score >= 75 ? "? Good Match" : "~ Fair Match"}
                 </div>
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function CandidatesPage() {
               <label className="interview-check">
                 <input type="checkbox" checked={selected.interviewDone} onChange={() => toggleDone(selected.name)} />
                 <span className={`check-label ${selected.interviewDone ? "done" : "pending"}`}>
-                  {selected.interviewDone ? "âœ“ Interview Done" : "â—‹ Interview Pending"}
+                  {selected.interviewDone ? "? Interview Done" : "? Interview Pending"}
                 </span>
               </label>
               <button className="btn-email" style={{ marginLeft: "auto" }} onClick={() => openEmail(selected)}>
@@ -270,7 +270,7 @@ export default function CandidatesPage() {
                 {selected.experience.map((e) => (
                   <div key={e.company} className="exp-row">
                     <div className="exp-dot" />
-                    <div><div className="exp-title">{e.title}</div><div className="exp-company">{e.company} Â· {e.duration}</div></div>
+                    <div><div className="exp-title">{e.title}</div><div className="exp-company">{e.company} · {e.duration}</div></div>
                   </div>
                 ))}
               </div>
@@ -309,7 +309,7 @@ export default function CandidatesPage() {
             <div className="email-modal-footer">
               <button className="btn-outline" onClick={() => setEmailModal(null)}>Cancel</button>
               <button className={`btn-send ${sent ? "sent" : ""}`} onClick={handleSend}>
-                {sent ? "âœ“ Sent!" : <><Send size={14} /> Send Email</>}
+                {sent ? "? Sent!" : <><Send size={14} /> Send Email</>}
               </button>
             </div>
           </div>
