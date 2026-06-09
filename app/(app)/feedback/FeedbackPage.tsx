@@ -192,17 +192,10 @@ function RoundCell({ round, onView }: { round: RoundData; onView: () => void }) 
   return (
     <div className="rc-cell">
       <span className={`rc-status ${sm.cls}`}>{sm.icon}{sm.label}</span>
-      <div className="rc-interviewer">
-        <div className="rc-avatar">{round.interviewerInitials}</div>
-        <div>
-          <div className="rc-name">{round.interviewer}</div>
-          <div className="rc-date">{round.date}</div>
-        </div>
-      </div>
       <MiniStars score={round.rating} />
       {round.status === "completed"
         ? <button className="btn-view" onClick={onView}><MessageSquare size={11} /> View Feedback</button>
-        : <span className="rc-note">{round.status === "scheduled" ? `Scheduled · ${round.date}` : "Awaiting schedule"}</span>}
+        : <span className="rc-note">{round.status === "scheduled" ? `Sched. · ${round.date}` : "Awaiting"}</span>}
     </div>
   );
 }
@@ -526,6 +519,7 @@ export default function FeedbackPage() {
                     <div className="cand-name">{f.candidate}</div>
                     <div className="cand-role">{f.role}</div>
                     <MiniStars score={f.overallRating} />
+                    <RecBadge rec={f.overallRecommendation} />
                   </div>
                 </div>
                 {/* Primary interviewer */}
@@ -537,8 +531,6 @@ export default function FeedbackPage() {
                       <div className="int-date">{f.round1.date}</div>
                     </div>
                   </div>
-                  <div className="int-label"><User size={10} /> Technical Lead</div>
-                  <RecBadge rec={f.overallRecommendation} />
                 </div>
                 {/* Round columns */}
                 {ROUND_COLS.map(col => (

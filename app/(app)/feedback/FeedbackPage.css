@@ -16,27 +16,27 @@
 .fb-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .fb-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
 
-/* Grid — Candidate | Interviewer | R1 | R2 | Managerial | HR Round | Approval */
+/* Grid — tighter, cleaner */
 .fb-head,
 .fb-row {
   display: grid;
-  grid-template-columns: 170px 155px repeat(4, 1fr) 155px;
-  min-width: 1100px;
+  grid-template-columns: 180px 150px repeat(4, minmax(140px, 1fr)) 150px;
+  min-width: 1080px;
 }
 
 .fb-head {
-  background: #f5f0fa;
-  border-bottom: 1px solid var(--border);
+  background: #f8f5fc;
+  border-bottom: 2px solid var(--border);
 }
 .fb-head .fbc {
-  padding: 10px 14px;
-  font-size: 11px; font-weight: 700;
+  padding: 11px 14px;
+  font-size: 10.5px; font-weight: 700;
   color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.05em;
+  text-transform: uppercase; letter-spacing: 0.06em;
 }
 
 .fb-row {
-  border-bottom: 1px solid rgba(221,208,232,0.4);
+  border-bottom: 1px solid rgba(221,208,232,0.35);
   transition: background 0.12s;
   align-items: stretch;
 }
@@ -44,10 +44,10 @@
 .fb-row:hover { background: #fdf9ff; }
 
 .fbc {
-  padding: 14px;
-  border-right: 1px solid rgba(221,208,232,0.3);
+  padding: 12px 14px;
+  border-right: 1px solid rgba(221,208,232,0.28);
   display: flex; flex-direction: column;
-  justify-content: flex-start; gap: 6px;
+  justify-content: center; gap: 5px;
 }
 .fbc:last-child { border-right: none; }
 
@@ -64,21 +64,19 @@
 .int-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
 .int-label { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
 
-/* Round cell */
-.fbc-round {}
-.rc-cell { display: flex; flex-direction: column; gap: 7px; }
-.rc-na   { color: #ddd; font-size: 16px; text-align: center; width: 100%; padding: 8px 0; }
+/* Round cell — minimal: status badge, rating, button */
+.fbc-round { justify-content: center; }
+.rc-cell { display: flex; flex-direction: column; gap: 6px; }
+.rc-na   { color: #ccc; font-size: 20px; text-align: center; width: 100%; }
 .rc-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; width: fit-content; }
 .st-done      { background: rgba(122,184,216,0.15); color: #3A70A0; }
 .st-scheduled { background: rgba(168,152,216,0.15); color: #5A4878; }
 .st-pending   { background: rgba(200,190,220,0.2);  color: #7A6898; }
 .st-na        { display: none; }
+.rc-note { font-size: 10.5px; color: var(--muted); font-style: italic; }
 
-.rc-interviewer { display: flex; align-items: center; gap: 7px; }
-.rc-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #B875A0, #7AB8D8); color: #fff; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.rc-name   { font-size: 11.5px; font-weight: 600; color: var(--text); }
-.rc-date   { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
-.rc-note   { font-size: 11px; color: var(--muted); font-style: italic; }
+/* Remove old rc-interviewer / rc-avatar / rc-name / rc-date */
+.rc-interviewer, .rc-avatar, .rc-name, .rc-date { display: none; }
 
 .btn-view { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(184,117,160,0.08); border: 1px solid rgba(184,117,160,0.22); border-radius: 8px; font-size: 11.5px; font-weight: 600; color: var(--primary-dark); cursor: pointer; width: fit-content; transition: background 0.15s; }
 .btn-view:hover { background: rgba(184,117,160,0.18); }
