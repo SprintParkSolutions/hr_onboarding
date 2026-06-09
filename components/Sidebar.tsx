@@ -16,16 +16,16 @@ const nav = [
 ];
 
 const C = {
-  bg:         "rgba(255,255,255,0.85)",
-  border:     "rgba(226,212,204,0.7)",
-  logo:       "linear-gradient(135deg, #9B7485, #E8806A)",
-  logoShadow: "0 2px 10px rgba(155,116,133,0.35)",
-  textMain:   "#4A3040",
-  textSub:    "#A8919A",
-  navActive:  "rgba(155,116,133,0.12)",
-  navText:    "#7E6070",
-  navTextAct: "#7D5568",
-  navBorder:  "#9B7485",
+  bg:         "rgba(255,255,255,0.90)",
+  border:     "rgba(224,208,232,0.8)",
+  logo:       "linear-gradient(135deg, #C084A8, #7BBFDE)",
+  logoShadow: "0 2px 10px rgba(192,132,168,0.35)",
+  textMain:   "#2A1A38",
+  textSub:    "#9090B0",
+  navActive:  "rgba(192,132,168,0.12)",
+  navText:    "#5A4870",
+  navTextAct: "#A0608A",
+  navBorder:  "#C084A8",
 };
 
 function RecruitAILogo({ size = 20 }: { size?: number }) {
@@ -71,7 +71,7 @@ export default function Sidebar() {
       </div>
       <div>
         <div style={{ fontWeight: 800, fontSize: 15, color: C.textMain, letterSpacing: "-0.4px" }}>
-          Recruit<span style={{ color: "#E8806A" }}>AI</span>
+          Recruit<span style={{ color: "#7BBFDE" }}>AI</span>
         </div>
         <div style={{ fontSize: 11, color: C.textSub }}>AI-Powered Recruiting</div>
       </div>
@@ -92,7 +92,7 @@ export default function Sidebar() {
       </button>
 
       {/* Mobile overlay */}
-      {mobileOpen && <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(74,48,64,0.35)", backdropFilter: "blur(3px)" }} />}
+      {mobileOpen && <div onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(42,26,56,0.35)", backdropFilter: "blur(3px)" }} />}
 
       {/* Mobile drawer */}
       <aside style={{ position: "fixed", top: 0, left: mobileOpen ? 0 : -260, bottom: 0, width: 240, zIndex: 400, background: "rgba(255,255,255,0.97)", borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", transition: "left 0.25s ease", boxShadow: mobileOpen ? "4px 0 30px rgba(155,116,133,0.2)" : "none" }}>
@@ -102,7 +102,7 @@ export default function Sidebar() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 800, fontSize: 15, color: C.textMain, letterSpacing: "-0.4px" }}>
-              Recruit<span style={{ color: "#E8806A" }}>AI</span>
+              Recruit<span style={{ color: "#7BBFDE" }}>AI</span>
             </div>
             <div style={{ fontSize: 11, color: C.textSub }}>AI-Powered Recruiting</div>
           </div>

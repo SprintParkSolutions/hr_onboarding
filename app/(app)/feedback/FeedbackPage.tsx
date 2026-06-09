@@ -24,6 +24,7 @@ type CandidateFeedback = {
   initials: string;
   color: string;
   role: string;
+  interviewDate: string;   // latest completed round date for filtering
   overallRating: number;
   overallRecommendation: "Strong Hire" | "Hire" | "Hold" | "No Hire";
   managerApprovalStatus: "pending" | "approved" | "rejected";
@@ -45,7 +46,7 @@ function makeRound(
 const feedbackData: CandidateFeedback[] = [
   {
     id: 1, candidate: "Yuki Tanaka", initials: "YT", color: "#10b981",
-    role: "Frontend Engineer", overallRating: 4.5, overallRecommendation: "Strong Hire",
+    role: "Frontend Engineer", interviewDate: "22 May 2026", overallRating: 4.5, overallRecommendation: "Strong Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Priya R.", "PR", "22 May 2026", 4.5, "Strong Hire",
       "Exceptional proficiency in React and modern frontend tooling. Tackled live coding confidently with clean well-structured code. Performance optimisation stood out.",
@@ -62,7 +63,7 @@ const feedbackData: CandidateFeedback[] = [
   },
   {
     id: 2, candidate: "Sarah Mitchell", initials: "SM", color: "#8b5cf6",
-    role: "Senior Backend Engineer", overallRating: 4.0, overallRecommendation: "Hire",
+    role: "Senior Backend Engineer", interviewDate: "20 May 2026", overallRating: 4.0, overallRecommendation: "Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Arjun K.", "AK", "20 May 2026", 4.0, "Hire",
       "Strong Kafka and distributed systems knowledge. Solved all coding problems correctly. Minor gaps in database sharding strategies.",
@@ -83,7 +84,7 @@ const feedbackData: CandidateFeedback[] = [
   },
   {
     id: 3, candidate: "Marco Greco", initials: "MG", color: "#2563eb",
-    role: "DevOps Engineer", overallRating: 3.0, overallRecommendation: "Hold",
+    role: "DevOps Engineer", interviewDate: "30 May 2026", overallRating: 3.0, overallRecommendation: "Hold",
     managerApprovalStatus: "pending",
     round1: makeRound("scheduled", "Sneha M.", "SM", "30 May 2026", 0, "—",
       "Round 1 scheduled — awaiting completion.", [], []),
@@ -95,7 +96,7 @@ const feedbackData: CandidateFeedback[] = [
   },
   {
     id: 4, candidate: "Aisha Levi", initials: "AL", color: "#ef4444",
-    role: "Data Scientist", overallRating: 4.8, overallRecommendation: "Strong Hire",
+    role: "Data Scientist", interviewDate: "20 May 2026", overallRating: 4.8, overallRecommendation: "Strong Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Rahul D.", "RD", "20 May 2026", 5.0, "Strong Hire",
       "Outstanding ML pipeline presentation. End-to-end coverage from data ingestion to deployment monitoring. Best data science candidate this quarter.",
@@ -116,7 +117,7 @@ const feedbackData: CandidateFeedback[] = [
   },
   {
     id: 5, candidate: "Priya Sharma", initials: "PS", color: "#0891b2",
-    role: "Product Manager", overallRating: 3.5, overallRecommendation: "Hire",
+    role: "Product Manager", interviewDate: "19 May 2026", overallRating: 3.5, overallRecommendation: "Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Sneha M.", "SM", "19 May 2026", 3.5, "Hire",
       "Good product mindset with concrete examples of cross-functional alignment. Some hesitation on ambiguous prioritisation scenarios.",
@@ -281,6 +282,8 @@ function FeedbackModal({ round, colLabel, candidate, onClose }: {
 export default function FeedbackPage() {
   const [roundFilter,    setRoundFilter]    = useState("All Rounds");
   const [approvalFilter, setApprovalFilter] = useState("All");
+  const [jobFilter,      setJobFilter]      = useState("All Roles");
+  const [dateFilter,     setDateFilter]     = useState("Any Date");
   const [modal,          setModal]          = useState<{ candidate: CandidateFeedback; round: RoundData; colLabel: string } | null>(null);
   const [summaryModal,   setSummaryModal]   = useState<CandidateFeedback | null>(null);
   const [approvalState,  setApprovalState]  = useState<Record<number, "pending" | "approved" | "rejected">>(
@@ -289,16 +292,63 @@ export default function FeedbackPage() {
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [sentId,    setSentId]    = useState<number | null>(null);
 
+  // Derive unique roles and date buckets from data
+  const allRoles = ["All Roles", ...Array.from(new Set(feedbackData.map(f => f.role))).sort()];
+  const dateBuckets = ["Any Date", "Last 7 days", "Last 14 days", "Last 30 days"];
+
+  // Parse date strings like "22 May 2026"
+  function parseDateStr(d: string): Date | null {
+    const months: Record<string, number> = {
+      Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5,
+      Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11
+    };
+    const parts = d.split(" ");
+    if (parts.length !== 3) return null;
+    const month = months[parts[1]];
+    if (month === undefined) return null;
+    return new Date(parseInt(parts[2]), month, parseInt(parts[0]));
+  }
+
+  const today = new Date(2026, 5, 9); // June 9 2026 — current date in app
+
   const filtered = feedbackData.filter(f => {
     const approval = approvalState[f.id] ?? "pending";
+
+    // Approval filter
     if (approvalFilter === "Pending" && approval !== "pending")  return false;
     if (approvalFilter === "Sent"    && approval !== "approved") return false;
+
+    // Round filter
     if (roundFilter === "Round 1"          && f.round1.status          !== "completed") return false;
     if (roundFilter === "Round 2"          && f.round2.status          !== "completed") return false;
     if (roundFilter === "Managerial Round" && f.managerialRound.status !== "completed") return false;
     if (roundFilter === "HR Round"         && f.hrRound.status         !== "completed") return false;
+
+    // Job title filter
+    if (jobFilter !== "All Roles" && f.role !== jobFilter) return false;
+
+    // Date filter
+    if (dateFilter !== "Any Date") {
+      const d = parseDateStr(f.interviewDate);
+      if (!d) return false;
+      const diffDays = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+      if (dateFilter === "Last 7 days"  && diffDays > 7)  return false;
+      if (dateFilter === "Last 14 days" && diffDays > 14) return false;
+      if (dateFilter === "Last 30 days" && diffDays > 30) return false;
+    }
+
     return true;
   });
+
+  const anyFilterActive = roundFilter !== "All Rounds" || approvalFilter !== "All" ||
+                          jobFilter !== "All Roles" || dateFilter !== "Any Date";
+
+  function clearFilters() {
+    setRoundFilter("All Rounds");
+    setApprovalFilter("All");
+    setJobFilter("All Roles");
+    setDateFilter("Any Date");
+  }
 
   function handleSendSummary(f: CandidateFeedback) {
     setSendingId(f.id);
@@ -323,6 +373,7 @@ export default function FeedbackPage() {
 
       {/* Filters */}
       <div className="fb-filters-bar">
+        {/* Round */}
         <div className="fb-dropdown-group">
           <label className="fb-dropdown-label" htmlFor="round-filter">Round</label>
           <div className="fb-select-wrap">
@@ -338,8 +389,33 @@ export default function FeedbackPage() {
           </div>
         </div>
 
+        {/* Job Title */}
         <div className="fb-dropdown-group">
-          <label className="fb-dropdown-label" htmlFor="approval-filter">Manager Approval</label>
+          <label className="fb-dropdown-label" htmlFor="job-filter">Job Title</label>
+          <div className="fb-select-wrap">
+            <select id="job-filter" className="fb-select" value={jobFilter}
+              onChange={e => setJobFilter(e.target.value)}>
+              {allRoles.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <span className="fb-select-arrow">&#9660;</span>
+          </div>
+        </div>
+
+        {/* Date */}
+        <div className="fb-dropdown-group">
+          <label className="fb-dropdown-label" htmlFor="date-filter">Interview Date</label>
+          <div className="fb-select-wrap">
+            <select id="date-filter" className="fb-select" value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}>
+              {dateBuckets.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <span className="fb-select-arrow">&#9660;</span>
+          </div>
+        </div>
+
+        {/* Manager Approval */}
+        <div className="fb-dropdown-group">
+          <label className="fb-dropdown-label" htmlFor="approval-filter">Approval Status</label>
           <div className="fb-select-wrap">
             <select id="approval-filter" className="fb-select" value={approvalFilter}
               onChange={e => setApprovalFilter(e.target.value)}>
@@ -351,15 +427,15 @@ export default function FeedbackPage() {
           </div>
         </div>
 
+        {/* Summary */}
         <div className="fb-filter-summary">
           Showing <strong>{filtered.length}</strong> of {feedbackData.length} candidates
-          {roundFilter !== "All Rounds" && <span className="fb-filter-tag">{roundFilter}</span>}
-          {approvalFilter !== "All" && <span className="fb-filter-tag">{approvalFilter}</span>}
-          {(roundFilter !== "All Rounds" || approvalFilter !== "All") && (
-            <button className="fb-clear-filter"
-              onClick={() => { setRoundFilter("All Rounds"); setApprovalFilter("All"); }}>
-              &#x2715; Clear
-            </button>
+          {roundFilter !== "All Rounds"  && <span className="fb-filter-tag">{roundFilter}</span>}
+          {jobFilter   !== "All Roles"   && <span className="fb-filter-tag">{jobFilter}</span>}
+          {dateFilter  !== "Any Date"    && <span className="fb-filter-tag">{dateFilter}</span>}
+          {approvalFilter !== "All"      && <span className="fb-filter-tag">{approvalFilter}</span>}
+          {anyFilterActive && (
+            <button className="fb-clear-filter" onClick={clearFilters}>&#x2715; Clear all</button>
           )}
         </div>
       </div>
