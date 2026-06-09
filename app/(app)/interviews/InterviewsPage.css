@@ -15,6 +15,21 @@
 .stage-tab.active { background: #fff; color: #B875A0; box-shadow: 0 1px 4px rgba(184,117,160,0.18); }
 .int-count { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 
+/* ── Status Legend ──────────────────────────────────── */
+.status-legend {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px 16px; background: #fff;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.legend-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+.legend-item  { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-sm); }
+.legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot-ongoing   { background: #F5C518; box-shadow: 0 0 0 2px rgba(245,197,24,0.25); }
+.dot-completed { background: #34C759; box-shadow: 0 0 0 2px rgba(52,199,89,0.25); }
+.dot-didntpass { background: #DC3545; box-shadow: 0 0 0 2px rgba(220,53,69,0.25); }
+.dot-onhold    { background: #F0A500; box-shadow: 0 0 0 2px rgba(240,165,0,0.25); }
+.dot-locked    { background: #9090B0; box-shadow: 0 0 0 2px rgba(144,144,176,0.2); }
+
 /* ── Table ──────────────────────────────────────────── */
 .int-table-wrap { background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 .int-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
@@ -50,9 +65,9 @@
   font-size: 10px; font-weight: 700; white-space: nowrap;
   border: 1.5px solid transparent;
 }
-.rdot-active    { background: linear-gradient(135deg, #B875A0, #7AB8D8); color: #fff; box-shadow: 0 1px 4px rgba(184,117,160,0.3); }
+.rdot-active    { background: rgba(253,200,56,0.25); color: #7A5A00; border-color: rgba(253,200,56,0.5); }
 .rdot-passed    { background: rgba(52,199,89,0.18); color: #1a7a3a; border-color: rgba(52,199,89,0.4); }
-.rdot-failed    { background: rgba(184,117,160,0.14); color: #8A4A78; border-color: rgba(184,117,160,0.3); }
+.rdot-failed    { background: rgba(220,53,69,0.12); color: #b02030; border-color: rgba(220,53,69,0.35); }
 .rdot-on-hold   { background: rgba(238,208,90,0.2); color: #7A5A10; border-color: rgba(238,208,90,0.4); }
 .rdot-pending   { background: rgba(221,208,232,0.35); color: #9090B0; border-color: rgba(221,208,232,0.5); }
 .progress-text  { font-size: 11px; color: var(--muted); }
@@ -76,9 +91,9 @@
 .int-expanded { padding: 14px 16px; background: #fdf9ff; border-top: 1px solid rgba(221,208,232,0.35); }
 .expanded-rounds { display: flex; gap: 10px; flex-wrap: wrap; }
 .exp-round { flex: 1; min-width: 180px; max-width: 240px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
-.exp-active  { border-color: rgba(122,184,216,0.5); background: rgba(122,184,216,0.04); }
+.exp-active  { border-color: rgba(253,200,56,0.5); background: rgba(253,200,56,0.05); }
 .exp-passed  { border-color: rgba(52,199,89,0.35); background: rgba(52,199,89,0.05); }
-.exp-failed  { opacity: 0.7; }
+.exp-failed  { border-color: rgba(220,53,69,0.25); background: rgba(220,53,69,0.04); opacity: 0.9; }
 .exp-pending { opacity: 0.55; }
 
 .exp-round-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }

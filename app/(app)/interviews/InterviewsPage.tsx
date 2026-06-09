@@ -49,11 +49,11 @@ const seed: Candidate[] = [
 
 /* ── Status config ──────────────────────────────────────── */
 const SC: Record<RoundStatus, { bg: string; color: string; label: string }> = {
-  active:    { bg:"rgba(122,184,216,0.18)", color:"#3A70A0", label:"Active"    },
-  passed:    { bg:"rgba(52,199,89,0.15)",  color:"#1a7a3a", label:"Passed"    },
-  failed:    { bg:"rgba(184,117,160,0.18)", color:"#8A4A78", label:"Failed"    },
-  "on-hold": { bg:"rgba(238,208,90,0.22)",  color:"#7A5A10", label:"On Hold"   },
-  pending:   { bg:"rgba(221,208,232,0.3)",  color:"#9090B0", label:"Locked"    },
+  active:    { bg:"rgba(253,200,56,0.2)",   color:"#7A5A00", label:"Ongoing"     },
+  passed:    { bg:"rgba(52,199,89,0.15)",   color:"#1a7a3a", label:"Completed"   },
+  failed:    { bg:"rgba(220,53,69,0.13)",   color:"#b02030", label:"Didn't Pass" },
+  "on-hold": { bg:"rgba(238,208,90,0.22)",  color:"#7A5A10", label:"On Hold"     },
+  pending:   { bg:"rgba(221,208,232,0.3)",  color:"#9090B0", label:"Locked"      },
 };
 
 /* ── Email templates ────────────────────────────────────── */
@@ -166,7 +166,15 @@ export default function InterviewsPage() {
         <span className="int-count">{filtered.length} candidates</span>
       </div>
 
-      {/* Table */}
+      {/* Legend */}
+      <div className="status-legend">
+        <span className="legend-title">Round Status:</span>
+        <span className="legend-item"><span className="legend-dot dot-ongoing" />Ongoing</span>
+        <span className="legend-item"><span className="legend-dot dot-completed" />Completed</span>
+        <span className="legend-item"><span className="legend-dot dot-didntpass" />Didn&apos;t Pass</span>
+        <span className="legend-item"><span className="legend-dot dot-onhold" />On Hold</span>
+        <span className="legend-item"><span className="legend-dot dot-locked" />Locked</span>
+      </div>
       <div className="int-table-wrap">
         {/* Head */}
         <div className="int-thead">
