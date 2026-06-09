@@ -92,10 +92,11 @@ export default function InterviewsPage() {
   const filtered = useMemo(() => data.filter(c => {
     const q = search.toLowerCase();
     if (q && !c.name.toLowerCase().includes(q) && !c.role.toLowerCase().includes(q)) return false;
-    if (roleFilter  !== "All" && c.role !== roleFilter) return false;
-    if (stageFilter === "Active")    return c.rounds.some(r => r.status === "active");
+    if (roleFilter !== "All" && c.role !== roleFilter) return false;
+    // Stage filters
+    if (stageFilter === "Active")       return c.rounds.some(r => r.status === "active");
     if (stageFilter === "Pending Mail") return c.rounds.some(r => r.status === "active" && !r.mailSent);
-    if (stageFilter === "Completed") return c.rounds.every(r => r.status === "passed");
+    if (stageFilter === "Completed")    return c.rounds.some(r => r.status === "passed");
     return true;
   }), [data, search, roleFilter, stageFilter]);
 
@@ -151,8 +152,15 @@ export default function InterviewsPage() {
           {roles.map(r => <option key={r}>{r}</option>)}
         </select>
         <div className="int-stage-tabs">
-          {["All","Active","Pending Mail","Completed"].map(s => (
-            <button key={s} className={`stage-tab ${stageFilter === s ? "active" : ""}`} onClick={() => setStageFilter(s)}>{s}</button>
+          {[
+            { key: "All",          label: "All",          count: data.length },
+            { key: "Active",       label: "Active",       count: data.filter(c => c.rounds.some(r => r.status === "active")).length },
+            { key: "Pending Mail", label: "Pending Mail", count: data.filter(c => c.rounds.some(r => r.status === "active" && !r.mailSent)).length },
+            { key: "Completed",    label: "Completed",    count: data.filter(c => c.rounds.some(r => r.status === "passed")).length },
+          ].map(s => (
+            <button key={s.key} className={`stage-tab ${stageFilter === s.key ? "active" : ""}`} onClick={() => setStageFilter(s.key)}>
+              {s.label} <span className="stage-count">{s.count}</span>
+            </button>
           ))}
         </div>
         <span className="int-count">{filtered.length} candidates</span>
