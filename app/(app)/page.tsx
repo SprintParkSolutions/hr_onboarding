@@ -1,1 +1,5 @@
-﻿export { default } from "./dashboard/DashboardPage";
+﻿import { redirect } from "next/navigation";
+
+export default function RootPage() {
+  redirect("/dashboard");
+}

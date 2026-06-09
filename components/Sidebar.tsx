@@ -5,7 +5,7 @@ import { LayoutDashboard, Users, Briefcase, Calendar, FileText, BarChart2, Bot, 
 import { useState } from "react";
 
 const nav = [
-  { href: "/",           label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/jobs",       label: "Jobs",        icon: Briefcase },
   { href: "/interviews", label: "Interviews",  icon: Calendar },
