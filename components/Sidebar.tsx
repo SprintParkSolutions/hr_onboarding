@@ -16,16 +16,16 @@ const nav = [
 ];
 
 const C = {
-  bg:         "rgba(255,255,255,0.90)",
-  border:     "rgba(224,208,232,0.8)",
-  logo:       "linear-gradient(135deg, #C084A8, #7BBFDE)",
-  logoShadow: "0 2px 10px rgba(192,132,168,0.35)",
-  textMain:   "#2A1A38",
+  bg:         "#ffffff",
+  border:     "rgba(224,208,232,0.6)",
+  logo:       "linear-gradient(135deg, #B875A0, #7AB8D8)",
+  logoShadow: "0 2px 10px rgba(184,117,160,0.28)",
+  textMain:   "#28183A",
   textSub:    "#9090B0",
-  navActive:  "rgba(192,132,168,0.12)",
-  navText:    "#5A4870",
-  navTextAct: "#A0608A",
-  navBorder:  "#C084A8",
+  navActive:  "rgba(184,117,160,0.1)",
+  navText:    "#584878",
+  navTextAct: "#8A4A78",
+  navBorder:  "#B875A0",
 };
 
 function RecruitAILogo({ size = 20 }: { size?: number }) {
