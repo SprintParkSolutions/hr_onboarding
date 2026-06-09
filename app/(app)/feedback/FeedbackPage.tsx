@@ -1,10 +1,7 @@
 "use client";
 import "./FeedbackPage.css";
 import { useState } from "react";
-import {
-  Star, X, MessageSquare,
-  CheckCircle, Circle, Clock, User,
-} from "lucide-react";
+import { Star, X, MessageSquare, CheckCircle, Circle, Clock, User } from "lucide-react";
 
 /* ── Types ─────────────────────────────────────────────── */
 type RoundStatus = "completed" | "pending" | "scheduled" | "na";
@@ -36,12 +33,6 @@ type CandidateFeedback = {
   hrRound: RoundData;
 };
 
-/* ── Helpers ────────────────────────────────────────────── */
-const NA: RoundData = {
-  status: "na", interviewer: "—", interviewerInitials: "—", date: "—",
-  rating: 0, recommendation: "—", summary: "", strengths: [], improvements: [],
-};
-
 function makeRound(
   status: RoundStatus, interviewer: string, initials: string, date: string,
   rating: number, rec: RoundData["recommendation"],
@@ -50,61 +41,56 @@ function makeRound(
   return { status, interviewer, interviewerInitials: initials, date, rating, recommendation: rec, summary, strengths, improvements };
 }
 
-/* ── Data ──────────────────────────────────────────────── */
+/* ── Data ─────────────────────────────────────────────── */
 const feedbackData: CandidateFeedback[] = [
   {
     id: 1, candidate: "Yuki Tanaka", initials: "YT", color: "#10b981",
     role: "Frontend Engineer", overallRating: 4.5, overallRecommendation: "Strong Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Priya R.", "PR", "22 May 2026", 4.5, "Strong Hire",
-      "Exceptional proficiency in React and modern frontend tooling. Tackled live coding confidently with clean well-structured code. Performance optimisation and accessibility best practices stood out.",
-      ["Deep React hooks and state management knowledge", "Strong CSS architecture and responsive design", "Proactive in discussing trade-offs"],
-      ["Backend integration patterns need depth", "Testing coverage awareness needs improvement"]),
+      "Exceptional proficiency in React and modern frontend tooling. Tackled live coding confidently with clean well-structured code. Performance optimisation stood out.",
+      ["Deep React hooks knowledge", "Strong CSS architecture", "Proactive in trade-off discussions"],
+      ["Backend integration patterns need depth", "Testing coverage needs improvement"]),
     round2: makeRound("completed", "Arjun K.", "AK", "24 May 2026", 4.0, "Hire",
-      "Good understanding of component architecture at scale. Designed a micro-frontend approach with clear reasoning. Some gaps in large-scale state management but overall solid.",
-      ["Clear component decomposition strategy", "Understood trade-offs well"],
+      "Good understanding of component architecture at scale. Designed a micro-frontend approach with clear reasoning. Some gaps in large-scale state management.",
+      ["Clear component decomposition", "Understood trade-offs well"],
       ["Large-scale state management", "SSR/SSG trade-off exploration"]),
     managerialRound: makeRound("scheduled", "CEO", "CE", "28 May 2026", 0, "—",
-      "Interview scheduled — managerial round feedback pending.",
-      [], []),
+      "Interview scheduled — managerial round feedback pending.", [], []),
     hrRound: makeRound("pending", "Sneha M.", "SM", "TBD", 0, "—",
-      "Pending — HR round to be scheduled after managerial round.",
-      [], []),
+      "Pending — HR round to be scheduled after managerial round.", [], []),
   },
   {
     id: 2, candidate: "Sarah Mitchell", initials: "SM", color: "#8b5cf6",
     role: "Senior Backend Engineer", overallRating: 4.0, overallRecommendation: "Hire",
-    managerApprovalStatus: "approved",
+    managerApprovalStatus: "pending",
     round1: makeRound("completed", "Arjun K.", "AK", "20 May 2026", 4.0, "Hire",
-      "Strong Kafka and distributed systems knowledge. Solved all coding problems correctly. Microservices architecture well explained. Minor gaps in database sharding strategies.",
+      "Strong Kafka and distributed systems knowledge. Solved all coding problems correctly. Minor gaps in database sharding strategies.",
       ["Strong distributed systems fundamentals", "Clean code with good test awareness"],
       ["Database sharding strategies", "Observability and monitoring depth"]),
     round2: makeRound("completed", "Priya R.", "PR", "22 May 2026", 4.5, "Strong Hire",
-      "Designed a scalable notification service with excellent trade-off discussions. Clear understanding of CAP theorem and event-driven architecture. One of the best system design rounds this quarter.",
+      "Designed a scalable notification service with excellent trade-off discussions. Clear understanding of CAP theorem and event-driven architecture.",
       ["Excellent trade-off analysis", "Strong CAP theorem understanding"],
       ["Cost optimisation depth", "Monitoring tooling choices were vague"]),
     managerialRound: makeRound("completed", "Rahul D.", "RD", "23 May 2026", 4.0, "Hire",
-      "Strong leadership qualities and cross-team collaboration examples. Handled hypothetical conflict scenarios well. Aligned on team culture and growth expectations.",
+      "Strong leadership qualities and cross-team collaboration examples. Handled hypothetical conflict scenarios well.",
       ["Excellent cross-functional collaboration", "Clear engineering leadership style"],
       ["Could give more structured examples of ownership"]),
     hrRound: makeRound("completed", "Sneha M.", "SM", "24 May 2026", 3.5, "Hire",
-      "Strong alignment with company values. Clear career motivation. Salary expectations within band. Joining date flexible. Good overall cultural fit.",
+      "Strong alignment with company values. Salary expectations within band. Joining date flexible.",
       ["Great cultural alignment", "Clear long-term career vision"],
       ["Could articulate leadership examples more concretely"]),
   },
   {
     id: 3, candidate: "Marco Greco", initials: "MG", color: "#2563eb",
     role: "DevOps Engineer", overallRating: 3.0, overallRecommendation: "Hold",
-    managerApprovalStatus: "rejected",
+    managerApprovalStatus: "pending",
     round1: makeRound("scheduled", "Sneha M.", "SM", "30 May 2026", 0, "—",
-      "Round 1 scheduled — awaiting completion.",
-      [], []),
+      "Round 1 scheduled — awaiting completion.", [], []),
     round2: makeRound("pending", "Rahul D.", "RD", "TBD", 0, "—",
-      "Practical/system design round pending — awaiting scheduling.",
-      [], []),
+      "Practical/system design round pending — awaiting scheduling.", [], []),
     managerialRound: makeRound("pending", "CEO", "CE", "TBD", 0, "—",
-      "Managerial round on hold — subject to Round 2 outcome.",
-      [], []),
+      "Managerial round on hold — subject to Round 2 outcome.", [], []),
     hrRound: makeRound("na", "—", "—", "—", 0, "—", "", [], []),
   },
   {
@@ -112,52 +98,48 @@ const feedbackData: CandidateFeedback[] = [
     role: "Data Scientist", overallRating: 4.8, overallRecommendation: "Strong Hire",
     managerApprovalStatus: "pending",
     round1: makeRound("completed", "Rahul D.", "RD", "20 May 2026", 5.0, "Strong Hire",
-      "Outstanding ML pipeline presentation. End-to-end coverage from data ingestion to deployment monitoring. Best data science candidate this quarter by a significant margin.",
-      ["Exceptional ML pipeline design and MLOps awareness", "Strong statistical intuition"],
+      "Outstanding ML pipeline presentation. End-to-end coverage from data ingestion to deployment monitoring. Best data science candidate this quarter.",
+      ["Exceptional ML pipeline design", "Strong statistical intuition"],
       ["Real-time inference optimisation could be deeper"]),
     round2: makeRound("completed", "Arjun K.", "AK", "22 May 2026", 4.5, "Strong Hire",
-      "Fluent in Python and SQL. Handled Bayesian vs frequentist discussion confidently. MLOps awareness was impressive — covered drift detection and A/B testing frameworks well.",
-      ["Fluent Python and SQL", "Strong MLOps and experimentation awareness"],
+      "Fluent in Python and SQL. Handled Bayesian vs frequentist discussion confidently. MLOps awareness was impressive.",
+      ["Fluent Python and SQL", "Strong MLOps awareness"],
       ["Streaming data pipelines need more exposure"]),
     managerialRound: makeRound("completed", "Priya R.", "PR", "24 May 2026", 4.5, "Strong Hire",
-      "Demonstrated strong sense of ownership and clear analytical thinking. Articulated her vision for using AI responsibly in data pipelines. Very impressive.",
+      "Demonstrated strong ownership and clear analytical thinking. Articulated her vision for responsible AI in data pipelines.",
       ["Strong ownership mentality", "Excellent analytical communication"],
       ["Could think more about stakeholder management at scale"]),
     hrRound: makeRound("completed", "Sneha M.", "SM", "25 May 2026", 4.0, "Strong Hire",
-      "Excellent culture fit. Open about salary expectations which are in range. Ready to join within 2 weeks. References confirmed positive.",
+      "Excellent culture fit. Salary expectations in range. Ready to join within 2 weeks.",
       ["Strong culture fit", "Quick joining timeline"],
       ["None significant"]),
   },
   {
     id: 5, candidate: "Priya Sharma", initials: "PS", color: "#0891b2",
     role: "Product Manager", overallRating: 3.5, overallRecommendation: "Hire",
-    managerApprovalStatus: "approved",
+    managerApprovalStatus: "pending",
     round1: makeRound("completed", "Sneha M.", "SM", "19 May 2026", 3.5, "Hire",
-      "Good product mindset with concrete examples of cross-functional alignment. Data-driven decision making was solid. Some hesitation on ambiguous prioritisation scenarios.",
-      ["Strong stakeholder management", "User-centric thinking with good examples"],
+      "Good product mindset with concrete examples of cross-functional alignment. Some hesitation on ambiguous prioritisation scenarios.",
+      ["Strong stakeholder management", "User-centric thinking"],
       ["Confidence in ambiguous trade-offs", "Technical constraints understanding"]),
     round2: makeRound("completed", "Arjun K.", "AK", "20 May 2026", 3.5, "Hire",
-      "Reasonable product sense. Handled feature prioritisation framework question well. Lacked depth in metric definition for ambiguous products.",
-      ["Good framework for prioritisation", "Clear user empathy"],
-      ["Metric definition needs more depth", "Could improve on technical feasibility discussions"]),
+      "Reasonable product sense. Handled feature prioritisation framework question well. Lacked depth in metric definition.",
+      ["Good prioritisation framework", "Clear user empathy"],
+      ["Metric definition needs more depth", "Technical feasibility discussions"]),
     managerialRound: makeRound("scheduled", "CEO", "CE", "29 May 2026", 0, "—",
-      "Managerial round scheduled — feedback pending.",
-      [], []),
+      "Managerial round scheduled — feedback pending.", [], []),
     hrRound: makeRound("pending", "Sneha M.", "SM", "TBD", 0, "—",
-      "HR round pending — awaiting managerial round completion.",
-      [], []),
+      "HR round pending — awaiting managerial round completion.", [], []),
   },
 ];
 
-/* ── Column definitions ────────────────────────────────── */
 const ROUND_COLS: { key: keyof CandidateFeedback; label: string; shortLabel: string }[] = [
-  { key: "round1",         label: "Round 1 — Technical",    shortLabel: "Round 1" },
-  { key: "round2",         label: "Round 2 — System Design", shortLabel: "Round 2" },
-  { key: "managerialRound", label: "Managerial Round",       shortLabel: "Managerial" },
-  { key: "hrRound",        label: "HR Round",                shortLabel: "HR Round" },
+  { key: "round1",          label: "Round 1 — Technical",     shortLabel: "Round 1"    },
+  { key: "round2",          label: "Round 2 — System Design", shortLabel: "Round 2"    },
+  { key: "managerialRound", label: "Managerial Round",        shortLabel: "Managerial" },
+  { key: "hrRound",         label: "HR Round",                shortLabel: "HR Round"   },
 ];
 
-/* ── Style maps ─────────────────────────────────────────── */
 const recStyle: Record<string, { bg: string; text: string; dot: string }> = {
   "Strong Hire": { bg: "rgba(110,200,160,0.18)", text: "#1a7a50", dot: "#6ec8a0" },
   "Hire":        { bg: "rgba(128,178,255,0.18)", text: "#2a5090", dot: "#80B2FF" },
@@ -168,12 +150,12 @@ const recStyle: Record<string, { bg: string; text: string; dot: string }> = {
 
 const statusMeta: Record<RoundStatus, { label: string; cls: string; icon: React.ReactNode }> = {
   completed: { label: "Completed", cls: "status-completed", icon: <CheckCircle size={12} /> },
-  scheduled: { label: "Scheduled", cls: "status-scheduled", icon: <Clock size={12} /> },
-  pending:   { label: "Pending",   cls: "status-pending",   icon: <Circle size={12} /> },
-  na:        { label: "N/A",       cls: "status-na",        icon: <Circle size={12} /> },
+  scheduled: { label: "Scheduled", cls: "status-scheduled", icon: <Clock size={12} />       },
+  pending:   { label: "Pending",   cls: "status-pending",   icon: <Circle size={12} />       },
+  na:        { label: "N/A",       cls: "status-na",        icon: <Circle size={12} />       },
 };
 
-/* ── Sub-components ────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────── */
 function MiniStars({ score }: { score: number }) {
   if (!score) return <span className="no-score">—</span>;
   return (
@@ -198,24 +180,12 @@ function RecBadge({ rec }: { rec: string }) {
   );
 }
 
-function RoundCell({
-  round, colLabel, candidate, onView,
-}: {
-  round: RoundData;
-  colLabel: string;
-  candidate: CandidateFeedback;
-  onView: () => void;
-}) {
-  if (round.status === "na") {
-    return <div className="round-na">—</div>;
-  }
+function RoundCell({ round, onView }: { round: RoundData; onView: () => void }) {
+  if (round.status === "na") return <div className="round-na">—</div>;
   const sm = statusMeta[round.status];
   return (
     <div className="round-cell">
-      {/* Status badge */}
       <span className={`status-badge ${sm.cls}`}>{sm.icon}{sm.label}</span>
-
-      {/* Interviewer */}
       <div className="round-interviewer">
         <div className="round-iavatar">{round.interviewerInitials}</div>
         <div>
@@ -223,11 +193,7 @@ function RoundCell({
           <div className="round-idate">{round.date}</div>
         </div>
       </div>
-
-      {/* Stars */}
       <MiniStars score={round.rating} />
-
-      {/* View Feedback / status text */}
       {round.status === "completed" ? (
         <button className="btn-view-feedback" onClick={onView}>
           <MessageSquare size={11} /> View Feedback
@@ -257,7 +223,6 @@ function FeedbackModal({ round, colLabel, candidate, onClose }: {
           </div>
           <button className="close-btn" onClick={onClose}><X size={18} /></button>
         </div>
-
         <div className="fb-modal-body">
           <div className="fb-modal-overall">
             <div className="fb-modal-overall-left">
@@ -286,12 +251,10 @@ function FeedbackModal({ round, colLabel, candidate, onClose }: {
               </div>
             </div>
           </div>
-
           <div className="fb-modal-section">
             <div className="fb-modal-section-title">Interview Summary</div>
             <p className="fb-summary-text">{round.summary}</p>
           </div>
-
           {(round.strengths.length > 0 || round.improvements.length > 0) && (
             <div className="fb-modal-two-col">
               <div className="fb-modal-section">
@@ -314,35 +277,26 @@ function FeedbackModal({ round, colLabel, candidate, onClose }: {
   );
 }
 
-/* ── Page ──────────────────────────────────────────────── */
+/* ── Page ─────────────────────────────────────────────── */
 export default function FeedbackPage() {
-  const [roundFilter, setRoundFilter] = useState("All Rounds");
+  const [roundFilter,    setRoundFilter]    = useState("All Rounds");
   const [approvalFilter, setApprovalFilter] = useState("All");
-  const [modal, setModal] = useState<{ candidate: CandidateFeedback; round: RoundData; colLabel: string } | null>(null);
-  const [summaryModal, setSummaryModal] = useState<CandidateFeedback | null>(null);
-  const [approvalState, setApprovalState] = useState<Record<number, "pending" | "approved" | "rejected">>(
+  const [modal,          setModal]          = useState<{ candidate: CandidateFeedback; round: RoundData; colLabel: string } | null>(null);
+  const [summaryModal,   setSummaryModal]   = useState<CandidateFeedback | null>(null);
+  const [approvalState,  setApprovalState]  = useState<Record<number, "pending" | "approved" | "rejected">>(
     () => Object.fromEntries(feedbackData.map(f => [f.id, f.managerApprovalStatus]))
   );
   const [sendingId, setSendingId] = useState<number | null>(null);
-  const [sentId, setSentId] = useState<number | null>(null);
+  const [sentId,    setSentId]    = useState<number | null>(null);
 
-  const roundFilters = ["All Rounds", "Round 1", "Round 2", "Managerial Round", "HR Round"];
-  const approvalFilters = ["All", "Pending", "Sent"];
-
-  // Filter logic — both filters combined correctly
   const filtered = feedbackData.filter(f => {
     const approval = approvalState[f.id] ?? "pending";
-
-    // Approval filter
-    if (approvalFilter === "Pending" && approval !== "pending") return false;
+    if (approvalFilter === "Pending" && approval !== "pending")  return false;
     if (approvalFilter === "Sent"    && approval !== "approved") return false;
-
-    // Round filter — keep candidate only if that round is completed
     if (roundFilter === "Round 1"          && f.round1.status          !== "completed") return false;
     if (roundFilter === "Round 2"          && f.round2.status          !== "completed") return false;
     if (roundFilter === "Managerial Round" && f.managerialRound.status !== "completed") return false;
     if (roundFilter === "HR Round"         && f.hrRound.status         !== "completed") return false;
-
     return true;
   });
 
@@ -361,50 +315,50 @@ export default function FeedbackPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Interviewer Feedback</h1>
-          <p className="page-sub">{feedbackData.length} candidates · {feedbackData.filter(f => f.overallRecommendation === "Strong Hire").length} strong hires · avg {(feedbackData.reduce((s, f) => s + f.overallRating, 0) / feedbackData.length).toFixed(1)}/5</p>
+          <p className="page-sub">
+            {feedbackData.length} candidates &middot; {feedbackData.filter(f => f.overallRecommendation === "Strong Hire").length} strong hires &middot; avg {(feedbackData.reduce((s, f) => s + f.overallRating, 0) / feedbackData.length).toFixed(1)}/5
+          </p>
         </div>
       </div>
 
-      {/* Filters — dropdowns */}
+      {/* Filters */}
       <div className="fb-filters-bar">
         <div className="fb-dropdown-group">
           <label className="fb-dropdown-label" htmlFor="round-filter">Round</label>
           <div className="fb-select-wrap">
-            <select
-              id="round-filter"
-              className="fb-select"
-              value={roundFilter}
-              onChange={e => setRoundFilter(e.target.value)}
-            >
-              {roundFilters.map(r => <option key={r} value={r}>{r}</option>)}
+            <select id="round-filter" className="fb-select" value={roundFilter}
+              onChange={e => setRoundFilter(e.target.value)}>
+              <option value="All Rounds">All Rounds</option>
+              <option value="Round 1">Round 1</option>
+              <option value="Round 2">Round 2</option>
+              <option value="Managerial Round">Managerial Round</option>
+              <option value="HR Round">HR Round</option>
             </select>
-            <span className="fb-select-arrow">▾</span>
+            <span className="fb-select-arrow">&#9660;</span>
           </div>
         </div>
 
         <div className="fb-dropdown-group">
           <label className="fb-dropdown-label" htmlFor="approval-filter">Manager Approval</label>
           <div className="fb-select-wrap">
-            <select
-              id="approval-filter"
-              className="fb-select"
-              value={approvalFilter}
-              onChange={e => setApprovalFilter(e.target.value)}
-            >
-              {approvalFilters.map(a => <option key={a} value={a}>{a}</option>)}
+            <select id="approval-filter" className="fb-select" value={approvalFilter}
+              onChange={e => setApprovalFilter(e.target.value)}>
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Sent">Sent</option>
             </select>
-            <span className="fb-select-arrow">▾</span>
+            <span className="fb-select-arrow">&#9660;</span>
           </div>
         </div>
 
-        {/* Active filter summary */}
         <div className="fb-filter-summary">
           Showing <strong>{filtered.length}</strong> of {feedbackData.length} candidates
           {roundFilter !== "All Rounds" && <span className="fb-filter-tag">{roundFilter}</span>}
           {approvalFilter !== "All" && <span className="fb-filter-tag">{approvalFilter}</span>}
           {(roundFilter !== "All Rounds" || approvalFilter !== "All") && (
-            <button className="fb-clear-filter" onClick={() => { setRoundFilter("All Rounds"); setApprovalFilter("All"); }}>
-              ✕ Clear
+            <button className="fb-clear-filter"
+              onClick={() => { setRoundFilter("All Rounds"); setApprovalFilter("All"); }}>
+              &#x2715; Clear
             </button>
           )}
         </div>
@@ -413,7 +367,6 @@ export default function FeedbackPage() {
       {/* Table */}
       <div className="fb-table-wrap">
         <div className="fb-scroll">
-          {/* Header */}
           <div className="fb-head">
             <div className="fbc fbc-candidate">Candidate</div>
             <div className="fbc fbc-interviewer">Interviewer</div>
@@ -426,13 +379,16 @@ export default function FeedbackPage() {
             <div className="fbc fbc-approval">Manager Approval</div>
           </div>
 
-          {/* Rows */}
+          {filtered.length === 0 && (
+            <div style={{ padding: "32px", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+              No candidates match the selected filters.
+            </div>
+          )}
+
           {filtered.map(f => {
             const approval = approvalState[f.id] ?? "pending";
             return (
               <div key={f.id} className="fb-row">
-
-                {/* Candidate */}
                 <div className="fbc fbc-candidate">
                   <div className="fb-avatar-sm" style={{ background: f.color }}>{f.initials}</div>
                   <div>
@@ -441,7 +397,6 @@ export default function FeedbackPage() {
                   </div>
                 </div>
 
-                {/* Primary Interviewer (R1) */}
                 <div className="fbc fbc-interviewer">
                   <div className="fb-irow">
                     <div className="fb-iavatar">{f.round1.interviewerInitials}</div>
@@ -453,26 +408,20 @@ export default function FeedbackPage() {
                   <div className="fb-int-label"><User size={10} /> Technical Lead</div>
                 </div>
 
-                {/* Round columns */}
-                {ROUND_COLS.map(col => {
-                  const roundData = f[col.key] as RoundData;
-                  return (
-                    <div key={col.key as string} className="fbc fbc-round">
-                      <RoundCell
-                        round={roundData}
-                        colLabel={col.label}
-                        candidate={f}
-                        onView={() => setModal({ candidate: f, round: roundData, colLabel: col.label })}
-                      />
-                    </div>
-                  );
-                })}
+                {ROUND_COLS.map(col => (
+                  <div key={col.key as string} className="fbc fbc-round">
+                    <RoundCell
+                      round={f[col.key] as RoundData}
+                      onView={() => setModal({ candidate: f, round: f[col.key] as RoundData, colLabel: col.label })}
+                    />
+                  </div>
+                ))}
 
-                {/* Manager Approval */}
                 <div className="fbc fbc-approval">
                   {approval === "approved" ? (
-                    <div className="approval-done approved">
-                      <CheckCircle size={14} /> <span>Summary Sent</span>
+                    <div className="approval-sent-status">
+                      <CheckCircle size={14} color="#2a7a4a" />
+                      <span>Summary sent to manager</span>
                     </div>
                   ) : (
                     <button className="btn-approve" onClick={() => setSummaryModal(f)}>
@@ -480,14 +429,12 @@ export default function FeedbackPage() {
                     </button>
                   )}
                 </div>
-
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Feedback Round Modal */}
       {modal && (
         <FeedbackModal
           round={modal.round}
@@ -497,7 +444,6 @@ export default function FeedbackPage() {
         />
       )}
 
-      {/* Manager Summary & Approval Modal */}
       {summaryModal && (
         <div className="modal-overlay" onClick={() => setSummaryModal(null)}>
           <div className="fb-modal fb-modal-wide" onClick={e => e.stopPropagation()}>
@@ -506,14 +452,12 @@ export default function FeedbackPage() {
                 <div className="fb-avatar" style={{ background: summaryModal.color }}>{summaryModal.initials}</div>
                 <div>
                   <div className="fb-modal-name">{summaryModal.candidate} — Interview Summary</div>
-                  <div className="fb-modal-sub">{summaryModal.role} · All Rounds · For Manager Approval</div>
+                  <div className="fb-modal-sub">{summaryModal.role} &middot; All Rounds &middot; For Manager Approval</div>
                 </div>
               </div>
               <button className="close-btn" onClick={() => setSummaryModal(null)}><X size={18} /></button>
             </div>
-
             <div className="fb-modal-body">
-              {/* Overall banner */}
               <div className="summary-banner">
                 <div className="summary-banner-left">
                   <div className="summary-banner-label">Overall Recommendation</div>
@@ -525,7 +469,6 @@ export default function FeedbackPage() {
                 </div>
               </div>
 
-              {/* All rounds */}
               {ROUND_COLS.map(col => {
                 const r = summaryModal[col.key] as RoundData;
                 if (r.status === "na" || r.status === "pending") return null;
@@ -574,8 +517,6 @@ export default function FeedbackPage() {
                 );
               })}
             </div>
-
-            {/* Approval footer */}
             <div className="fb-modal-footer">
               <button className="btn-outline" onClick={() => setSummaryModal(null)}>Cancel</button>
               <button
@@ -586,7 +527,7 @@ export default function FeedbackPage() {
                 {sentId === summaryModal.id
                   ? <><CheckCircle size={14} /> Approved &amp; Sent!</>
                   : sendingId === summaryModal.id
-                  ? <><span className="btn-spinner" /> Sending…</>
+                  ? <><span className="btn-spinner" /> Sending...</>
                   : <><MessageSquare size={14} /> Approve &amp; Send Summary</>}
               </button>
             </div>
