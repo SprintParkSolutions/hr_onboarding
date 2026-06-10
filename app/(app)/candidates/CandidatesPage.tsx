@@ -1,66 +1,83 @@
 "use client";
 import "./CandidatesPage.css";
 import { useState } from "react";
-import { Search, Filter, Star, X, Briefcase, Award, TrendingUp, CheckCircle, Mail, Send } from "lucide-react";
+import {
+  Search, Filter, Star, X, RefreshCw,
+  Briefcase, Award, TrendingUp, CheckCircle,
+  Mail, Send, Zap, ChevronDown,
+} from "lucide-react";
+
+type InterviewStatus = "— Select —" | "Shortlisted" | "Scheduled" | "On Hold" | "Rejected" | "Hired";
 
 type Candidate = {
   initials: string; color: string; name: string; role: string; score: number;
   stage: string; tags: string[]; yoe: string; email: string;
   interviewDone: boolean;
+  interviewStatus: InterviewStatus;
   summary: string;
   experience: { company: string; title: string; duration: string }[];
   skills: { name: string; level: number }[];
   dimensions: { label: string; score: number }[];
 };
 
+const STATUSES: InterviewStatus[] = [
+  "— Select —", "Shortlisted", "Scheduled", "On Hold", "Rejected", "Hired",
+];
+
 const initCandidates: Candidate[] = [
   {
-    initials: "SM", color: "#8b5cf6", name: "Sarah Mitchell", role: "Senior Backend Engineer",
-    score: 94, stage: "Interview", tags: ["Python","Kafka","AWS"], yoe: "8 yrs", email: "sarah.mitchell@email.com", interviewDone: false,
-    summary: "Highly experienced backend engineer with deep expertise in distributed systems. Strong match on all technical dimensions — particularly system design and communication. Recommended for fast-track hiring.",
-    experience: [{ company: "Stripe", title: "Staff Engineer", duration: "2021 – Present" }, { company: "Flipkart", title: "Senior Backend Engineer", duration: "2018 – 2021" }, { company: "Infosys", title: "Software Engineer", duration: "2016 – 2018" }],
-    skills: [{ name: "Python", level: 95 }, { name: "Kafka", level: 90 }, { name: "AWS", level: 88 }, { name: "System Design", level: 92 }, { name: "PostgreSQL", level: 80 }],
-    dimensions: [{ label: "Skills", score: 96 }, { label: "Experience", score: 94 }, { label: "Education", score: 88 }, { label: "Leadership", score: 90 }, { label: "Culture Fit", score: 92 }, { label: "Communication", score: 95 }],
+    initials:"SM", color:"#8b5cf6", name:"Sarah Mitchell",  role:"Senior Backend Engineer",
+    score:94, stage:"Interview", tags:["Python","Kafka","AWS"],
+    yoe:"8 yrs", email:"sarah.mitchell@email.com", interviewDone:false, interviewStatus:"— Select —",
+    summary:"Highly experienced backend engineer with deep expertise in distributed systems. Strong match on all technical dimensions — particularly system design and communication. Recommended for fast-track hiring.",
+    experience:[{company:"Stripe",title:"Staff Engineer",duration:"2021 – Present"},{company:"Flipkart",title:"Senior Backend Engineer",duration:"2018 – 2021"},{company:"Infosys",title:"Software Engineer",duration:"2016 – 2018"}],
+    skills:[{name:"Python",level:95},{name:"Kafka",level:90},{name:"AWS",level:88},{name:"System Design",level:92},{name:"PostgreSQL",level:80}],
+    dimensions:[{label:"Skills",score:96},{label:"Experience",score:94},{label:"Education",score:88},{label:"Leadership",score:90},{label:"Culture Fit",score:92},{label:"Communication",score:95}],
   },
   {
-    initials: "RK", color: "#f59e0b", name: "Rohan Kapoor", role: "Product Designer",
-    score: 88, stage: "Interview", tags: ["Figma","UX Research"], yoe: "5 yrs", email: "rohan.kapoor@email.com", interviewDone: true,
-    summary: "Creative product designer with a strong portfolio in B2B SaaS. Excellent UX research skills and a collaborative working style.",
-    experience: [{ company: "Razorpay", title: "Senior Product Designer", duration: "2022 – Present" }, { company: "Swiggy", title: "UI/UX Designer", duration: "2019 – 2022" }],
-    skills: [{ name: "Figma", level: 97 }, { name: "UX Research", level: 88 }, { name: "Prototyping", level: 85 }, { name: "Design Systems", level: 82 }, { name: "User Testing", level: 80 }],
-    dimensions: [{ label: "Skills", score: 92 }, { label: "Experience", score: 86 }, { label: "Education", score: 84 }, { label: "Leadership", score: 80 }, { label: "Culture Fit", score: 90 }, { label: "Communication", score: 88 }],
+    initials:"RK", color:"#f59e0b", name:"Rohan Kapoor",    role:"Product Designer",
+    score:88, stage:"Interview", tags:["Figma","UX Research"],
+    yoe:"5 yrs", email:"rohan.kapoor@email.com", interviewDone:true, interviewStatus:"Scheduled",
+    summary:"Creative product designer with a strong portfolio in B2B SaaS. Excellent UX research skills and a collaborative working style.",
+    experience:[{company:"Razorpay",title:"Senior Product Designer",duration:"2022 – Present"},{company:"Swiggy",title:"UI/UX Designer",duration:"2019 – 2022"}],
+    skills:[{name:"Figma",level:97},{name:"UX Research",level:88},{name:"Prototyping",level:85},{name:"Design Systems",level:82},{name:"User Testing",level:80}],
+    dimensions:[{label:"Skills",score:92},{label:"Experience",score:86},{label:"Education",score:84},{label:"Leadership",score:80},{label:"Culture Fit",score:90},{label:"Communication",score:88}],
   },
   {
-    initials: "YT", color: "#10b981", name: "Yuki Tanaka", role: "Frontend Engineer",
-    score: 81, stage: "Interview", tags: ["React","TypeScript"], yoe: "4 yrs", email: "yuki.tanaka@email.com", interviewDone: false,
-    summary: "Solid frontend engineer with a focus on performance and accessibility. Good TypeScript fundamentals. Interview scheduled for today — technical round pending.",
-    experience: [{ company: "Atlassian", title: "Frontend Engineer", duration: "2022 – Present" }, { company: "Zoho", title: "Junior Developer", duration: "2020 – 2022" }],
-    skills: [{ name: "React", level: 90 }, { name: "TypeScript", level: 85 }, { name: "CSS/Tailwind", level: 82 }, { name: "Next.js", level: 78 }, { name: "Testing", level: 70 }],
-    dimensions: [{ label: "Skills", score: 84 }, { label: "Experience", score: 80 }, { label: "Education", score: 78 }, { label: "Leadership", score: 72 }, { label: "Culture Fit", score: 85 }, { label: "Communication", score: 82 }],
+    initials:"YT", color:"#10b981", name:"Yuki Tanaka",     role:"Frontend Engineer",
+    score:81, stage:"Interview", tags:["React","TypeScript"],
+    yoe:"4 yrs", email:"yuki.tanaka@email.com", interviewDone:false, interviewStatus:"— Select —",
+    summary:"Solid frontend engineer with a focus on performance and accessibility. Good TypeScript fundamentals. Interview scheduled for today — technical round pending.",
+    experience:[{company:"Atlassian",title:"Frontend Engineer",duration:"2022 – Present"},{company:"Zoho",title:"Junior Developer",duration:"2020 – 2022"}],
+    skills:[{name:"React",level:90},{name:"TypeScript",level:85},{name:"CSS/Tailwind",level:82},{name:"Next.js",level:78},{name:"Testing",level:70}],
+    dimensions:[{label:"Skills",score:84},{label:"Experience",score:80},{label:"Education",score:78},{label:"Leadership",score:72},{label:"Culture Fit",score:85},{label:"Communication",score:82}],
   },
   {
-    initials: "AL", color: "#ef4444", name: "Aisha Levi", role: "Data Scientist",
-    score: 76, stage: "Interview", tags: ["Python","ML","SQL"], yoe: "3 yrs", email: "aisha.levi@email.com", interviewDone: false,
-    summary: "Promising data scientist with hands-on ML project experience. Needs further evaluation on leadership and communication dimensions.",
-    experience: [{ company: "Mu Sigma", title: "Data Scientist", duration: "2023 – Present" }, { company: "TCS", title: "Data Analyst", duration: "2021 – 2023" }],
-    skills: [{ name: "Python", level: 88 }, { name: "Machine Learning", level: 80 }, { name: "SQL", level: 85 }, { name: "TensorFlow", level: 72 }, { name: "Data Viz", level: 75 }],
-    dimensions: [{ label: "Skills", score: 82 }, { label: "Experience", score: 74 }, { label: "Education", score: 80 }, { label: "Leadership", score: 65 }, { label: "Culture Fit", score: 76 }, { label: "Communication", score: 70 }],
+    initials:"AL", color:"#ef4444", name:"Aisha Levi",      role:"Data Scientist",
+    score:76, stage:"Interview", tags:["Python","ML","SQL"],
+    yoe:"3 yrs", email:"aisha.levi@email.com", interviewDone:false, interviewStatus:"— Select —",
+    summary:"Promising data scientist with hands-on ML project experience. Needs further evaluation on leadership and communication dimensions.",
+    experience:[{company:"Mu Sigma",title:"Data Scientist",duration:"2023 – Present"},{company:"TCS",title:"Data Analyst",duration:"2021 – 2023"}],
+    skills:[{name:"Python",level:88},{name:"Machine Learning",level:80},{name:"SQL",level:85},{name:"TensorFlow",level:72},{name:"Data Viz",level:75}],
+    dimensions:[{label:"Skills",score:82},{label:"Experience",score:74},{label:"Education",score:80},{label:"Leadership",score:65},{label:"Culture Fit",score:76},{label:"Communication",score:70}],
   },
   {
-    initials: "MG", color: "#2563eb", name: "Marco Greco", role: "DevOps Engineer",
-    score: 91, stage: "Interview", tags: ["Kubernetes","Terraform"], yoe: "6 yrs", email: "marco.greco@email.com", interviewDone: true,
-    summary: "Highly capable DevOps engineer with strong cloud-native expertise. Excellent match on infrastructure skills.",
-    experience: [{ company: "Thoughtworks", title: "Senior DevOps Engineer", duration: "2021 – Present" }, { company: "HCL", title: "DevOps Engineer", duration: "2018 – 2021" }],
-    skills: [{ name: "Kubernetes", level: 94 }, { name: "Terraform", level: 90 }, { name: "AWS", level: 88 }, { name: "CI/CD", level: 92 }, { name: "Docker", level: 95 }],
-    dimensions: [{ label: "Skills", score: 94 }, { label: "Experience", score: 90 }, { label: "Education", score: 85 }, { label: "Leadership", score: 88 }, { label: "Culture Fit", score: 90 }, { label: "Communication", score: 86 }],
+    initials:"MG", color:"#2563eb", name:"Marco Greco",     role:"DevOps Engineer",
+    score:91, stage:"Interview", tags:["Kubernetes","Terraform"],
+    yoe:"6 yrs", email:"marco.greco@email.com", interviewDone:true, interviewStatus:"Scheduled",
+    summary:"Highly capable DevOps engineer with strong cloud-native expertise. Excellent match on infrastructure skills.",
+    experience:[{company:"Thoughtworks",title:"Senior DevOps Engineer",duration:"2021 – Present"},{company:"HCL",title:"DevOps Engineer",duration:"2018 – 2021"}],
+    skills:[{name:"Kubernetes",level:94},{name:"Terraform",level:90},{name:"AWS",level:88},{name:"CI/CD",level:92},{name:"Docker",level:95}],
+    dimensions:[{label:"Skills",score:94},{label:"Experience",score:90},{label:"Education",score:85},{label:"Leadership",score:88},{label:"Culture Fit",score:90},{label:"Communication",score:86}],
   },
   {
-    initials: "PS", color: "#0891b2", name: "Priya Sharma", role: "Product Manager",
-    score: 85, stage: "Interview", tags: ["Roadmapping","Agile"], yoe: "7 yrs", email: "priya.sharma@email.com", interviewDone: false,
-    summary: "Experienced product manager with a strong track record in B2C and B2B products. Final round interview scheduled with the CEO.",
-    experience: [{ company: "Meesho", title: "Senior Product Manager", duration: "2020 – Present" }, { company: "OYO", title: "Product Manager", duration: "2017 – 2020" }],
-    skills: [{ name: "Roadmapping", level: 90 }, { name: "Agile / Scrum", level: 88 }, { name: "Data Analysis", level: 78 }, { name: "Stakeholder Mgmt", level: 85 }, { name: "User Research", level: 80 }],
-    dimensions: [{ label: "Skills", score: 88 }, { label: "Experience", score: 86 }, { label: "Education", score: 82 }, { label: "Leadership", score: 84 }, { label: "Culture Fit", score: 88 }, { label: "Communication", score: 90 }],
+    initials:"PS", color:"#0891b2", name:"Priya Sharma",    role:"Product Manager",
+    score:85, stage:"Interview", tags:["Roadmapping","Agile"],
+    yoe:"7 yrs", email:"priya.sharma@email.com", interviewDone:false, interviewStatus:"— Select —",
+    summary:"Experienced product manager with a strong track record in B2C and B2B products. Final round interview scheduled with the CEO.",
+    experience:[{company:"Meesho",title:"Senior Product Manager",duration:"2020 – Present"},{company:"OYO",title:"Product Manager",duration:"2017 – 2020"}],
+    skills:[{name:"Roadmapping",level:90},{name:"Agile / Scrum",level:88},{name:"Data Analysis",level:78},{name:"Stakeholder Mgmt",level:85},{name:"User Research",level:80}],
+    dimensions:[{label:"Skills",score:88},{label:"Experience",score:86},{label:"Education",score:82},{label:"Leadership",score:84},{label:"Culture Fit",score:88},{label:"Communication",score:90}],
   },
 ];
 
@@ -74,7 +91,7 @@ function ScoreRing({ score }: { score: number }) {
       <circle cx="45" cy="45" r={r} fill="none" stroke="#ddeeff" strokeWidth="8" />
       <circle cx="45" cy="45" r={r} fill="none" stroke="url(#grad)" strokeWidth="8"
         strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} strokeDashoffset={circ / 4}
-        transform="rotate(-90 45 45)" style={{ transition: "stroke-dasharray 0.6s ease" }} />
+        transform="rotate(-90 45 45)" style={{ transition:"stroke-dasharray 0.6s ease" }} />
       <defs>
         <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#80B2FF" /><stop offset="100%" stopColor="#9E74D0" />
@@ -87,28 +104,39 @@ function ScoreRing({ score }: { score: number }) {
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>(initCandidates);
-  const [selected, setSelected] = useState<Candidate | null>(null);
-  const [emailModal, setEmailModal] = useState<EmailModal>(null);
-  const [sent, setSent] = useState(false);
-  const [search, setSearch] = useState("");
+  const [selected,   setSelected]   = useState<Candidate | null>(null);
+  const [emailModal, setEmailModal]  = useState<EmailModal>(null);
+  const [sent,       setSent]        = useState(false);
+  const [search,     setSearch]      = useState("");
+  const [filterOpen, setFilterOpen]  = useState(false);
+  const [showBanner, setShowBanner]  = useState(true);
 
-  const doneCount = candidates.filter(c => c.interviewDone).length;
+  const doneCount    = candidates.filter(c => c.interviewDone).length;
+  const pendingCount = candidates.length - doneCount;
 
   function toggleDone(name: string) {
     setCandidates(prev => prev.map(c => c.name === name ? { ...c, interviewDone: !c.interviewDone } : c));
-    if (selected?.name === name) setSelected(prev => prev ? { ...prev, interviewDone: !prev.interviewDone } : null);
+    setSelected(prev => prev?.name === name ? { ...prev, interviewDone: !prev.interviewDone } : prev);
+  }
+
+  function setStatus(name: string, status: InterviewStatus) {
+    setCandidates(prev => prev.map(c => c.name === name ? { ...c, interviewStatus: status } : c));
+    setSelected(prev => prev?.name === name ? { ...prev, interviewStatus: status } : prev);
   }
 
   function openEmail(c: Candidate) {
     setEmailModal({
       candidate: c,
-      subject: `Interview Schedule - ${c.role} at RecruitAI`,
-      body: `Hi ${c.name.split(" ")[0]},\n\nWe are pleased to inform you that you have been shortlisted for the ${c.role} position at RecruitAI. We would like to schedule an interview with you.\n\nInterview Details:\n- Round: Technical Interview\n- Duration: 60 minutes\n- Mode: Video Call (Google Meet / Zoom)\n- Proposed Date: Please confirm your availability for the slots below\n\nAvailable Slots:\n  - Monday, 26 May 2026 at 10:00 AM IST\n  - Tuesday, 27 May 2026 at 2:00 PM IST\n  - Wednesday, 28 May 2026 at 11:00 AM IST\n\nPlease reply with your preferred slot or suggest an alternative time that works for you.\n\nBest regards,\nPriya R.\nTalent Acquisition | RecruitAI\npriya.r@recruitai.app`,
+      subject: `Interview Schedule — ${c.role} at RecruitAI`,
+      body: `Hi ${c.name.split(" ")[0]},\n\nWe are pleased to inform you that you have been shortlisted for the ${c.role} position at RecruitAI. We would like to schedule an interview with you.\n\nInterview Details:\n- Round: Technical Interview\n- Duration: 60 minutes\n- Mode: Video Call (Google Meet / Zoom)\n\nAvailable Slots:\n  - Monday, 26 May 2026 at 10:00 AM IST\n  - Tuesday, 27 May 2026 at 2:00 PM IST\n  - Wednesday, 28 May 2026 at 11:00 AM IST\n\nPlease reply with your preferred slot or suggest an alternative.\n\nBest regards,\nPriya R.\nTalent Acquisition | RecruitAI`,
     });
     setSent(false);
   }
 
-  function handleSend() { setSent(true); setTimeout(() => setEmailModal(null), 1500); }
+  function handleSend() {
+    setSent(true);
+    setTimeout(() => setEmailModal(null), 1500);
+  }
 
   const filtered = candidates.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -117,26 +145,45 @@ export default function CandidatesPage() {
 
   return (
     <div className="candidates">
+      {/* ── Header ── */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Candidates — Interview Stage</h1>
-          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {candidates.length - doneCount} pending</p>
+          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {pendingCount} pending</p>
         </div>
-        <button className="btn-primary">+ Add candidate</button>
+        <div className="header-actions">
+          <button className="btn-refresh"><RefreshCw size={13} /> Refresh</button>
+          <button className="btn-salesforce"><Zap size={13} /> Analyse from Salesforce</button>
+        </div>
       </div>
 
+      {/* ── Backend banner ── */}
+      {showBanner && (
+        <div className="backend-banner">
+          <span className="banner-icon">↗</span>
+          <span>
+            <strong>Backend not reachable</strong> — showing demo data. Start your FastAPI server and click <strong>Refresh</strong>, or click <Zap size={11} style={{display:"inline",verticalAlign:"middle"}} /> <strong>Analyse from Salesforce</strong> to run a fresh analysis.
+          </span>
+          <button className="banner-close" onClick={() => setShowBanner(false)}><X size={13} /></button>
+        </div>
+      )}
+
+      {/* ── Toolbar ── */}
       <div className="toolbar">
         <div className="search-box">
-          <Search size={14} color="#7a9abf" />
+          <Search size={14} color="#9090B0" />
           <input placeholder="Search by name or role..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <button className="btn-outline"><Filter size={13} /> Filter</button>
+        <button className={`btn-filter ${filterOpen ? "active" : ""}`} onClick={() => setFilterOpen(p => !p)}>
+          <Filter size={13} /> Filter
+        </button>
         <div className="interview-legend">
-          <span className="legend-done">&#10003; Done ({doneCount})</span>
-          <span className="legend-pending">&#9675; Pending ({candidates.length - doneCount})</span>
+          <span className="legend-done"><CheckCircle size={12} /> Done ({doneCount})</span>
+          <span className="legend-pending">○ Pending ({pendingCount})</span>
         </div>
       </div>
 
+      {/* ── Table + side panel ── */}
       <div className={`cand-layout ${selected ? "panel-open" : ""}`}>
         <div className="card">
           <div className="table-scroll">
@@ -148,31 +195,61 @@ export default function CandidatesPage() {
                   <th>AI Score</th>
                   <th>Stage</th>
                   <th>Tags</th>
-                  <th>Interview Done</th>
+                  <th>Interview<br/>Status</th>
+                  <th>Interview<br/>Done</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c) => (
+                {filtered.map(c => (
                   <tr key={c.name} className={`${selected?.name === c.name ? "row-active" : ""} ${c.interviewDone ? "row-done" : ""}`}>
+
+                    {/* Candidate */}
                     <td>
                       <div className="cand-name-cell">
                         <div className="avatar" style={{ background: c.color }}>{c.initials}</div>
-                        <div>
-                          <div className="cand-name cand-name-link" onClick={() => setSelected(c)}>{c.name}</div>
-                          <div className="cand-yoe">{c.yoe} experience</div>
-                        </div>
+                        <button className="cand-name-link" onClick={() => setSelected(c)}>{c.name}</button>
                       </div>
                     </td>
+
+                    {/* Role */}
                     <td className="cand-role">{c.role}</td>
+
+                    {/* AI Score */}
                     <td>
                       <div className="score-cell">
                         <Star size={12} color="#f59e0b" fill="#f59e0b" />
                         <span className="score-val">{c.score}%</span>
                       </div>
                     </td>
-                    <td><span className="stage-badge interview-stage">Interview</span></td>
-                    <td><div className="tags">{c.tags.map(t => <span key={t} className="tag">{t}</span>)}</div></td>
+
+                    {/* Stage */}
+                    <td>
+                      <span className="stage-badge interview-stage">{c.stage}</span>
+                    </td>
+
+                    {/* Tags */}
+                    <td>
+                      <div className="tags">
+                        {c.tags.map(t => <span key={t} className="tag">{t}</span>)}
+                      </div>
+                    </td>
+
+                    {/* Interview Status dropdown */}
+                    <td>
+                      <div className="status-select-wrap">
+                        <select
+                          className={`status-select ${c.interviewStatus !== "— Select —" ? "status-has-value" : ""}`}
+                          value={c.interviewStatus}
+                          onChange={e => setStatus(c.name, e.target.value as InterviewStatus)}
+                        >
+                          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <ChevronDown size={11} className="select-chevron" />
+                      </div>
+                    </td>
+
+                    {/* Interview Done checkbox */}
                     <td>
                       <label className="interview-check">
                         <input type="checkbox" checked={c.interviewDone} onChange={() => toggleDone(c.name)} />
@@ -181,10 +258,12 @@ export default function CandidatesPage() {
                         </span>
                       </label>
                     </td>
+
+                    {/* Actions */}
                     <td>
                       <div className="row-actions">
-                        <button className="btn-email" onClick={() => openEmail(c)}><Mail size={13} /> Email</button>
-                        <button className="btn-outline-sm" onClick={() => setSelected(c)}>View</button>
+                        <button className="btn-email" onClick={() => openEmail(c)}><Mail size={12} /> Email</button>
+                        <button className="btn-view-sm" onClick={() => setSelected(c)}>View</button>
                       </div>
                     </td>
                   </tr>
@@ -194,6 +273,7 @@ export default function CandidatesPage() {
           </div>
         </div>
 
+        {/* ── Detail panel ── */}
         {selected && (
           <div className="detail-panel">
             <div className="panel-header">
@@ -219,15 +299,22 @@ export default function CandidatesPage() {
 
             <div className="panel-interview-row">
               <span className="panel-int-label">Interview Status</span>
-              <label className="interview-check">
+              <div className="status-select-wrap">
+                <select
+                  className={`status-select ${selected.interviewStatus !== "— Select —" ? "status-has-value" : ""}`}
+                  value={selected.interviewStatus}
+                  onChange={e => setStatus(selected.name, e.target.value as InterviewStatus)}
+                >
+                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <ChevronDown size={11} className="select-chevron" />
+              </div>
+              <label className="interview-check" style={{ marginLeft:"auto" }}>
                 <input type="checkbox" checked={selected.interviewDone} onChange={() => toggleDone(selected.name)} />
                 <span className={`check-label ${selected.interviewDone ? "done" : "pending"}`}>
-                  {selected.interviewDone ? "✓ Interview Done" : "○ Interview Pending"}
+                  {selected.interviewDone ? "✓ Done" : "○ Pending"}
                 </span>
               </label>
-              <button className="btn-email" style={{ marginLeft: "auto" }} onClick={() => openEmail(selected)}>
-                <Mail size={13} /> Send Email
-              </button>
             </div>
 
             <div className="panel-section">
@@ -238,10 +325,10 @@ export default function CandidatesPage() {
             <div className="panel-section">
               <div className="panel-section-title"><TrendingUp size={14} /> Match Dimensions</div>
               <div className="dimensions">
-                {selected.dimensions.map((d) => (
+                {selected.dimensions.map(d => (
                   <div key={d.label} className="dim-row">
                     <span className="dim-label">{d.label}</span>
-                    <div className="dim-bar-wrap"><div className="dim-bar" style={{ width: `${d.score}%` }} /></div>
+                    <div className="dim-bar-wrap"><div className="dim-bar" style={{ width:`${d.score}%` }} /></div>
                     <span className="dim-score">{d.score}%</span>
                   </div>
                 ))}
@@ -251,10 +338,10 @@ export default function CandidatesPage() {
             <div className="panel-section">
               <div className="panel-section-title"><CheckCircle size={14} /> Skills</div>
               <div className="skill-list">
-                {selected.skills.map((s) => (
+                {selected.skills.map(s => (
                   <div key={s.name} className="skill-row">
                     <span className="skill-name">{s.name}</span>
-                    <div className="skill-bar-wrap"><div className="skill-bar" style={{ width: `${s.level}%` }} /></div>
+                    <div className="skill-bar-wrap"><div className="skill-bar" style={{ width:`${s.level}%` }} /></div>
                     <span className="skill-pct">{s.level}%</span>
                   </div>
                 ))}
@@ -264,7 +351,7 @@ export default function CandidatesPage() {
             <div className="panel-section">
               <div className="panel-section-title"><Briefcase size={14} /> Work Experience</div>
               <div className="exp-list">
-                {selected.experience.map((e) => (
+                {selected.experience.map(e => (
                   <div key={e.company} className="exp-row">
                     <div className="exp-dot" />
                     <div>
@@ -277,7 +364,7 @@ export default function CandidatesPage() {
             </div>
 
             <div className="panel-actions">
-              <button className="btn-outline-sm">Reject</button>
+              <button className="btn-reject">Reject</button>
               <button className="btn-email" onClick={() => openEmail(selected)}><Mail size={13} /> Email</button>
               <button className="btn-primary">Schedule Interview</button>
             </div>
@@ -285,11 +372,12 @@ export default function CandidatesPage() {
         )}
       </div>
 
+      {/* ── Email modal ── */}
       {emailModal && (
         <div className="modal-overlay" onClick={() => setEmailModal(null)}>
           <div className="email-modal" onClick={e => e.stopPropagation()}>
             <div className="email-modal-header">
-              <div className="email-modal-title"><Mail size={16} color="#7a52b0" /><span>Send Interview Email to {emailModal.candidate.name}</span></div>
+              <div className="email-modal-title"><Mail size={16} color="#7a52b0" /><span>Send Email to {emailModal.candidate.name}</span></div>
               <button className="close-btn" onClick={() => setEmailModal(null)}><X size={18} /></button>
             </div>
             <div className="email-modal-body">
