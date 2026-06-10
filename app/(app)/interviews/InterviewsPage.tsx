@@ -2,50 +2,11 @@
 import "./InterviewsPage.css";
 import { useState, useMemo } from "react";
 import {
-  Calendar, Clock, Video, Monitor, Plus, Bell, Send,
+  Calendar, Video, Monitor, Plus, Bell, Send,
   X, ChevronRight, ChevronLeft, CheckCircle, Mail, Lock,
-  Search, User,
+  Search, User, Pencil, Trash2, Clock, Briefcase,
 } from "lucide-react";
-
-/* ── Types ─────────────────────────────────────────────── */
-type RoundStatus = "pending" | "active" | "passed" | "failed" | "on-hold";
-
-type Round = {
-  roundNo: number;
-  type: string;
-  date: string;
-  time: string;
-  interviewer: string;
-  interviewerEmail: string;
-  mode: "Video Call" | "In-person";
-  duration: string;
-  status: RoundStatus;
-  mailSent: boolean;
-};
-
-type Candidate = {
-  id: number;
-  name: string;
-  initials: string;
-  color: string;
-  email: string;
-  role: string;
-  rounds: Round[];
-};
-
-/* ── Seed data ──────────────────────────────────────────── */
-const seed: Candidate[] = [
-  { id:1,  name:"Yuki Tanaka",       initials:"YT", color:"#B875A0", email:"yuki.tanaka@email.com",       role:"Frontend Engineer",        rounds:[{roundNo:1,type:"Technical",   date:"Today",       time:"11:00 AM",interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"60 min",status:"active", mailSent:false},{roundNo:2,type:"System Design",date:"Tomorrow",   time:"2:00 PM", interviewer:"Arjun K.", interviewerEmail:"arjun.k@recruitai.app",mode:"Video Call",duration:"60 min",status:"pending",mailSent:false},{roundNo:3,type:"Managerial",  date:"28 May 2026",time:"11:00 AM",interviewer:"CEO",       interviewerEmail:"ceo@recruitai.app",     mode:"In-person", duration:"45 min",status:"pending",mailSent:false}] },
-  { id:2,  name:"Sarah Mitchell",    initials:"SM", color:"#8A6AAE", email:"sarah.mitchell@email.com",     role:"Senior Backend Engineer",  rounds:[{roundNo:1,type:"Technical",   date:"20 May 2026", time:"10:00 AM",interviewer:"Arjun K.", interviewerEmail:"arjun.k@recruitai.app",mode:"Video Call",duration:"60 min",status:"passed", mailSent:true },{roundNo:2,type:"System Design",date:"Today",       time:"2:30 PM", interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"60 min",status:"active", mailSent:false},{roundNo:3,type:"Managerial",  date:"25 May 2026",time:"10:00 AM",interviewer:"Rahul D.", interviewerEmail:"rahul.d@recruitai.app",  mode:"In-person", duration:"60 min",status:"pending",mailSent:false},{roundNo:4,type:"HR Round",    date:"26 May 2026",time:"3:00 PM", interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"Video Call",duration:"30 min",status:"pending",mailSent:false}] },
-  { id:3,  name:"Marco Greco",       initials:"MG", color:"#7AB8D8", email:"marco.greco@email.com",       role:"DevOps Engineer",          rounds:[{roundNo:1,type:"Technical",   date:"Tomorrow",    time:"10:00 AM",interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"In-person", duration:"60 min",status:"active", mailSent:false},{roundNo:2,type:"Practical",    date:"27 May 2026",time:"11:00 AM",interviewer:"Rahul D.", interviewerEmail:"rahul.d@recruitai.app",  mode:"Video Call",duration:"60 min",status:"pending",mailSent:false}] },
-  { id:4,  name:"Aisha Levi",        initials:"AL", color:"#C078B0", email:"aisha.levi@email.com",        role:"Data Scientist",           rounds:[{roundNo:1,type:"Case Study",  date:"20 May 2026", time:"3:00 PM", interviewer:"Rahul D.", interviewerEmail:"rahul.d@recruitai.app",  mode:"Video Call",duration:"60 min",status:"passed", mailSent:true },{roundNo:2,type:"Technical",   date:"22 May 2026", time:"10:00 AM",interviewer:"Arjun K.", interviewerEmail:"arjun.k@recruitai.app",mode:"Video Call",duration:"60 min",status:"passed", mailSent:true },{roundNo:3,type:"Managerial",  date:"Tomorrow",    time:"2:00 PM", interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"In-person", duration:"45 min",status:"active", mailSent:false},{roundNo:4,type:"HR Round",    date:"29 May 2026",time:"11:00 AM",interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"Video Call",duration:"30 min",status:"pending",mailSent:false}] },
-  { id:5,  name:"Priya Sharma",      initials:"PS", color:"#A898D8", email:"priya.sharma@email.com",      role:"Product Manager",          rounds:[{roundNo:1,type:"Product",     date:"19 May 2026", time:"11:30 AM",interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"In-person", duration:"45 min",status:"passed", mailSent:true },{roundNo:2,type:"Culture Fit",  date:"Today",       time:"3:00 PM", interviewer:"CEO",       interviewerEmail:"ceo@recruitai.app",     mode:"In-person", duration:"45 min",status:"active", mailSent:false}] },
-  { id:6,  name:"Ravi Kumar",        initials:"RK", color:"#B875A0", email:"ravi.kumar@email.com",        role:"Frontend Engineer",        rounds:[{roundNo:1,type:"Technical",   date:"23 May 2026", time:"10:00 AM",interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"60 min",status:"active", mailSent:false},{roundNo:2,type:"System Design",date:"25 May 2026", time:"11:00 AM",interviewer:"Arjun K.", interviewerEmail:"arjun.k@recruitai.app",mode:"Video Call",duration:"60 min",status:"pending",mailSent:false}] },
-  { id:7,  name:"Neha Joshi",        initials:"NJ", color:"#8A6AAE", email:"neha.joshi@email.com",        role:"UX Designer",              rounds:[{roundNo:1,type:"Portfolio",   date:"22 May 2026", time:"2:00 PM", interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"45 min",status:"passed", mailSent:true },{roundNo:2,type:"Culture Fit",  date:"24 May 2026", time:"3:00 PM", interviewer:"CEO",       interviewerEmail:"ceo@recruitai.app",     mode:"In-person", duration:"45 min",status:"active", mailSent:false}] },
-  { id:8,  name:"Amit Singh",        initials:"AS", color:"#7AB8D8", email:"amit.singh@email.com",        role:"Backend Engineer",         rounds:[{roundNo:1,type:"Technical",   date:"Today",       time:"9:00 AM", interviewer:"Arjun K.", interviewerEmail:"arjun.k@recruitai.app",mode:"Video Call",duration:"60 min",status:"active", mailSent:false},{roundNo:2,type:"System Design",date:"26 May 2026", time:"10:00 AM",interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"60 min",status:"pending",mailSent:false},{roundNo:3,type:"HR Round",    date:"27 May 2026",time:"3:00 PM", interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"Video Call",duration:"30 min",status:"pending",mailSent:false}] },
-  { id:9,  name:"Divya Menon",       initials:"DM", color:"#C078B0", email:"divya.menon@email.com",       role:"Data Analyst",             rounds:[{roundNo:1,type:"Technical",   date:"21 May 2026", time:"11:00 AM",interviewer:"Rahul D.", interviewerEmail:"rahul.d@recruitai.app",  mode:"Video Call",duration:"60 min",status:"failed", mailSent:true }] },
-  { id:10, name:"Karan Mehta",       initials:"KM", color:"#A898D8", email:"karan.mehta@email.com",       role:"Product Manager",          rounds:[{roundNo:1,type:"Product",     date:"22 May 2026", time:"10:00 AM",interviewer:"Priya R.",  interviewerEmail:"priya.r@recruitai.app", mode:"Video Call",duration:"60 min",status:"passed", mailSent:true },{roundNo:2,type:"Managerial",  date:"24 May 2026", time:"2:00 PM", interviewer:"CEO",       interviewerEmail:"ceo@recruitai.app",     mode:"In-person", duration:"45 min",status:"passed", mailSent:true },{roundNo:3,type:"HR Round",    date:"Today",       time:"4:00 PM", interviewer:"Sneha M.", interviewerEmail:"sneha.m@recruitai.app",  mode:"Video Call",duration:"30 min",status:"active", mailSent:false}] },
-];
+import { useInterviewStore, type Candidate, type Round, type RoundStatus } from "@/lib/interviewStore";
 
 /* ── Status config ──────────────────────────────────────── */
 const SC: Record<RoundStatus, { bg: string; color: string; label: string }> = {
@@ -60,45 +21,164 @@ const SC: Record<RoundStatus, { bg: string; color: string; label: string }> = {
 function makeCandidateEmail(c: Candidate, r: Round) {
   return {
     subject: `Round ${r.roundNo} Interview — ${c.role} | ${r.date} at ${r.time}`,
-    body: `Hi ${c.name.split(" ")[0]},\n\nYou are scheduled for Round ${r.roundNo} (${r.type}) interview.\n\nDetails:\n- Role        : ${c.role}\n- Round       : ${r.roundNo} — ${r.type}\n- Date        : ${r.date}\n- Time        : ${r.time} IST\n- Interviewer : ${r.interviewer}\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n\n${r.mode==="Video Call"?"A Google Meet link will be shared 15 minutes before.":"Please arrive 10 minutes early at our office."}\n\nBest regards,\nPriya R. | RecruitAI`,
+    body: `Hi ${c.name.split(" ")[0]},\n\nYou are scheduled for Round ${r.roundNo} (${r.type}) interview.\n\nDetails:\n- Role        : ${c.role}\n- Round       : ${r.roundNo} — ${r.type}\n- Date        : ${r.date}\n- Time        : ${r.time}\n- Interviewer : ${r.interviewer}\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n\n${r.mode==="Video Call"?"A Google Meet link will be shared 15 minutes before.":"Please arrive 10 minutes early at our office."}\n\nBest regards,\nPriya R. | RecruitAI`,
   };
 }
 function makeInterviewerEmail(c: Candidate, r: Round) {
   return {
     subject: `Round ${r.roundNo} Interview — ${c.name} | ${r.date}`,
-    body: `Hi ${r.interviewer.split(" ")[0]},\n\nYou are conducting Round ${r.roundNo} (${r.type}) for ${c.name}.\n\nDetails:\n- Candidate   : ${c.name}\n- Role        : ${c.role}\n- Date        : ${r.date}\n- Time        : ${r.time} IST\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n\n${r.mode==="Video Call"?"Please share Google Meet link 15 min before.":"Please be present 5 min early."}\n\nBest regards,\nPriya R. | RecruitAI`,
+    body: `Hi ${r.interviewer.split(" ")[0]},\n\nYou are conducting Round ${r.roundNo} (${r.type}) for ${c.name}.\n\nDetails:\n- Candidate   : ${c.name}\n- Role        : ${c.role}\n- Date        : ${r.date}\n- Time        : ${r.time}\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n\n${r.mode==="Video Call"?"Please share Google Meet link 15 min before.":"Please be present 5 min early."}\n\nBest regards,\nPriya R. | RecruitAI`,
   };
 }
 
-/* ── Wizard type ────────────────────────────────────────── */
+/* ── Types ──────────────────────────────────────────────── */
 type WizardState = { candidate: Candidate; round: Round; step: 1|2; cSub: string; cBody: string; iSub: string; iBody: string };
 type ResultTarget = { candidateId: number; roundNo: number } | null;
 
+// Fields editable on a round
+type RoundTextField = "type" | "date" | "time" | "interviewer" | "duration";
+type EditTarget =
+  | { kind: "round-text"; candidateId: number; roundNo: number; field: RoundTextField }
+  | { kind: "candidate-role"; candidateId: number };
+
 /* ── Component ──────────────────────────────────────────── */
 export default function InterviewsPage() {
-  const [data,        setData]        = useState(seed);
-  const [search,      setSearch]      = useState("");
-  const [roleFilter,  setRoleFilter]  = useState("All");
-  const [stageFilter, setStageFilter] = useState("All");
-  const [expandedId,  setExpandedId]  = useState<number | null>(null);
-  const [wizard,      setWizard]      = useState<WizardState | null>(null);
-  const [wizSent,     setWizSent]     = useState(false);
-  const [resultTarget,setResultTarget]= useState<ResultTarget>(null);
+  const { candidates, setCandidates, addRound, removeRound } = useInterviewStore();
 
-  /* Derived filter options */
-  const roles = useMemo(() => ["All", ...Array.from(new Set(data.map(c => c.role))).sort()], [data]);
+  const [search,       setSearch]       = useState("");
+  const [roleFilter,   setRoleFilter]   = useState("All");
+  const [stageFilter,  setStageFilter]  = useState("All");
+  const [expandedId,   setExpandedId]   = useState<number | null>(null);
+  const [wizard,       setWizard]       = useState<WizardState | null>(null);
+  const [wizSent,      setWizSent]      = useState(false);
+  const [resultTarget, setResultTarget] = useState<ResultTarget>(null);
 
-  /* Filter candidates */
-  const filtered = useMemo(() => data.filter(c => {
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const [editValue,  setEditValue]  = useState("");
+
+  /* ── Edit helpers ── */
+  function startRoundEdit(candidateId: number, roundNo: number, field: RoundTextField, current: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditTarget({ kind: "round-text", candidateId, roundNo, field });
+    setEditValue(current);
+  }
+
+  function startRoleEdit(candidateId: number, current: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditTarget({ kind: "candidate-role", candidateId });
+    setEditValue(current);
+  }
+
+  function commitEdit() {
+    if (!editTarget) return;
+    const v = editValue.trim();
+    if (!v) { setEditTarget(null); return; }
+
+    if (editTarget.kind === "candidate-role") {
+      setCandidates(prev => prev.map(c => c.id === editTarget.candidateId ? { ...c, role: v } : c));
+    } else {
+      const { candidateId, roundNo, field } = editTarget;
+      setCandidates(prev => prev.map(c => c.id !== candidateId ? c : {
+        ...c,
+        rounds: c.rounds.map(r => r.roundNo === roundNo ? { ...r, [field]: v } : r),
+      }));
+    }
+    setEditTarget(null);
+  }
+
+  function toggleMode(candidateId: number, roundNo: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setCandidates(prev => prev.map(c => c.id !== candidateId ? c : {
+      ...c,
+      rounds: c.rounds.map(r => r.roundNo === roundNo
+        ? { ...r, mode: r.mode === "Video Call" ? "In-person" : "Video Call" }
+        : r
+      ),
+    }));
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter")  commitEdit();
+    if (e.key === "Escape") setEditTarget(null);
+  }
+
+  /* ── Inline text field ── */
+  function EditText({
+    candidateId, roundNo, field, value, placeholder, wide = false,
+  }: {
+    candidateId: number; roundNo: number; field: RoundTextField;
+    value: string; placeholder?: string; wide?: boolean;
+  }) {
+    const active = editTarget?.kind === "round-text"
+      && editTarget.candidateId === candidateId
+      && editTarget.roundNo === roundNo
+      && editTarget.field === field;
+
+    if (active) {
+      return (
+        <input
+          className={`exp-field-input ${wide ? "exp-field-input-wide" : ""}`}
+          value={editValue}
+          placeholder={placeholder}
+          autoFocus
+          onChange={e => setEditValue(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={handleKeyDown}
+          onClick={e => e.stopPropagation()}
+        />
+      );
+    }
+    return (
+      <button
+        className="exp-field-btn"
+        onClick={e => startRoundEdit(candidateId, roundNo, field, value, e)}
+        title={`Edit ${field}`}
+      >
+        <span>{value || placeholder}</span>
+        <Pencil size={9} className="edit-pencil" />
+      </button>
+    );
+  }
+
+  /* ── Role editable text ── */
+  function EditRole({ candidateId, value }: { candidateId: number; value: string }) {
+    const active = editTarget?.kind === "candidate-role" && editTarget.candidateId === candidateId;
+    if (active) {
+      return (
+        <input
+          className="exp-field-input exp-field-input-wide"
+          value={editValue}
+          autoFocus
+          onChange={e => setEditValue(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={handleKeyDown}
+          onClick={e => e.stopPropagation()}
+        />
+      );
+    }
+    return (
+      <button
+        className="exp-field-btn exp-role-btn"
+        onClick={e => startRoleEdit(candidateId, value, e)}
+        title="Edit role"
+      >
+        <span>{value}</span>
+        <Pencil size={9} className="edit-pencil" />
+      </button>
+    );
+  }
+
+  /* filters */
+  const roles = useMemo(() => ["All", ...Array.from(new Set(candidates.map(c => c.role))).sort()], [candidates]);
+  const filtered = useMemo(() => candidates.filter(c => {
     const q = search.toLowerCase();
     if (q && !c.name.toLowerCase().includes(q) && !c.role.toLowerCase().includes(q)) return false;
     if (roleFilter !== "All" && c.role !== roleFilter) return false;
-    // Stage filters
     if (stageFilter === "Active")       return c.rounds.some(r => r.status === "active");
     if (stageFilter === "Pending Mail") return c.rounds.some(r => r.status === "active" && !r.mailSent);
     if (stageFilter === "Completed")    return c.rounds.some(r => r.status === "passed");
     return true;
-  }), [data, search, roleFilter, stageFilter]);
+  }), [candidates, search, roleFilter, stageFilter]);
 
   function openWizard(c: Candidate, r: Round) {
     const ce = makeCandidateEmail(c, r);
@@ -111,7 +191,7 @@ export default function InterviewsPage() {
     if (!wizard) return;
     setWizSent(true);
     setTimeout(() => {
-      setData(prev => prev.map(c => c.id !== wizard.candidate.id ? c : {
+      setCandidates(prev => prev.map(c => c.id !== wizard.candidate.id ? c : {
         ...c, rounds: c.rounds.map(r => r.roundNo === wizard.round.roundNo ? { ...r, mailSent: true } : r),
       }));
       setWizSent(false); setWizard(null);
@@ -119,8 +199,8 @@ export default function InterviewsPage() {
   }
 
   function markResult(candidateId: number, roundNo: number, result: "passed"|"failed"|"on-hold") {
-    setData(prev => prev.map(c => c.id !== candidateId ? c : {
-      ...c, rounds: c.rounds.map((r, i) => {
+    setCandidates(prev => prev.map(c => c.id !== candidateId ? c : {
+      ...c, rounds: c.rounds.map(r => {
         if (r.roundNo === roundNo)     return { ...r, status: result };
         if (r.roundNo === roundNo + 1 && result === "passed") return { ...r, status: "active" as RoundStatus };
         return r;
@@ -129,7 +209,7 @@ export default function InterviewsPage() {
     setResultTarget(null);
   }
 
-  const activeCount = data.flatMap(c => c.rounds).filter(r => r.status === "active").length;
+  const activeCount = candidates.flatMap(c => c.rounds).filter(r => r.status === "active").length;
 
   return (
     <div className="interviews">
@@ -137,7 +217,7 @@ export default function InterviewsPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Interviews</h1>
-          <p className="page-sub">{data.length} candidates · {activeCount} active rounds today</p>
+          <p className="page-sub">{candidates.length} candidates · {activeCount} active rounds today</p>
         </div>
         <button className="btn-primary"><Plus size={14} /> Schedule</button>
       </div>
@@ -153,10 +233,10 @@ export default function InterviewsPage() {
         </select>
         <div className="int-stage-tabs">
           {[
-            { key: "All",          label: "All",          count: data.length },
-            { key: "Active",       label: "Active",       count: data.filter(c => c.rounds.some(r => r.status === "active")).length },
-            { key: "Pending Mail", label: "Pending Mail", count: data.filter(c => c.rounds.some(r => r.status === "active" && !r.mailSent)).length },
-            { key: "Completed",    label: "Completed",    count: data.filter(c => c.rounds.some(r => r.status === "passed")).length },
+            { key:"All",          label:"All",          count: candidates.length },
+            { key:"Active",       label:"Active",       count: candidates.filter(c => c.rounds.some(r => r.status === "active")).length },
+            { key:"Pending Mail", label:"Pending Mail", count: candidates.filter(c => c.rounds.some(r => r.status === "active" && !r.mailSent)).length },
+            { key:"Completed",    label:"Completed",    count: candidates.filter(c => c.rounds.some(r => r.status === "passed")).length },
           ].map(s => (
             <button key={s.key} className={`stage-tab ${stageFilter === s.key ? "active" : ""}`} onClick={() => setStageFilter(s.key)}>
               {s.label} <span className="stage-count">{s.count}</span>
@@ -175,12 +255,13 @@ export default function InterviewsPage() {
         <span className="legend-item"><span className="legend-dot dot-onhold" />On Hold</span>
         <span className="legend-item"><span className="legend-dot dot-locked" />Locked</span>
       </div>
+
       <div className="int-table-wrap">
-        {/* Head */}
         <div className="int-thead">
           <div className="th th-cand">Candidate</div>
           <div className="th th-role">Role</div>
           <div className="th th-rounds">Round Progress</div>
+          <div className="th th-interviewer">Interviewer</div>
           <div className="th th-current">Current Round</div>
           <div className="th th-action">Action</div>
         </div>
@@ -215,10 +296,7 @@ export default function InterviewsPage() {
                 <div className="td td-rounds">
                   <div className="round-dots">
                     {c.rounds.map(r => (
-                      <span key={r.roundNo}
-                        className={`rdot rdot-${r.status}`}
-                        title={`R${r.roundNo} ${r.type}: ${SC[r.status].label}`}
-                      >
+                      <span key={r.roundNo} className={`rdot rdot-${r.status}`} title={`R${r.roundNo} ${r.type}: ${SC[r.status].label}`}>
                         R{r.roundNo}
                       </span>
                     ))}
@@ -226,17 +304,46 @@ export default function InterviewsPage() {
                   <span className="progress-text">{passedCount}/{c.rounds.length} passed</span>
                 </div>
 
+                {/* Interviewer (active round) */}
+                <div className="td td-interviewer" onClick={e => e.stopPropagation()}>
+                  {activeRound ? (
+                    editTarget?.kind === "round-text" && editTarget.candidateId === c.id
+                      && editTarget.roundNo === activeRound.roundNo && editTarget.field === "interviewer" ? (
+                      <input
+                        className="exp-field-input"
+                        value={editValue}
+                        autoFocus
+                        onChange={e => setEditValue(e.target.value)}
+                        onBlur={commitEdit}
+                        onKeyDown={handleKeyDown}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <button
+                        className="interviewer-edit-btn"
+                        onClick={e => startRoundEdit(c.id, activeRound.roundNo, "interviewer", activeRound.interviewer, e)}
+                      >
+                        <User size={11} />
+                        <span>{activeRound.interviewer}</span>
+                        <Pencil size={10} className="edit-pencil" />
+                      </button>
+                    )
+                  ) : (
+                    <span className="no-active">—</span>
+                  )}
+                </div>
+
                 {/* Current round */}
                 <div className="td td-current">
                   {activeRound ? (
                     <div className="curr-round">
                       <span className="curr-badge">R{activeRound.roundNo} — {activeRound.type}</span>
-                      <span className="curr-meta"><Calendar size={10} /> {activeRound.date} · {activeRound.time}</span>
+                      <span className="curr-meta"><Calendar size={10} /> {activeRound.date}</span>
                     </div>
                   ) : (
                     <span className="no-active">
                       {c.rounds.every(r => r.status === "passed") ? "✓ All rounds passed" :
-                       c.rounds.some(r => r.status === "failed") ? "Did not pass" : "—"}
+                       c.rounds.some(r => r.status === "failed")  ? "Did not pass" : "—"}
                     </span>
                   )}
                 </div>
@@ -260,29 +367,84 @@ export default function InterviewsPage() {
                 </div>
               </div>
 
-              {/* Expanded round detail */}
+              {/* ── Expanded round detail ── */}
               {isExpanded && (
                 <div className="int-expanded">
                   <div className="expanded-rounds">
                     {c.rounds.map(r => {
                       const sm = SC[r.status];
+                      const canDelete = r.status === "pending" && c.rounds.length > 1;
                       return (
-                        <div key={r.roundNo} className={`exp-round exp-${r.status}`}>
+                        <div key={r.roundNo} className={`exp-round exp-${r.status}`} onClick={e => e.stopPropagation()}>
+
+                          {/* ── Round header: number + editable type + status + delete ── */}
                           <div className="exp-round-head">
                             <span className="exp-round-num">R{r.roundNo}</span>
-                            <span className="exp-round-type">{r.type}</span>
-                            <span className="exp-status" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
-                          </div>
-                          <div className="exp-round-meta">
-                            <span><Calendar size={10} /> {r.date} · {r.time}</span>
-                            <span><User size={10} /> {r.interviewer}</span>
-                            <span className={`exp-mode ${r.mode === "Video Call" ? "mode-video" : "mode-person"}`}>
-                              {r.mode === "Video Call" ? <Video size={10} /> : <Monitor size={10} />} {r.mode}
+                            <span className="exp-round-type">
+                              <EditText candidateId={c.id} roundNo={r.roundNo} field="type" value={r.type} placeholder="Round type" />
                             </span>
-                            <span><Clock size={10} /> {r.duration}</span>
+                            <span className="exp-status" style={{ background: sm.bg, color: sm.color }}>{sm.label}</span>
+                            {canDelete && (
+                              <button className="btn-delete-round" title="Remove round" onClick={e => { e.stopPropagation(); removeRound(c.id, r.roundNo); }}>
+                                <Trash2 size={11} />
+                              </button>
+                            )}
                           </div>
+
+                          {/* ── Editable fields grid ── */}
+                          <div className="exp-fields-grid">
+
+                            {/* Role */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label"><Briefcase size={10} /> Role</span>
+                              <EditRole candidateId={c.id} value={c.role} />
+                            </div>
+
+                            {/* Date */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label"><Calendar size={10} /> Date</span>
+                              <EditText candidateId={c.id} roundNo={r.roundNo} field="date" value={r.date} placeholder="e.g. 10 Jun 2026" />
+                            </div>
+
+                            {/* Time */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label"><Clock size={10} /> Time</span>
+                              <EditText candidateId={c.id} roundNo={r.roundNo} field="time" value={r.time} placeholder="e.g. 10:00 AM" />
+                            </div>
+
+                            {/* Interviewer */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label"><User size={10} /> Interviewer</span>
+                              <EditText candidateId={c.id} roundNo={r.roundNo} field="interviewer" value={r.interviewer} placeholder="Name" />
+                            </div>
+
+                            {/* Mode toggle */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label">
+                                {r.mode === "Video Call" ? <Video size={10} /> : <Monitor size={10} />} Mode
+                              </span>
+                              <button
+                                className={`exp-mode-toggle ${r.mode === "Video Call" ? "mode-video" : "mode-person"}`}
+                                onClick={e => toggleMode(c.id, r.roundNo, e)}
+                                title="Click to toggle mode"
+                              >
+                                {r.mode === "Video Call" ? <Video size={10} /> : <Monitor size={10} />}
+                                {r.mode}
+                                <Pencil size={9} className="edit-pencil" />
+                              </button>
+                            </div>
+
+                            {/* Duration */}
+                            <div className="exp-field-row">
+                              <span className="exp-field-label"><Clock size={10} /> Duration</span>
+                              <EditText candidateId={c.id} roundNo={r.roundNo} field="duration" value={r.duration} placeholder="e.g. 60 min" />
+                            </div>
+
+                          </div>
+
+                          {/* ── Actions ── */}
                           {r.status === "active" && (
-                            <div className="exp-actions" onClick={e => e.stopPropagation()}>
+                            <div className="exp-actions">
                               {r.mailSent ? (
                                 <>
                                   <span className="mail-sent-tag"><CheckCircle size={12} /> Mail Sent</span>
@@ -295,10 +457,18 @@ export default function InterviewsPage() {
                               )}
                             </div>
                           )}
-                          {r.status === "pending" && <div className="exp-locked"><Lock size={11} /> Awaiting previous round</div>}
+                          {r.status === "pending" && (
+                            <div className="exp-locked"><Lock size={11} /> Awaiting previous round</div>
+                          )}
                         </div>
                       );
                     })}
+
+                    {/* Add Round card */}
+                    <button className="exp-add-round" onClick={e => { e.stopPropagation(); addRound(c.id); }}>
+                      <Plus size={14} />
+                      <span>Add Round</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -307,7 +477,7 @@ export default function InterviewsPage() {
         })}
       </div>
 
-      {/* Email Wizard */}
+      {/* ── Email Wizard ── */}
       {wizard && (
         <div className="modal-overlay" onClick={() => setWizard(null)}>
           <div className="reminder-modal" onClick={e => e.stopPropagation()}>
@@ -383,7 +553,7 @@ export default function InterviewsPage() {
         </div>
       )}
 
-      {/* Mark Result */}
+      {/* ── Mark Result ── */}
       {resultTarget && (
         <div className="modal-overlay" onClick={() => setResultTarget(null)}>
           <div className="result-modal" onClick={e => e.stopPropagation()}>
@@ -396,7 +566,7 @@ export default function InterviewsPage() {
               <div className="result-options">
                 <button className="result-opt passed" onClick={() => markResult(resultTarget.candidateId, resultTarget.roundNo, "passed")}><CheckCircle size={17} /> Completed &amp; Passed</button>
                 <button className="result-opt failed" onClick={() => markResult(resultTarget.candidateId, resultTarget.roundNo, "failed")}><X size={17} /> Did Not Pass</button>
-                <button className="result-opt hold"   onClick={() => markResult(resultTarget.candidateId, resultTarget.roundNo, "on-hold")}><Clock size={17} /> On Hold</button>
+                <button className="result-opt hold"   onClick={() => markResult(resultTarget.candidateId, resultTarget.roundNo, "on-hold")}><Mail size={17} /> On Hold</button>
               </div>
             </div>
           </div>

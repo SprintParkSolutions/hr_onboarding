@@ -16,15 +16,14 @@
 .fb-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .fb-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
 
-/* Grid — tighter, cleaner */
+/* Grid — dynamic columns set inline via style prop */
 .fb-head,
 .fb-row {
-  display: grid;
-  grid-template-columns: 180px 150px repeat(4, minmax(140px, 1fr)) 150px;
-  min-width: 1080px;
+  min-width: 900px;
 }
 
 .fb-head {
+  display: grid;
   background: #f8f5fc;
   border-bottom: 2px solid var(--border);
 }
@@ -36,6 +35,7 @@
 }
 
 .fb-row {
+  display: grid;
   border-bottom: 1px solid rgba(221,208,232,0.35);
   transition: background 0.12s;
   align-items: stretch;

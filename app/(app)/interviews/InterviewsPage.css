@@ -34,13 +34,13 @@
 .int-table-wrap { background: #fff; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 .int-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
 
-.int-thead { display: grid; grid-template-columns: 220px 160px 180px 1fr 140px; min-width: 850px; background: #f9f6fc; border-bottom: 2px solid var(--border); }
+.int-thead { display: grid; grid-template-columns: 220px 160px 180px 160px 1fr 140px; min-width: 1010px; background: #f9f6fc; border-bottom: 2px solid var(--border); }
 .th { padding: 10px 14px; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
 .int-row-wrap { border-bottom: 1px solid rgba(221,208,232,0.35); }
 .int-row-wrap:last-child { border-bottom: none; }
 
-.int-row { display: grid; grid-template-columns: 220px 160px 180px 1fr 140px; min-width: 850px; cursor: pointer; transition: background 0.12s; overflow-x: auto; }
+.int-row { display: grid; grid-template-columns: 220px 160px 180px 160px 1fr 140px; min-width: 1010px; cursor: pointer; transition: background 0.12s; overflow-x: auto; }
 .int-row:hover { background: #fdf9ff; }
 .int-row.row-open { background: #fdf9ff; }
 
@@ -90,7 +90,7 @@
 /* ── Expanded detail ────────────────────────────────── */
 .int-expanded { padding: 14px 16px; background: #fdf9ff; border-top: 1px solid rgba(221,208,232,0.35); }
 .expanded-rounds { display: flex; gap: 10px; flex-wrap: wrap; }
-.exp-round { flex: 1; min-width: 180px; max-width: 240px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; }
+.exp-round { flex: 1; min-width: 200px; max-width: 270px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .exp-active  { border-color: rgba(253,200,56,0.5); background: rgba(253,200,56,0.05); }
 .exp-passed  { border-color: rgba(52,199,89,0.35); background: rgba(52,199,89,0.05); }
 .exp-failed  { border-color: rgba(220,53,69,0.25); background: rgba(220,53,69,0.04); opacity: 0.9; }
@@ -169,3 +169,108 @@
 .result-opt.failed:hover { background: rgba(184,117,160,0.15); }
 .result-opt.hold   { background: rgba(238,208,90,0.09);  border-color: rgba(238,208,90,0.4);  color: #7A5A10; }
 .result-opt.hold:hover { background: rgba(238,208,90,0.18); }
+
+/* ── Inline editable fields ─────────────────────────── */
+.td-interviewer { align-items: center; }
+
+/* Interviewer pill in main table row */
+.interviewer-edit-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(168,152,216,0.1); border: 1px dashed rgba(168,152,216,0.4);
+  border-radius: 7px; padding: 4px 9px;
+  font-size: 12px; font-weight: 600; color: #5A4878;
+  cursor: pointer; transition: all 0.14s; max-width: 140px;
+}
+.interviewer-edit-btn:hover { background: rgba(168,152,216,0.2); border-color: rgba(168,152,216,0.7); }
+.interviewer-edit-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edit-pencil { opacity: 0; transition: opacity 0.14s; flex-shrink: 0; color: var(--muted); }
+.interviewer-edit-btn:hover .edit-pencil { opacity: 1; }
+
+/* Round type edit button in exp header */
+.round-type-edit-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: transparent; border: none; padding: 0;
+  font-size: 12.5px; font-weight: 700; color: var(--text); cursor: pointer;
+}
+.round-type-edit-btn:hover { color: #B875A0; }
+.round-type-edit-btn:hover .edit-pencil { opacity: 1; }
+
+/* ── Expanded fields grid ───────────────────────────── */
+.exp-fields-grid {
+  display: flex; flex-direction: column; gap: 5px;
+  background: rgba(240,235,250,0.35); border-radius: 8px;
+  padding: 8px 10px; margin-top: 2px;
+}
+
+.exp-field-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; min-height: 24px;
+}
+
+.exp-field-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap; flex-shrink: 0; width: 68px;
+}
+
+/* Field value button — click to edit */
+.exp-field-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #fff; border: 1px solid rgba(184,117,160,0.18);
+  border-radius: 6px; padding: 3px 8px;
+  font-size: 11.5px; font-weight: 600; color: var(--text);
+  cursor: pointer; transition: all 0.13s;
+  flex: 1; min-width: 0; max-width: 100%;
+  text-align: left;
+}
+.exp-field-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.exp-field-btn:hover { border-color: #B875A0; background: rgba(184,117,160,0.05); }
+.exp-field-btn:hover .edit-pencil { opacity: 1; }
+
+/* Role button slight style variation */
+.exp-role-btn { color: #5A4878; font-style: italic; }
+
+/* Inline text input (active edit) */
+.exp-field-input {
+  flex: 1; padding: 3px 8px;
+  border: 1.5px solid #B875A0; border-radius: 6px;
+  font-size: 11.5px; font-weight: 600; color: var(--text);
+  background: #fff; outline: none; font-family: inherit;
+  box-shadow: 0 0 0 3px rgba(184,117,160,0.12);
+}
+.exp-field-input-wide { min-width: 120px; }
+
+/* Mode toggle button */
+.exp-mode-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 6px; padding: 3px 8px;
+  font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.13s;
+  flex: 1; border: 1px solid;
+}
+.exp-mode-toggle.mode-video  { background: rgba(122,184,216,0.12); border-color: rgba(122,184,216,0.4); color: #3A70A0; }
+.exp-mode-toggle.mode-person { background: rgba(168,152,216,0.12); border-color: rgba(168,152,216,0.4); color: #5A4878; }
+.exp-mode-toggle:hover { opacity: 0.8; }
+.exp-mode-toggle:hover .edit-pencil { opacity: 1; }
+
+/* ── Add round button ───────────────────────────────── */
+.exp-add-round {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; min-width: 110px; max-width: 130px;
+  background: rgba(184,117,160,0.05);
+  border: 2px dashed rgba(184,117,160,0.3);
+  border-radius: 10px; padding: 16px 12px;
+  font-size: 12px; font-weight: 600; color: #B875A0;
+  cursor: pointer; transition: all 0.14s; align-self: flex-start;
+}
+.exp-add-round:hover { background: rgba(184,117,160,0.1); border-color: rgba(184,117,160,0.6); }
+
+/* ── Delete round button ────────────────────────────── */
+.btn-delete-round {
+  margin-left: auto; display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.2);
+  color: #b02030; cursor: pointer; transition: all 0.13s; flex-shrink: 0;
+}
+.btn-delete-round:hover { background: rgba(220,53,69,0.18); border-color: rgba(220,53,69,0.45); }
