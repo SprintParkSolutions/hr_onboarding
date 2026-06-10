@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Search, Filter, Star, X, RefreshCw,
   Briefcase, Award, TrendingUp, CheckCircle,
-  Mail, Send, Zap, ChevronDown,
+  Mail, Send, ChevronDown,
 } from "lucide-react";
 
 type InterviewStatus = "— Select —" | "Shortlisted" | "Scheduled" | "On Hold" | "Rejected" | "Hired";
@@ -109,7 +109,6 @@ export default function CandidatesPage() {
   const [sent,       setSent]        = useState(false);
   const [search,     setSearch]      = useState("");
   const [filterOpen, setFilterOpen]  = useState(false);
-  const [showBanner, setShowBanner]  = useState(true);
 
   const doneCount    = candidates.filter(c => c.interviewDone).length;
   const pendingCount = candidates.length - doneCount;
@@ -153,20 +152,9 @@ export default function CandidatesPage() {
         </div>
         <div className="header-actions">
           <button className="btn-refresh"><RefreshCw size={13} /> Refresh</button>
-          <button className="btn-salesforce"><Zap size={13} /> Analyse from Salesforce</button>
+          <button className="btn-salesforce">⚡ Analyse from Salesforce</button>
         </div>
       </div>
-
-      {/* ── Backend banner ── */}
-      {showBanner && (
-        <div className="backend-banner">
-          <span className="banner-icon">↗</span>
-          <span>
-            <strong>Backend not reachable</strong> — showing demo data. Start your FastAPI server and click <strong>Refresh</strong>, or click <Zap size={11} style={{display:"inline",verticalAlign:"middle"}} /> <strong>Analyse from Salesforce</strong> to run a fresh analysis.
-          </span>
-          <button className="banner-close" onClick={() => setShowBanner(false)}><X size={13} /></button>
-        </div>
-      )}
 
       {/* ── Toolbar ── */}
       <div className="toolbar">
