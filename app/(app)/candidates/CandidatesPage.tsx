@@ -1,6 +1,6 @@
 "use client";
 import "./CandidatesPage.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Search, Filter, Star, X, RefreshCw,
   Briefcase, Award, TrendingUp, CheckCircle,
@@ -23,6 +23,96 @@ type Candidate = {
 const STATUSES: InterviewStatus[] = [
   "— Select —", "Shortlisted", "Scheduled", "On Hold", "Rejected", "Hired",
 ];
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+function initialsOf(name: string) {
+  const parts = (name || "Candidate").trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0]?.slice(0, 2).toUpperCase() || "CA";
+}
+
+function avatarColor(name: string) {
+  const palette = ["#8b5cf6", "#2563eb", "#0891b2", "#10b981", "#f59e0b", "#ef4444"];
+  let hash = 0;
+  for (let i = 0; i < (name || "Candidate").length; i += 1) {
+    hash = (hash * 31 + (name || "Candidate").charCodeAt(i)) % palette.length;
+  }
+  return palette[hash];
+}
+
+function normalizeSkills(skills: unknown, score: number) {
+  const fallback = Math.max(65, Math.min(98, score));
+
+  if (Array.isArray(skills)) {
+    return skills
+      .map((skill, index) => {
+        if (typeof skill === "string") {
+          const name = skill.trim();
+          return name ? { name, level: Math.max(60, Math.min(98, fallback - index * 2)) } : null;
+        }
+        if (skill && typeof skill === "object" && "name" in skill) {
+          const typedSkill = skill as { name?: string; level?: number };
+          return typedSkill.name
+            ? { name: typedSkill.name, level: Math.max(60, Math.min(98, typedSkill.level ?? fallback)) }
+            : null;
+        }
+        return null;
+      })
+      .filter(Boolean) as { name: string; level: number }[];
+  }
+
+  if (typeof skills === "string") {
+    return skills
+      .split(",")
+      .map((item, index) => {
+        const name = item.trim();
+        return name ? { name, level: Math.max(60, Math.min(98, fallback - index * 2)) } : null;
+      })
+      .filter(Boolean) as { name: string; level: number }[];
+  }
+
+  return [{ name: "Core Skills", level: fallback }];
+}
+
+function normalizeCandidate(raw: any): Candidate {
+  const score = Math.max(0, Math.min(100, Number(raw.ai_score ?? raw.score ?? 0) || 0));
+  const name = raw.name || "Unknown Candidate";
+  const role = raw.role || raw.job_title || raw.position || "Candidate";
+  const tags = Array.isArray(raw.tags)
+    ? raw.tags.filter(Boolean).map(String)
+    : (typeof raw.skills === "string"
+        ? raw.skills.split(",").map((item: string) => item.trim()).filter(Boolean)
+        : [role]);
+
+  return {
+    initials: (raw.initials || initialsOf(name)).toUpperCase(),
+    color: raw.color || avatarColor(name),
+    name,
+    role,
+    score,
+    stage: raw.stage || (score >= 85 ? "Shortlisted" : "Review"),
+    tags: tags.slice(0, 5),
+    yoe: raw.yoe || "N/A",
+    email: raw.email || "noreply@example.com",
+    interviewDone: false,
+    interviewStatus: "— Select —",
+    summary:
+      raw.summary ||
+      raw.analysis_summary ||
+      `${name} is a strong candidate for the ${role} role. Review the AI match details and interview status in the dashboard.`,
+    experience: Array.isArray(raw.experience)
+      ? raw.experience
+      : [],
+    skills: normalizeSkills(raw.skills ?? tags, score),
+    dimensions: [
+      { label: "Skills", score: Math.min(99, Math.max(60, score + 2)) },
+      { label: "Experience", score: Math.min(99, Math.max(60, score - 1)) },
+      { label: "Communication", score: Math.min(99, Math.max(60, score - 3)) },
+      { label: "Culture Fit", score: Math.min(99, Math.max(60, score + 1)) },
+    ],
+  };
+}
 
 const initCandidates: Candidate[] = [
   {
@@ -104,14 +194,68 @@ function ScoreRing({ score }: { score: number }) {
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>(initCandidates);
-  const [selected,   setSelected]   = useState<Candidate | null>(null);
-  const [emailModal, setEmailModal]  = useState<EmailModal>(null);
-  const [sent,       setSent]        = useState(false);
-  const [search,     setSearch]      = useState("");
-  const [filterOpen, setFilterOpen]  = useState(false);
+  const [selected, setSelected] = useState<Candidate | null>(null);
+  const [emailModal, setEmailModal] = useState<EmailModal>(null);
+  const [sent, setSent] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const doneCount    = candidates.filter(c => c.interviewDone).length;
+  const doneCount = candidates.filter(c => c.interviewDone).length;
   const pendingCount = candidates.length - doneCount;
+
+  async function loadCandidates() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/candidates?min_score=80`, { cache: "no-store" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to load candidates from the backend.");
+      }
+
+      const nextCandidates = (data.candidates || []).map((item: unknown) => normalizeCandidate(item));
+      setCandidates(nextCandidates.length ? nextCandidates : initCandidates);
+      setSelected((current) => current ? nextCandidates.find((item: Candidate) => item.name === current.name) || null : null);
+    } catch (err) {
+      console.error("Failed to load candidates", err);
+      setError("Could not load data from the backend. Showing sample candidates instead.");
+      setCandidates(initCandidates);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function analyzeFromSalesforce() {
+    setIsAnalyzing(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/analyze-salesforce?score_threshold=80`, {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Salesforce analysis failed.");
+      }
+
+      await loadCandidates();
+    } catch (err) {
+      console.error("Salesforce analysis failed", err);
+      setError("Salesforce analysis could not be completed right now.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCandidates();
+  }, []);
 
   function toggleDone(name: string) {
     setCandidates(prev => prev.map(c => c.name === name ? { ...c, interviewDone: !c.interviewDone } : c));
@@ -132,9 +276,28 @@ export default function CandidatesPage() {
     setSent(false);
   }
 
-  function handleSend() {
+  async function handleSend() {
+    if (!emailModal) return;
+
     setSent(true);
-    setTimeout(() => setEmailModal(null), 1500);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/candidates/send-email?candidate_email=${encodeURIComponent(emailModal.candidate.email)}`,
+        { method: "POST" }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Email delivery failed.");
+      }
+
+      setTimeout(() => setEmailModal(null), 1000);
+    } catch (err) {
+      console.error("Email send failed", err);
+      setSent(false);
+      setError("Email delivery failed. Please verify the backend email settings.");
+    }
   }
 
   const filtered = candidates.filter(c =>
@@ -148,13 +311,19 @@ export default function CandidatesPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Candidates — Interview Stage</h1>
-          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {pendingCount} pending</p>
+          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {pendingCount} pending{loading ? " · loading" : ""}</p>
         </div>
         <div className="header-actions">
-          <button className="btn-refresh"><RefreshCw size={13} /> Refresh</button>
-          <button className="btn-salesforce">⚡ Analyse from Salesforce</button>
+          <button className="btn-refresh" onClick={() => loadCandidates()} disabled={loading}>
+            <RefreshCw size={13} /> {loading ? "Refreshing..." : "Refresh"}
+          </button>
+          <button className="btn-salesforce" onClick={analyzeFromSalesforce} disabled={isAnalyzing}>
+            {isAnalyzing ? "Analyzing..." : "⚡ Analyse from Salesforce"}
+          </button>
         </div>
       </div>
+
+      {error ? <p className="page-sub" style={{ color: "#ef4444", marginTop: "-6px" }}>{error}</p> : null}
 
       {/* ── Toolbar ── */}
       <div className="toolbar">
