@@ -164,3 +164,107 @@
 @media (max-width: 600px) {
   .fm-two-col, .fm-round-head { grid-template-columns: 1fr; }
 }
+/* ── Add these to your existing FeedbackPage.css ── */
+
+.fb-ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: #888;
+  font-size: 13px;
+}
+
+.fb-ai-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  background: rgba(184, 117, 160, 0.08);
+  border-radius: 10px;
+  color: #8A4A78;
+  font-size: 13px;
+}
+
+.fb-ai-generated-note {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #aaa;
+  text-align: right;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+  display: inline-block;
+}
+
+/* ── Manager email input in approval modal footer ── */
+.fb-modal-ft {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(168, 152, 216, 0.15);
+}
+
+.fm-manager-email-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fm-manager-email-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.fm-manager-email-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid rgba(168, 152, 216, 0.35);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  background: #faf9fc;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.fm-manager-email-input:focus {
+  border-color: #A898D8;
+  background: #fff;
+}
+
+.fm-manager-email-input.input-error {
+  border-color: #B875A0;
+  background: rgba(184, 117, 160, 0.04);
+}
+
+.fm-manager-email-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fm-email-error {
+  font-size: 11px;
+  color: #B875A0;
+}
+
+.fm-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-send:disabled:not(.sent) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
