@@ -54,3 +54,11 @@ __pycache__/
 .next/
 node_modules/
 
+
+# Nested project folders
+frontend/.next/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
+backend/__pycache__/
+backend/manager_backend/__pycache__/
+backend/.env
