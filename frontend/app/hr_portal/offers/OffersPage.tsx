@@ -1,68 +1,22 @@
 ﻿"use client";
 import "./OffersPage.css";
-import { FileText, Send, Users, Calendar, Cpu, TrendingUp, Pencil, Check, X } from "lucide-react";
-import { useState } from "react";
+import { FileText, Send, Pencil, Check, X, RefreshCw, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useInterviewStore } from "@/lib/interviewStore";
 
-const initialOffers = [
-  { initials: "RK", color: "#f59e0b", name: "Rohan Kapoor",   role: "Product Designer",        band: "₹28L – ₹32L", equity: "0.05%", bonus: "₹2L", status: "Sent",     sentDate: "20 May 2026" },
-  { initials: "SM", color: "#8b5cf6", name: "Sarah Mitchell",  role: "Senior Backend Engineer", band: "₹42L – ₹48L", equity: "0.1%",  bonus: "₹4L", status: "Draft",    sentDate: "—" },
-  { initials: "MG", color: "#2563eb", name: "Marco Greco",     role: "DevOps Engineer",         band: "₹36L – ₹40L", equity: "0.08%", bonus: "₹3L", status: "Accepted", sentDate: "18 May 2026" },
-  { initials: "PS", color: "#0891b2", name: "Priya Sharma",    role: "Product Manager",         band: "₹38L – ₹44L", equity: "0.12%", bonus: "₹5L", status: "Declined", sentDate: "15 May 2026" },
-];
+type Offer = {
+  candidate_id?: string;
+  initials:  string;
+  color:     string;
+  name:      string;
+  role:      string;
+  band:      string;
+  bonus:     string;
+  status:    string;
+  sentDate:  string;
+};
 
-const hiredEmployees = [
-  {
-    initials: "MG", color: "#2563eb", name: "Marco Greco",
-    role: "DevOps Engineer", dept: "Infrastructure",
-    ctc: "₹38L", joiningDate: "2 Jun 2026",
-    technologies: ["Kubernetes", "Terraform", "AWS", "Docker", "CI/CD"],
-    reportingTo: "Sneha M.", location: "Bangalore",
-  },
-  {
-    initials: "YT", color: "#10b981", name: "Yuki Tanaka",
-    role: "Frontend Engineer", dept: "Engineering",
-    ctc: "₹24L", joiningDate: "9 Jun 2026",
-    technologies: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    reportingTo: "Arjun K.", location: "Remote",
-  },
-  {
-    initials: "AL", color: "#ef4444", name: "Aisha Levi",
-    role: "Data Scientist", dept: "Analytics",
-    ctc: "₹22L", joiningDate: "16 Jun 2026",
-    technologies: ["Python", "TensorFlow", "SQL", "Spark"],
-    reportingTo: "Rahul D.", location: "Hyderabad",
-  },
-  {
-    initials: "DS", color: "#8b5cf6", name: "Divya Sharma",
-    role: "Product Designer", dept: "Design",
-    ctc: "₹26L", joiningDate: "2 Jun 2026",
-    technologies: ["Figma", "Prototyping", "Design Systems", "User Research"],
-    reportingTo: "Priya R.", location: "Mumbai",
-  },
-  {
-    initials: "SJ", color: "#0891b2", name: "Suresh Joshi",
-    role: "DevOps Engineer", dept: "Infrastructure",
-    ctc: "₹34L", joiningDate: "23 Jun 2026",
-    technologies: ["Docker", "AWS", "CI/CD", "Grafana"],
-    reportingTo: "Sneha M.", location: "Bangalore",
-  },
-  {
-    initials: "RV", color: "#f59e0b", name: "Rohit Verma",
-    role: "Product Manager", dept: "Product",
-    ctc: "₹40L", joiningDate: "1 Jul 2026",
-    technologies: ["Roadmapping", "Agile", "SQL", "Mixpanel"],
-    reportingTo: "CEO", location: "Delhi",
-  },
-];
-
-const roleStats = [
-  { role: "Senior Backend Engineer", hired: 7,  target: 10, color: "#80B2FF" },
-  { role: "Product Designer",        hired: 5,  target: 6,  color: "#BA9FE7" },
-  { role: "Frontend Engineer",       hired: 11, target: 12, color: "#9CE0FF" },
-  { role: "Data Scientist",          hired: 3,  target: 5,  color: "#C8A8F0" },
-  { role: "DevOps Engineer",         hired: 3,  target: 4,  color: "#9E74D0" },
-  { role: "Product Manager",         hired: 6,  target: 8,  color: "#80B2FF" },
-];
+const MANAGER_API = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
 
 const statusStyle: Record<string, { bg: string; text: string }> = {
   Sent:     { bg: "rgba(128,178,255,0.2)",  text: "#1a6080" },
@@ -71,270 +25,257 @@ const statusStyle: Record<string, { bg: string; text: string }> = {
   Declined: { bg: "rgba(255,200,216,0.5)",  text: "#c0506a" },
 };
 
-type BgvCheck = { label: string; status: "Verified" | "Pending" | "In Progress" | "Failed" };
-type BgvRecord = {
-  initials: string; color: string; name: string; role: string;
-  agency: string; initiatedDate: string; expectedDate: string;
-  overallStatus: "Clear" | "Pending" | "In Progress" | "Action Required";
-  checks: BgvCheck[];
-};
-
-const bgvRecords: BgvRecord[] = [
-  {
-    initials: "MG", color: "#2563eb", name: "Marco Greco", role: "DevOps Engineer",
-    agency: "AuthBridge", initiatedDate: "19 May 2026", expectedDate: "26 May 2026",
-    overallStatus: "Clear",
-    checks: [
-      { label: "Identity",        status: "Verified"    },
-      { label: "Education",       status: "Verified"    },
-      { label: "Employment",      status: "Verified"    },
-      { label: "Criminal Record", status: "Verified"    },
-      { label: "Address",         status: "Verified"    },
-      { label: "Reference",       status: "Verified"    },
-    ],
-  },
-  {
-    initials: "YT", color: "#10b981", name: "Yuki Tanaka", role: "Frontend Engineer",
-    agency: "KPMG BGV", initiatedDate: "20 May 2026", expectedDate: "27 May 2026",
-    overallStatus: "In Progress",
-    checks: [
-      { label: "Identity",        status: "Verified"    },
-      { label: "Education",       status: "Verified"    },
-      { label: "Employment",      status: "In Progress" },
-      { label: "Criminal Record", status: "Pending"     },
-      { label: "Address",         status: "Pending"     },
-      { label: "Reference",       status: "In Progress" },
-    ],
-  },
-  {
-    initials: "AL", color: "#ef4444", name: "Aisha Levi", role: "Data Scientist",
-    agency: "AuthBridge", initiatedDate: "21 May 2026", expectedDate: "28 May 2026",
-    overallStatus: "Action Required",
-    checks: [
-      { label: "Identity",        status: "Verified"    },
-      { label: "Education",       status: "Failed"      },
-      { label: "Employment",      status: "Verified"    },
-      { label: "Criminal Record", status: "Verified"    },
-      { label: "Address",         status: "Pending"     },
-      { label: "Reference",       status: "Verified"    },
-    ],
-  },
-  {
-    initials: "DS", color: "#8b5cf6", name: "Divya Sharma", role: "Product Designer",
-    agency: "First Advantage", initiatedDate: "18 May 2026", expectedDate: "25 May 2026",
-    overallStatus: "Clear",
-    checks: [
-      { label: "Identity",        status: "Verified"    },
-      { label: "Education",       status: "Verified"    },
-      { label: "Employment",      status: "Verified"    },
-      { label: "Criminal Record", status: "Verified"    },
-      { label: "Address",         status: "Verified"    },
-      { label: "Reference",       status: "Verified"    },
-    ],
-  },
-  {
-    initials: "SJ", color: "#0891b2", name: "Suresh Joshi", role: "DevOps Engineer",
-    agency: "KPMG BGV", initiatedDate: "22 May 2026", expectedDate: "29 May 2026",
-    overallStatus: "Pending",
-    checks: [
-      { label: "Identity",        status: "Pending"     },
-      { label: "Education",       status: "Pending"     },
-      { label: "Employment",      status: "Pending"     },
-      { label: "Criminal Record", status: "Pending"     },
-      { label: "Address",         status: "Pending"     },
-      { label: "Reference",       status: "Pending"     },
-    ],
-  },
-];
-
 export default function OffersPage() {
-  const [offers, setOffers] = useState(initialOffers);
-  // editingBand: index of the row being edited, or null
-  const [editingBand, setEditingBand] = useState<number | null>(null);
-  const [bandDraft, setBandDraft] = useState("");
+  const { refreshKey, refreshAll } = useInterviewStore();
 
-  function startEdit(index: number) {
-    setEditingBand(index);
-    setBandDraft(offers[index].band);
+  const [offers,       setOffers]       = useState<Offer[]>([]);
+  const [loading,      setLoading]      = useState(false);
+  const [fetchError,   setFetchError]   = useState(false);
+
+  const [editingBand,  setEditingBand]  = useState<number | null>(null);
+  const [bandDraft,    setBandDraft]    = useState("");
+  const [editingBonus, setEditingBonus] = useState<number | null>(null);
+  const [bonusDraft,   setBonusDraft]   = useState("");
+
+  async function fetchOffers() {
+    setLoading(true);
+    setFetchError(false);
+    /* Clear stale offers immediately for visual feedback */
+    setOffers([]);
+    try {
+      const res = await fetch(`${MANAGER_API}/manager/offers`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const live: Offer[] = (data.offers || []).map((o: any) => ({
+        candidate_id: o.candidate_id,
+        initials:  o.initials || (o.candidate_name?.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() || "?"),
+        color:     o.color           || "#6366f1",
+        name:      o.candidate_name  || "",
+        role:      o.role            || "",
+        band:      o.band            || "TBD",
+        bonus:     o.bonus           || "TBD",
+        status:    o.status          || "Draft",
+        sentDate:  o.sent_date       || "—",
+      }));
+      setOffers(live);
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function commitEdit(index: number) {
-    const trimmed = bandDraft.trim();
-    if (trimmed) {
-      setOffers((prev) =>
-        prev.map((o, i) => (i === index ? { ...o, band: trimmed } : o))
+  /* Auto-fetch on mount */
+  useEffect(() => { fetchOffers(); }, []);
+
+  /* Re-fetch whenever global refresh fires — clears offers (DB was wiped by refreshAll) */
+  useEffect(() => {
+    if (refreshKey === 0) return;   /* skip initial mount */
+    setOffers([]);                  /* clear immediately — backend was wiped */
+    setEditingBand(null);
+    setEditingBonus(null);
+    setSendError(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  const [sending,  setSending]  = useState<string | null>(null);  /* candidate_id being sent */
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  async function handleSend(o: Offer) {
+    if (!o.candidate_id) { setSendError("No candidate ID — cannot send."); return; }
+    setSending(o.candidate_id);
+    setSendError(null);
+    try {
+      const res = await fetch(
+        `${MANAGER_API}/manager/send-offer?candidate_id=${encodeURIComponent(o.candidate_id)}`,
+        { method: "POST" },
       );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.detail || `Error ${res.status}`);
+      /* Update status locally so UI reflects Sent immediately */
+      const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      setOffers(prev => prev.map(x =>
+        x.candidate_id === o.candidate_id ? { ...x, status: "Sent", sentDate: today } : x
+      ));
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "Failed to send offer.");
+    } finally {
+      setSending(null);
+    }
+  }
+  function commitBandEdit(i: number) {
+    const v = bandDraft.trim();
+    if (v) {
+      const updated = offers.map((o, idx) => idx === i ? { ...o, band: v } : o);
+      setOffers(updated);
+      const id = updated[i].candidate_id;
+      if (id) fetch(`${MANAGER_API}/manager/offers/${encodeURIComponent(id)}?band=${encodeURIComponent(v)}`, { method: "PATCH" }).catch(() => {});
     }
     setEditingBand(null);
   }
 
-  function cancelEdit() {
-    setEditingBand(null);
+  /* ── Bonus edit ── */
+  function commitBonusEdit(i: number) {
+    const v = bonusDraft.trim();
+    if (v) {
+      const updated = offers.map((o, idx) => idx === i ? { ...o, bonus: v } : o);
+      setOffers(updated);
+      const id = updated[i].candidate_id;
+      if (id) fetch(`${MANAGER_API}/manager/offers/${encodeURIComponent(id)}?bonus=${encodeURIComponent(v)}`, { method: "PATCH" }).catch(() => {});
+    }
+    setEditingBonus(null);
   }
+
+  /* ── Shared inline edit input ── */
+  const editInput = (
+    value: string,
+    onChange: (v: string) => void,
+    onCommit: () => void,
+    onCancel: () => void,
+  ) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <input
+        value={value} autoFocus
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") onCommit(); if (e.key === "Escape") onCancel(); }}
+        style={{ width: 130, padding: "4px 8px", border: "1.5px solid #9E74D0", borderRadius: 6, fontSize: 13, fontWeight: 600, outline: "none", boxShadow: "0 0 0 3px rgba(158,116,208,0.2)", fontFamily: "inherit" }}
+      />
+      <button onClick={onCommit} style={{ width: 26, height: 26, border: "none", borderRadius: 6, background: "rgba(16,185,129,0.15)", color: "#10b981", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={13} /></button>
+      <button onClick={onCancel} style={{ width: 26, height: 26, border: "none", borderRadius: 6, background: "rgba(239,68,68,0.12)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
+    </div>
+  );
+
+  const editableCell = (value: string, onEdit: () => void) => (
+    <div onClick={onEdit} title="Click to edit" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", padding: "4px 10px", borderRadius: 6, border: "1.5px dashed #9E74D0", background: "rgba(158,116,208,0.07)" }}>
+      <span style={{ fontWeight: 600, color: "var(--text)" }}>{value}</span>
+      <Pencil size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
+    </div>
+  );
 
   return (
     <div className="offers">
+      {/* ── Header ── */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Offers</h1>
-          <p className="page-sub">142 offers generated · 89 accepted this quarter</p>
+          <p className="page-sub">
+            {loading ? "Loading…" : `${offers.length} offer${offers.length !== 1 ? "s" : ""} · populated when manager approves`}
+          </p>
         </div>
-        <button className="btn-primary">+ Generate offer</button>
-      </div>
-
-      {/* ── Offers Table ── */}
-      <div className="card">
-        <div className="table-scroll">
-        <table className="offers-table">
-          <thead>
-            <tr><th>Candidate</th><th>Role</th><th>Compensation Band</th><th>Equity</th><th>Joining Bonus</th><th>Status</th><th>Sent</th><th>Actions</th></tr>
-          </thead>
-          <tbody>
-            {offers.map((o, i) => (
-              <tr key={o.name}>
-                <td><div className="cand-cell"><div className="avatar" style={{ background: o.color }}>{o.initials}</div><span className="cand-name">{o.name}</span></div></td>
-                <td className="role-cell">{o.role}</td>
-                <td style={{ fontWeight: 600, color: "var(--text)" }}>
-                  {editingBand === i ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <input
-                        value={bandDraft}
-                        autoFocus
-                        onChange={(e) => setBandDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitEdit(i);
-                          if (e.key === "Escape") cancelEdit();
-                        }}
-                        style={{
-                          width: 140,
-                          padding: "4px 8px",
-                          border: "1.5px solid #9E74D0",
-                          borderRadius: 6,
-                          fontSize: 13,
-                          fontWeight: 600,
-                          outline: "none",
-                          boxShadow: "0 0 0 3px rgba(158,116,208,0.2)",
-                        }}
-                      />
-                      <button
-                        onClick={() => commitEdit(i)}
-                        title="Save"
-                        style={{ display:"flex", alignItems:"center", justifyContent:"center", width:26, height:26, border:"none", borderRadius:6, background:"rgba(16,185,129,0.15)", color:"#10b981", cursor:"pointer" }}
-                      ><Check size={13} /></button>
-                      <button
-                        onClick={cancelEdit}
-                        title="Cancel"
-                        style={{ display:"flex", alignItems:"center", justifyContent:"center", width:26, height:26, border:"none", borderRadius:6, background:"rgba(239,68,68,0.12)", color:"#ef4444", cursor:"pointer" }}
-                      ><X size={13} /></button>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => startEdit(i)}
-                      title="Click to edit"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        cursor: "pointer",
-                        padding: "4px 10px",
-                        borderRadius: 6,
-                        border: "1.5px dashed #9E74D0",
-                        background: "rgba(158,116,208,0.07)",
-                      }}
-                    >
-                      <span>{o.band}</span>
-                      <Pencil size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
-                    </div>
-                  )}
-                </td>
-                <td>{o.equity}</td>
-                <td>{o.bonus}</td>
-                <td><span className="status-badge" style={{ background: statusStyle[o.status].bg, color: statusStyle[o.status].text }}>{o.status}</span></td>
-                <td className="date-cell">{o.sentDate}</td>
-                <td>
-                  <div className="row-actions">
-                    <button className="btn-outline-sm"><FileText size={12} /> View</button>
-                    {o.status === "Draft" && <button className="btn-primary-sm"><Send size={12} /> Send</button>}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => { refreshAll(); }}
+            disabled={loading}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: 9, fontSize: 12, fontWeight: 600, color: "#4f46e5", cursor: "pointer", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}
+          >
+            <RefreshCw size={12} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
+            {loading ? "Loading…" : "Refresh"}
+          </button>
+          <button className="btn-primary">+ Generate offer</button>
         </div>
       </div>
 
-      {/* ── Hired by Role ── */}
-      <div className="section-heading">
-        <Users size={16} color="#9E74D0" />
-        <span>Hired by Role</span>
-        <span className="section-sub">This quarter · {roleStats.reduce((s, r) => s + r.hired, 0)} total hires</span>
-      </div>
-      <div className="role-stats-grid">
-        {roleStats.map((r) => (
-          <div key={r.role} className="role-stat-card">
-            <div className="rs-top">
-              <span className="rs-role">{r.role}</span>
-              <span className="rs-count" style={{ color: r.color }}>{r.hired}<span className="rs-target">/{r.target}</span></span>
-            </div>
-            <div className="rs-bar-wrap">
-              <div className="rs-bar" style={{ width: `${(r.hired / r.target) * 100}%`, background: r.color }} />
-            </div>
-            <div className="rs-label">{r.hired} hired of {r.target} target · {Math.round((r.hired / r.target) * 100)}% filled</div>
+      {/* ── Send error banner ── */}
+      {sendError && (
+        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 16px", background:"rgba(220,53,69,0.07)", border:"1px solid rgba(220,53,69,0.2)", borderRadius:10, fontSize:13, color:"#b02030", marginBottom:8 }}>
+          <AlertCircle size={15} style={{ flexShrink:0 }} />
+          {sendError}
+          <button onClick={() => setSendError(null)} style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:"#b02030" }}><X size={14}/></button>
+        </div>
+      )}
+      {fetchError && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 10, fontSize: 13, color: "#92400e", marginBottom: 8 }}>
+          <AlertCircle size={15} style={{ flexShrink: 0 }} />
+          Could not reach Manager Backend (localhost:8001). Start it to see offers.
+        </div>
+      )}
+
+      {/* ── Empty state ── */}
+      {!loading && !fetchError && offers.length === 0 && (
+        <div style={{ padding: 48, textAlign: "center", color: "#9ca3af", fontSize: 13, background: "#fff", border: "1px solid rgba(221,208,232,0.4)", borderRadius: 14 }}>
+          No offers yet. When the manager approves a candidate in the Interviews page, their offer will appear here.
+        </div>
+      )}
+
+      {/* ── Offers table ── */}
+      {offers.length > 0 && (
+        <div className="card">
+          <div className="table-scroll">
+            <table className="offers-table">
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Role</th>
+                  <th>Compensation Band</th>
+                  <th>Joining Bonus</th>
+                  <th>Status</th>
+                  <th>Sent</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {offers.map((o, i) => (
+                  <tr key={`${o.name}-${i}`}>
+                    <td>
+                      <div className="cand-cell">
+                        <div className="avatar" style={{ background: o.color }}>{o.initials}</div>
+                        <div>
+                          <span className="cand-name">{o.name}</span>
+                          {o.candidate_id && (
+                            <div style={{ fontSize: 10, color: "#6366f1", fontWeight: 600, marginTop: 2 }}>✓ Manager Approved</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="role-cell">{o.role}</td>
+
+                    {/* Editable band */}
+                    <td>
+                      {editingBand === i
+                        ? editInput(bandDraft, setBandDraft, () => commitBandEdit(i), () => setEditingBand(null))
+                        : editableCell(o.band, () => { setEditingBand(i); setBandDraft(o.band); })}
+                    </td>
+
+                    {/* Editable bonus */}
+                    <td>
+                      {editingBonus === i
+                        ? editInput(bonusDraft, setBonusDraft, () => commitBonusEdit(i), () => setEditingBonus(null))
+                        : editableCell(o.bonus, () => { setEditingBonus(i); setBonusDraft(o.bonus); })}
+                    </td>
+
+                    <td>
+                      <span className="status-badge" style={{ background: statusStyle[o.status]?.bg || "rgba(221,208,232,0.3)", color: statusStyle[o.status]?.text || "#9090b0" }}>
+                        {o.status}
+                      </span>
+                    </td>
+                    <td className="date-cell">{o.sentDate}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="btn-outline-sm"><FileText size={12} /> View</button>
+                        {o.status === "Draft" && (
+                          <button
+                            className="btn-primary-sm"
+                            disabled={sending === o.candidate_id}
+                            onClick={() => handleSend(o)}
+                            style={{ opacity: sending === o.candidate_id ? 0.7 : 1 }}
+                          >
+                            {sending === o.candidate_id
+                              ? <><RefreshCw size={11} style={{ animation:"spin 1s linear infinite" }}/> Sending…</>
+                              : <><Send size={12} /> Send</>
+                            }
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
-
-      {/* ── Hired Employees Detail ── */}
-      <div className="section-heading">
-        <TrendingUp size={16} color="#9E74D0" />
-        <span>Hired Employees</span>
-        <span className="section-sub">CTC, joining date & technology stack</span>
-      </div>
-      <div className="card">
-        <div className="table-scroll">
-        <table className="hired-table">
-          <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Role / Dept</th>
-              <th><span className="th-icon"><TrendingUp size={11} /> CTC</span></th>
-              <th><span className="th-icon"><Calendar size={11} /> Joining Date</span></th>
-              <th>Location</th>
-              <th>Reporting To</th>
-              <th><span className="th-icon"><Cpu size={11} /> Technologies</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {hiredEmployees.map((e) => (
-              <tr key={e.name}>
-                <td>
-                  <div className="cand-cell">
-                    <div className="avatar" style={{ background: e.color }}>{e.initials}</div>
-                    <span className="cand-name">{e.name}</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="role-dept-cell">
-                    <span className="role-cell">{e.role}</span>
-                    <span className="dept-tag">{e.dept}</span>
-                  </div>
-                </td>
-                <td><span className="ctc-val">{e.ctc}</span></td>
-                <td><span className="joining-date">{e.joiningDate}</span></td>
-                <td className="date-cell">{e.location}</td>
-                <td className="date-cell">{e.reportingTo}</td>
-                <td>
-                  <div className="tech-tags">
-                    {e.technologies.map(t => <span key={t} className="tech-tag">{t}</span>)}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
         </div>
-      </div>
+      )}
+
+      <style>{`@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
     </div>
   );
 }

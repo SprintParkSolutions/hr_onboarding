@@ -1,7 +1,7 @@
 "use client";
 import "./FeedbackPage.css";
 import { useState, useMemo, useEffect } from "react";
-import { Star, X, MessageSquare, CheckCircle, Circle, Clock, Loader2, AlertCircle } from "lucide-react";
+import { Star, X, MessageSquare, CheckCircle, Circle, Clock, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useInterviewStore, type Candidate, type Round, type RoundStatus as InterviewRoundStatus, API_BASE_URL, apiHeaders } from "@/lib/interviewStore";
 
 /* ── Types ──────────────────────────────────────────────── */
@@ -633,8 +633,7 @@ function ApprovalModal({
 
 /* ── Page ───────────────────────────────────────────────── */
 export default function FeedbackPage() {
-  const { candidates } = useInterviewStore();
-
+  const { candidates, refreshKey } = useInterviewStore();
   const [approvalFilter, setApprovalFilter] = useState("All");
   const [jobFilter, setJobFilter] = useState("All Roles");
   const [dateFilter, setDateFilter] = useState("Any Date");
@@ -654,7 +653,7 @@ export default function FeedbackPage() {
   );
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [sentId,    setSentId]    = useState<number | null>(null);
-  const [managerStatus, setManagerStatus] = useState<Record<number, "approved" | "rejected" | "pending">>({});
+  const [managerStatus, setManagerStatus] = useState<Record<number, "approved" | "rejected" | "pending" | "new_round">>({});
 
   const MANAGER_API = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
 
@@ -676,7 +675,6 @@ export default function FeedbackPage() {
       const approvedIds = new Set<number>();
 
       for (const s of data.statuses || []) {
-        // Map backendId → frontend numeric id
         const candidate = candidates.find(c => c.backendId === s.candidate_id);
         if (!candidate) continue;
 
@@ -685,6 +683,8 @@ export default function FeedbackPage() {
           approvedIds.add(candidate.id);
         } else if (s.manager_decision === "rejected") {
           statuses[candidate.id] = "rejected";
+        } else if (s.manager_decision === "new_round") {
+          statuses[candidate.id] = "new_round" as any;
         } else {
           statuses[candidate.id] = "pending";
         }
@@ -706,13 +706,38 @@ export default function FeedbackPage() {
     }
   }
 
-  // Poll on mount and every 30 seconds
+  /* ── Demo refresh: resets all approval states so HR can re-send ── */
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    setApprovalState(
+      Object.fromEntries(candidates.map(c => [c.id, "pending" as const]))
+    );
+    setManagerStatus({});
+    setSentId(null);
+    await new Promise(r => setTimeout(r, 400));
+    setIsRefreshing(false);
+  }
+
+  /* ── Sync with global refresh from HR Interviews page ── */
+  useEffect(() => {
+    if (refreshKey === 0) return;   /* skip initial mount */
+    setApprovalState(
+      Object.fromEntries(candidates.map(c => [c.id, "pending" as const]))
+    );
+    setManagerStatus({});
+    setSentId(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  // Poll manager statuses on mount only (not on every candidates change)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     refreshManagerStatuses();
     const interval = setInterval(refreshManagerStatuses, 30_000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candidates]);
+  }, []); // empty deps — only on mount
 
   /* Build derived feedback for all candidates from live store (no static data) */
   const allFeedback = useMemo(
@@ -849,7 +874,22 @@ export default function FeedbackPage() {
             {avgRating}/5
           </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "7px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600,
+            background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)",
+            color: "#4f46e5", cursor: "pointer", fontFamily: "inherit",
+            opacity: isRefreshing ? 0.6 : 1,
+          }}
+        >
+          <RefreshCw size={12} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none" }}/>
+          {isRefreshing ? "Refreshing…" : "Refresh"}
+        </button>
       </div>
+      <style>{`@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }`}</style>
 
       {/* Filters */}
       <div className="fb-filters">
@@ -1020,6 +1060,11 @@ export default function FeedbackPage() {
                     if (dec === "rejected") return (
                       <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, background:"rgba(220,53,69,0.1)", color:"#b02030" }}>
                         <Circle size={12} /> Rejected
+                      </span>
+                    );
+                    if (dec === "new_round") return (
+                      <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:700, background:"rgba(99,102,241,0.1)", color:"#4f46e5" }}>
+                        <Clock size={12} /> Manager: New Round Added
                       </span>
                     );
                     return (

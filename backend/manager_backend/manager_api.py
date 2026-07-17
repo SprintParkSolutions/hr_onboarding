@@ -16,6 +16,7 @@ MongoDB collections used (all in db: hr_recruitment):
   - interview_details   (shared with HR backend — read only here)
   - candidates          (shared with HR backend — read only here)
   - manager_approvals   (owned by manager backend)
+  - manager_offers       (owned by manager backend)
 
 Endpoints:
   POST  /manager/hr-approve                              → HR submits approval
@@ -23,11 +24,19 @@ Endpoints:
   PATCH /manager/approved-candidates/{id}/decision       → Manager approve/reject
   GET   /manager/approved-candidates/{id}                → Single candidate detail
   GET   /manager/health                                  → Health check
+  POST  /manager/offers                                  → Save approved candidate as offer
+  GET   /manager/offers                                  → List offers
+  PATCH /manager/offers/{id}                              → Update band / bonus / doj / status
+  POST  /manager/send-offer                               → Generate PDF offer letter + email it
+  POST  /manager/send-round-email                         → Send round-scheduling email + Teams link
 """
 
 import os
 import logging
-from datetime import datetime, timezone
+import re
+import base64
+import httpx
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from bson import ObjectId
@@ -38,6 +47,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from database import db, ping_db
+from offer_letter_generator import generate_offer_letter_pdf
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -46,14 +56,15 @@ logger = logging.getLogger("manager_api")
 
 # ── Collections ────────────────────────────────────────────────────────────────
 interview_col  = db["interview_details"]   # HR backend writes here
-candidates_col = db["candidates"]          # raw candidate profiles
+candidates_col = db["candidates"]          # raw candidate profiles — also used for offer-letter enrichment
 approvals_col  = db["manager_approvals"]   # owned by manager backend
+offers_col     = db["manager_offers"]      # owned by manager backend
 
 # ── App ────────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Manager Backend API",
     description="HR → Manager approval pipeline for the RecruitAI portal",
-    version="1.1.0",
+    version="1.2.0",
 )
 
 app.add_middleware(
@@ -146,6 +157,28 @@ async def _resolve_candidate(candidate_id: str) -> Optional[dict]:
 
     logger.warning("Could not resolve candidate_id=%s in any collection", cid)
     return None
+
+
+async def _get_candidate_profile(candidate_id: str) -> dict:
+    """
+    Best-effort fetch of the full `candidates` collection document for a
+    candidate — used to enrich the offer letter with extra fields (skills,
+    yoe, position_name, ai_score, etc.) beyond what's stored on the offer
+    record itself. Returns {} if nothing is found (never raises).
+    """
+    cid = candidate_id.strip()
+
+    doc = await candidates_col.find_one({"candidate_id": cid})
+    if doc:
+        return doc
+
+    oid = _try_object_id(cid)
+    if oid:
+        doc = await candidates_col.find_one({"_id": oid})
+        if doc:
+            return doc
+
+    return {}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -303,8 +336,8 @@ async def hr_approve(body: HRApproveRequest):
 async def get_approved_candidates(status: Optional[str] = None):
     """
     Returns candidates that HR has approved for manager review.
-    Query param `status` filters by "pending_manager" | "approved" | "rejected".
-    Default: returns all three statuses.
+    Rounds are enriched from live interview_details so the manager
+    always sees the current round status, not the stale snapshot.
     """
     query: dict = {}
     if status:
@@ -314,7 +347,21 @@ async def get_approved_candidates(status: Optional[str] = None):
 
     results = []
     async for doc in approvals_col.find(query).sort("hr_approved_at", -1):
-        results.append(_safe_id(doc))
+        safe = _safe_id(doc)
+
+        # ── Enrich rounds from live interview_details ──────────────────────────
+        candidate_id = safe.get("candidate_id", "")
+        if candidate_id:
+            iv_doc = await interview_col.find_one({"candidate_id": candidate_id})
+            if iv_doc and iv_doc.get("rounds"):
+                # Use live rounds from HR backend — these reflect markResult updates
+                safe["rounds"] = [
+                    {k: (str(v) if hasattr(v, "hex") else v.isoformat() if hasattr(v, "isoformat") else v)
+                     for k, v in r.items()}
+                    for r in iv_doc["rounds"]
+                ]
+
+        results.append(safe)
 
     return {"candidates": results, "total": len(results)}
 
@@ -343,8 +390,8 @@ async def get_approved_candidate(candidate_id: str):
     summary="Manager approves or rejects a candidate",
 )
 async def manager_decision(candidate_id: str, body: ManagerDecisionRequest):
-    if body.decision not in ("approved", "rejected"):
-        raise HTTPException(status_code=400, detail="decision must be 'approved' or 'rejected'")
+    if body.decision not in ("approved", "rejected", "new_round"):
+        raise HTTPException(status_code=400, detail="decision must be 'approved', 'rejected', or 'new_round'")
 
     doc = await approvals_col.find_one({"candidate_id": candidate_id})
     if not doc:
@@ -442,6 +489,523 @@ async def health():
         "status":    "ok",
         "service":   "manager-backend",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 7 — Demo reset: delete all approvals from MongoDB
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.delete("/manager/offers/reset", summary="Demo reset — clears all manager_offers from MongoDB")
+async def reset_offers():
+    result = await offers_col.delete_many({})
+    logger.info("Demo reset: deleted %d offer records", result.deleted_count)
+    return {"success": True, "deleted": result.deleted_count}
+
+
+@app.delete("/manager/reset", summary="Demo reset — clears all manager_approvals from MongoDB")
+async def reset_approvals():
+    """
+    Called when manager or HR clicks Refresh for demo purposes.
+    Deletes ALL documents from manager_approvals collection so the
+    next fetch returns empty, giving a clean slate.
+    """
+    result = await approvals_col.delete_many({})
+    logger.info("Demo reset: deleted %d approval records", result.deleted_count)
+    return {
+        "success": True,
+        "deleted": result.deleted_count,
+        "message": f"Cleared {result.deleted_count} approval record(s). Ready for fresh demo.",
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 8 — Offers: save approved candidate as offer
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/manager/offers", summary="Save approved candidate as offer for HR Offers page")
+async def create_offer(candidate_id: str):
+    """
+    Called automatically when manager clicks Approve.
+    Creates / upserts an offer record in manager_offers collection.
+    """
+    doc = await approvals_col.find_one({"candidate_id": candidate_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"No approval record for {candidate_id!r}")
+
+    now = datetime.now(timezone.utc)
+    offer = {
+        "candidate_id":    candidate_id,
+        "candidate_name":  doc.get("candidate_name", ""),
+        "candidate_email": doc.get("candidate_email", ""),
+        "initials":        doc.get("initials", ""),
+        "color":           doc.get("color", "#6366f1"),
+        "role":            doc.get("role", ""),
+        "band":            "TBD",
+        "bonus":           "TBD",
+        "doj":             "TBD",
+        "status":          "Draft",
+        "sent_date":       "—",
+        "approved_at":     now,
+        "updated_at":      now,
+    }
+    await offers_col.update_one(
+        {"candidate_id": candidate_id},
+        {"$set": offer},
+        upsert=True,
+    )
+    logger.info("Offer created for candidate %s", candidate_id)
+    return {"success": True, "candidate_id": candidate_id, "message": f"Offer created for {doc.get('candidate_name')}"}
+
+
+@app.get("/manager/offers", summary="Get all offers for HR Offers page")
+async def get_offers():
+    """Returns all candidates that were approved by manager, as offer records."""
+    results = []
+    async for doc in offers_col.find({}).sort("approved_at", -1):
+        results.append(_safe_id(doc))
+    return {"offers": results, "total": len(results)}
+
+
+@app.patch("/manager/offers/{candidate_id}", summary="Update offer band, bonus, DOJ, or status")
+async def update_offer(
+    candidate_id: str,
+    band: Optional[str] = None,
+    bonus: Optional[str] = None,
+    status: Optional[str] = None,
+    doj: Optional[str] = None,
+):
+    update: dict = {"updated_at": datetime.now(timezone.utc)}
+    if band:   update["band"]   = band
+    if bonus:  update["bonus"]  = bonus
+    if status: update["status"] = status
+    if doj:    update["doj"]    = doj
+    result = await offers_col.update_one({"candidate_id": candidate_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"No offer for {candidate_id!r}")
+    return {"success": True}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MS GRAPH HELPERS  (same credentials as HR backend via shared .env)
+# ══════════════════════════════════════════════════════════════════════════════
+
+AZURE_TENANT_ID     = os.getenv("AZURE_TENANT_ID", "")
+AZURE_CLIENT_ID     = os.getenv("AZURE_CLIENT_ID", "")
+AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET", "")
+SENDER_EMAIL        = os.getenv("SENDER_EMAIL", "")
+
+
+def _graph_token_url() -> str:
+    if not AZURE_TENANT_ID:
+        raise RuntimeError("AZURE_TENANT_ID not set")
+    return f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/token"
+
+
+def _graph_send_url() -> str:
+    if not SENDER_EMAIL:
+        raise RuntimeError("SENDER_EMAIL not set")
+    return f"https://graph.microsoft.com/v1.0/users/{SENDER_EMAIL}/sendMail"
+
+
+async def _get_graph_token(http: httpx.AsyncClient) -> str:
+    resp = await http.post(
+        _graph_token_url(),
+        data={
+            "grant_type":    "client_credentials",
+            "client_id":     AZURE_CLIENT_ID,
+            "client_secret": AZURE_CLIENT_SECRET,
+            "scope":         "https://graph.microsoft.com/.default",
+        },
+        timeout=15,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Azure token failed [{resp.status_code}]: {resp.text}")
+    data = resp.json()
+    if "access_token" not in data:
+        raise RuntimeError(f"No access_token: {data}")
+    logger.info("✅ Manager: Azure token obtained")
+    return data["access_token"]
+
+
+async def _send_graph_email(
+    http: httpx.AsyncClient,
+    token: str,
+    to_email: str,
+    subject: str,
+    body_html: str,
+    attachments: Optional[list] = None,
+) -> None:
+    """
+    Send an email via MS Graph. `attachments`, if provided, must be a list
+    of Graph fileAttachment dicts, e.g.:
+        {
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          "name": "Offer_Letter.pdf",
+          "contentType": "application/pdf",
+          "contentBytes": "<base64 string>",
+        }
+    """
+    message: dict = {
+        "subject": subject,
+        "body": {"contentType": "HTML", "content": body_html},
+        "toRecipients": [{"emailAddress": {"address": to_email}}],
+    }
+    if attachments:
+        message["attachments"] = attachments
+
+    resp = await http.post(
+        _graph_send_url(),
+        json={"message": message, "saveToSentItems": True},
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        timeout=30,
+    )
+    if resp.status_code not in (200, 202):
+        raise RuntimeError(f"sendMail failed [{resp.status_code}] → {to_email}: {resp.text}")
+    logger.info("✅ Manager: email sent to %s%s", to_email, " (with attachment)" if attachments else "")
+
+
+async def _create_teams_meeting(
+    http: httpx.AsyncClient,
+    token: str,
+    candidate_name: str,
+    candidate_email: str,
+    hr_email: str,
+    role: str,
+    date_str: str,
+    time_str: str,
+    duration_min: int,
+    round_no: int,
+) -> str:
+    """Creates a Teams calendar event and returns the joinUrl."""
+    # Try multiple date/time formats to be robust
+    start_dt = None
+    date_clean = (date_str or "").strip()
+    time_clean = (time_str or "").strip().upper().replace(".", "").replace(" ", "")
+
+    formats = [
+        ("%d %b %Y %I:%M%p",  f"{date_clean} {time_clean}"),
+        ("%d %B %Y %I:%M%p",  f"{date_clean} {time_clean}"),
+        ("%d-%m-%Y %H:%M",    f"{date_clean} {time_clean}"),
+        ("%d %b %Y %H:%M",    f"{date_clean} {time_clean}"),
+        ("%d %B %Y %H:%M",    f"{date_clean} {time_clean}"),
+        ("%d %b %Y %I:%M %p", f"{date_clean} {time_clean}"),
+        ("%d %B %Y %I:%M %p", f"{date_clean} {time_clean}"),
+    ]
+    for fmt, val in formats:
+        try:
+            start_dt = datetime.strptime(val, fmt)
+            break
+        except Exception:
+            continue
+
+    if start_dt is None:
+        # fallback: 1 hour from now
+        start_dt = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+        logger.warning("Could not parse date='%s' time='%s', using fallback", date_str, time_str)
+
+    end_dt = start_dt + timedelta(minutes=duration_min)
+
+    try:
+        resp = await http.post(
+            f"https://graph.microsoft.com/v1.0/users/{SENDER_EMAIL}/events",
+            json={
+                "subject": f"Managerial Round {round_no} — {role} | {candidate_name}",
+                "body": {
+                    "contentType": "HTML",
+                    "content": f"<p>Managerial round interview for <b>{candidate_name}</b> ({role}).</p>",
+                },
+                "start": {"dateTime": start_dt.strftime("%Y-%m-%dT%H:%M:%S"), "timeZone": "Asia/Kolkata"},
+                "end":   {"dateTime": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),   "timeZone": "Asia/Kolkata"},
+                "attendees": [
+                    {"emailAddress": {"address": candidate_email, "name": candidate_name}, "type": "required"},
+                    {"emailAddress": {"address": hr_email,        "name": "HR"},            "type": "required"},
+                ],
+                "isOnlineMeeting": True,
+                "onlineMeetingProvider": "teamsForBusiness",
+            },
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            timeout=30,
+        )
+        if resp.status_code >= 400:
+            logger.warning("Teams meeting creation failed [%d]: %s", resp.status_code, resp.text[:300])
+            return ""
+        return resp.json().get("onlineMeeting", {}).get("joinUrl", "")
+    except Exception as e:
+        logger.warning("Teams meeting exception: %s", e)
+        return ""
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 9 — Send round email + create Teams meeting
+# ══════════════════════════════════════════════════════════════════════════════
+
+class SendRoundEmailRequest(BaseModel):
+    candidateEmail:     str
+    candidateSubject:   str
+    candidateBody:      str
+    hrEmail:            str
+    hrSubject:          str
+    hrBody:             str
+    candidateName:      Optional[str] = "Candidate"
+    role:               Optional[str] = "Position"
+    roundNo:            Optional[int] = 1
+    date:               Optional[str] = "TBD"
+    time:               Optional[str] = "TBD"
+    duration:           Optional[str] = "60 min"
+    mode:               Optional[str] = "Video Call"
+    candidateId:        Optional[str] = None
+
+
+@app.post("/manager/send-round-email", summary="Send email to candidate + HR and create Teams meeting")
+async def send_round_email(body: SendRoundEmailRequest):
+    """
+    Called from Manager Interviews → Add Another Round → Send Email.
+    1. Creates a Teams meeting via MS Graph
+    2. Appends the Teams link to both email bodies
+    3. Sends emails to candidate and HR via MS Graph
+    4. Returns teamsLink so the frontend can activate the Join Meeting button
+    """
+    dur_match    = re.search(r"\d+", body.duration or "60")
+    duration_min = int(dur_match.group()) if dur_match else 60
+
+    async with httpx.AsyncClient() as http:
+        # ── Get Azure token ──────────────────────────────────────────────────
+        try:
+            token = await _get_graph_token(http)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Azure token failed: {e}")
+
+        # ── Create Teams meeting ─────────────────────────────────────────────
+        teams_link = ""
+        try:
+            teams_link = await _create_teams_meeting(
+                http=http, token=token,
+                candidate_name=body.candidateName or "Candidate",
+                candidate_email=body.candidateEmail,
+                hr_email=body.hrEmail,
+                role=body.role or "Position",
+                date_str=body.date or "TBD",
+                time_str=body.time or "TBD",
+                duration_min=duration_min,
+                round_no=body.roundNo or 1,
+            )
+        except Exception as e:
+            logger.warning("Teams meeting failed (non-fatal): %s", e)
+
+        # ── Build meeting block — ALWAYS inject prominently ─────────────────
+        # Strip the frontend placeholder line first
+        c_body_clean = body.candidateBody.replace(
+            "[The Microsoft Teams meeting link will be included below]", ""
+        ).strip()
+        h_body_clean = body.hrBody.strip()
+
+        if teams_link:
+            meeting_block = f"""
+<br><br>
+<div style="background:#f0f4ff;border-left:4px solid #6366f1;padding:16px 18px;border-radius:8px;font-family:sans-serif;">
+  <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#4f46e5;">📅 Interview Scheduled</p>
+  <table style="border-collapse:collapse;font-size:13px;color:#374151;width:100%;">
+    <tr><td style="padding:3px 0;width:110px;color:#6b7280;">Position</td><td style="padding:3px 0;"><b>{body.role}</b></td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Round</td><td style="padding:3px 0;">R{body.roundNo} — {body.mode}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Date</td><td style="padding:3px 0;">{body.date}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Time</td><td style="padding:3px 0;">{body.time}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Duration</td><td style="padding:3px 0;">{duration_min} min</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Mode</td><td style="padding:3px 0;">{body.mode}</td></tr>
+  </table>
+  <br>
+  <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#374151;">🔗 Microsoft Teams Meeting Link:</p>
+  <a href="{teams_link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:13px;">Join Meeting on Teams</a>
+  <br><br>
+  <p style="margin:0;font-size:11px;color:#9ca3af;">Or copy this link: <a href="{teams_link}" style="color:#6366f1;">{teams_link}</a></p>
+</div>
+"""
+        else:
+            # Teams creation failed — still show interview details clearly
+            meeting_block = f"""
+<br><br>
+<div style="background:#f9fafb;border-left:4px solid #e5e7eb;padding:16px 18px;border-radius:8px;font-family:sans-serif;">
+  <p style="margin:0 0 10px;font-size:14px;font-weight:700;color:#374151;">📅 Interview Details</p>
+  <table style="border-collapse:collapse;font-size:13px;color:#374151;width:100%;">
+    <tr><td style="padding:3px 0;width:110px;color:#6b7280;">Position</td><td style="padding:3px 0;"><b>{body.role}</b></td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Round</td><td style="padding:3px 0;">R{body.roundNo}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Date</td><td style="padding:3px 0;">{body.date}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Time</td><td style="padding:3px 0;">{body.time}</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Duration</td><td style="padding:3px 0;">{duration_min} min</td></tr>
+    <tr><td style="padding:3px 0;color:#6b7280;">Mode</td><td style="padding:3px 0;">{body.mode}</td></tr>
+  </table>
+  <p style="margin:10px 0 0;font-size:12px;color:#f59e0b;">⚠️ Meeting link will be shared separately before the interview.</p>
+</div>
+"""
+
+        candidate_body_html = c_body_clean.replace("\n", "<br>") + meeting_block
+        hr_body_html        = h_body_clean.replace("\n", "<br>") + meeting_block
+
+        # ── Send to candidate ────────────────────────────────────────────────
+        try:
+            await _send_graph_email(http, token, body.candidateEmail, body.candidateSubject, candidate_body_html)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Candidate email failed: {e}")
+
+        # ── Send to HR ───────────────────────────────────────────────────────
+        try:
+            await _send_graph_email(http, token, body.hrEmail, body.hrSubject, hr_body_html)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"HR email failed: {e}")
+
+    # ── Persist teamsLink on approval record ─────────────────────────────────
+    if body.candidateId and teams_link:
+        await approvals_col.update_one(
+            {"candidate_id": body.candidateId},
+            {"$set": {
+                "new_round_teams_link": teams_link,
+                "updated_at": datetime.now(timezone.utc),
+            }},
+        )
+
+    logger.info("✅ Round email sent: candidate=%s hr=%s teamsLink=%s",
+                body.candidateEmail, body.hrEmail, teams_link or "none")
+    return {
+        "success":    True,
+        "mailSent":   True,
+        "teamsLink":  teams_link,
+        "message":    f"Emails sent to {body.candidateEmail} and {body.hrEmail}",
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENDPOINT 10 — Send offer letter (PDF attachment) to candidate via MS Graph
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/manager/send-offer", summary="Send offer letter (with PDF attachment) to candidate via MS Graph")
+async def send_offer(candidate_id: str):
+    """
+    Called when HR clicks Send on the Offers page.
+
+    1. Fetches offer details (name, email, role, band, bonus, doj) from
+       manager_offers, enriched with the fuller MongoDB `candidates` profile
+       where useful.
+    2. Generates a filled SprintPark offer letter PDF (candidate name, role,
+       DOJ, compensation summary) via offer_letter_generator.
+    3. Sends the offer email to the candidate via MS Graph with the PDF
+       attached.
+    4. Updates status to Sent + records sent date and reference number.
+    """
+    offer = await offers_col.find_one({"candidate_id": candidate_id})
+    if not offer:
+        raise HTTPException(status_code=404, detail=f"No offer found for {candidate_id!r}")
+
+    name  = offer.get("candidate_name", "Candidate")
+    email = offer.get("candidate_email", "")
+    role  = offer.get("role", "")
+    band  = offer.get("band", "TBD")
+    bonus = offer.get("bonus", "TBD")
+    doj   = offer.get("doj") or "To be communicated"
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Candidate email is missing from offer record")
+
+    # ── Enrich from the fuller candidates collection profile if useful ────────
+    candidate_profile = await _get_candidate_profile(candidate_id)
+    if not role:
+        role = candidate_profile.get("role") or candidate_profile.get("position_name", "")
+
+    now = datetime.now(timezone.utc)
+    ref_no = f"SPK/OFR/{now.year}/{candidate_id[-6:].upper()}"
+    date_str = now.strftime("%d-%b-%Y")
+
+    # ── Generate the filled offer letter PDF ──────────────────────────────────
+    try:
+        pdf_bytes = generate_offer_letter_pdf(
+            candidate_name=name,
+            designation=role,
+            doj_str=doj,
+            ref_no=ref_no,
+            date_str=date_str,
+            band=band,
+            bonus=bonus,
+        )
+    except Exception as e:
+        logger.exception("Offer letter PDF generation failed")
+        raise HTTPException(status_code=500, detail=f"Offer letter PDF generation failed: {e}")
+
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+    attachment = {
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "name": f"Offer_Letter_{name.replace(' ', '_')}.pdf",
+        "contentType": "application/pdf",
+        "contentBytes": pdf_b64,
+    }
+
+    subject = f"Offer Letter — {role} at SprintPark Solutions"
+    body_html = f"""
+<div style="font-family:sans-serif;max-width:600px;color:#1e1b4b;">
+  <div style="background:linear-gradient(135deg,#6366f1,#818cf8);padding:24px 28px;border-radius:12px 12px 0 0;">
+    <h2 style="color:#fff;margin:0;font-size:20px;">🎉 Congratulations, {name.split()[0]}!</h2>
+    <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px;">You have received an offer from SprintPark Solutions</p>
+  </div>
+  <div style="background:#fff;border:1px solid rgba(221,208,232,0.4);border-top:none;border-radius:0 0 12px 12px;padding:24px 28px;">
+    <p style="font-size:14px;line-height:1.7;color:#374151;">
+      Dear <b>{name}</b>,<br><br>
+      We are delighted to extend an offer of employment for the position of <b>{role}</b> at
+      <b>SprintPark Solutions Pvt Ltd</b>. Please find your formal offer letter attached as a PDF.
+    </p>
+
+    <div style="background:#f8f7ff;border-left:4px solid #6366f1;border-radius:8px;padding:16px 20px;margin:20px 0;">
+      <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#4f46e5;">📋 Offer Details</p>
+      <table style="border-collapse:collapse;font-size:13px;color:#374151;width:100%;">
+        <tr><td style="padding:5px 0;width:150px;color:#6b7280;">Position</td><td style="padding:5px 0;"><b>{role}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Date of Joining</td><td style="padding:5px 0;"><b>{doj}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Compensation Band</td><td style="padding:5px 0;"><b>{band}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Joining Bonus</td><td style="padding:5px 0;"><b>{bonus}</b></td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Reference No.</td><td style="padding:5px 0;">{ref_no}</td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Company</td><td style="padding:5px 0;">SprintPark Solutions Pvt Ltd</td></tr>
+      </table>
+    </div>
+
+    <p style="font-size:13px;color:#6b7280;line-height:1.7;">
+      Please review the attached offer letter carefully. To accept this offer, kindly sign and return it
+      within <b>3 business days</b>. If you have any questions, feel free to reach out to our HR team.
+    </p>
+
+    <p style="font-size:13px;color:#374151;">
+      We look forward to welcoming you to the team!<br><br>
+      Warm regards,<br>
+      <b>HR Team — SprintPark Solutions</b>
+    </p>
+  </div>
+  <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px;">
+    This offer was sent from the RecruitAI HR Portal
+  </p>
+</div>
+"""
+
+    async with httpx.AsyncClient() as http:
+        try:
+            token = await _get_graph_token(http)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Azure token failed: {e}")
+        try:
+            await _send_graph_email(http, token, email, subject, body_html, attachments=[attachment])
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Email send failed: {e}")
+
+    # Update status to Sent + record sent date + reference number
+    await offers_col.update_one(
+        {"candidate_id": candidate_id},
+        {"$set": {
+            "status":     "Sent",
+            "sent_date":  now.strftime("%d %b %Y"),
+            "ref_no":     ref_no,
+            "updated_at": now,
+        }},
+    )
+    logger.info("Offer letter PDF sent to %s (%s), ref=%s", name, email, ref_no)
+    return {
+        "success": True,
+        "sent_to": email,
+        "ref_no":  ref_no,
+        "message": f"Offer letter sent to {name}",
     }
 
 

@@ -58,14 +58,71 @@ function makeHrApprovalEmail(c: ApprovedCandidate, decision: string) {
 
 function makeRoundCandidateEmail(c: Candidate, r: Round) {
   return {
-    subject: `Managerial Round Interview — ${c.role} | ${r.date} at ${r.time}`,
-    body: `Hi ${c.name.split(" ")[0]},\n\nYou are scheduled for your Managerial Round interview.\n\nDetails:\n- Role        : ${c.role}\n- Round       : R${r.roundNo} — ${r.type}\n- Date        : ${r.date}\n- Time        : ${r.time}\n- Interviewer : ${MANAGER_NAME}\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n\n${r.mode === "Video Call" ? "A meeting link will be shared 15 minutes before." : "Please arrive 10 minutes early."}\n\nBest regards,\nRecruitAI Team`,
+    subject: `Interview Invitation — ${r.type} Round | ${c.role} | ${r.date}`,
+    body: `Dear ${c.name.split(" ")[0]},
+
+We hope this message finds you well.
+
+We are pleased to invite you to the next stage of the interview process for the ${c.role} position at RecruitAI.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  INTERVIEW DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📋 Position       : ${c.role}
+  🔁 Round          : R${r.roundNo} — ${r.type}
+  📅 Date           : ${r.date}
+  🕐 Time           : ${r.time}
+  ⏱  Duration       : ${r.duration}
+  🖥  Mode           : ${r.mode}
+  👤 Interviewer    : ${MANAGER_NAME}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[The Microsoft Teams meeting link will be included below]
+
+Please confirm your availability by replying to this email at your earliest convenience.
+
+If you have any questions or need to reschedule, feel free to reach out to us.
+
+We look forward to speaking with you!
+
+Warm regards,
+${MANAGER_NAME}
+Hiring Manager — RecruitAI
+📧 ${HR_EMAIL}`,
   };
 }
+
 function makeRoundHrEmail(c: Candidate, r: Round) {
   return {
-    subject: `Managerial Round Scheduled — ${c.name} | ${r.date}`,
-    body: `Hi ${HR_NAME.split(" ")[0]},\n\nA managerial round has been scheduled for ${c.name}.\n\nDetails:\n- Candidate   : ${c.name}\n- Role        : ${c.role}\n- Date        : ${r.date}\n- Time        : ${r.time}\n- Mode        : ${r.mode}\n- Duration    : ${r.duration}\n- Interviewer : ${MANAGER_NAME}\n\nBest regards,\nRecruitAI Manager Portal`,
+    subject: `[Action Required] New Round Scheduled — ${c.name} | ${r.type} | ${r.date}`,
+    body: `Hi ${HR_NAME.split(" ")[0]},
+
+This is to inform you that a new interview round has been scheduled by the Hiring Manager.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ROUND SCHEDULE DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  👤 Candidate      : ${c.name}
+  📧 Email          : ${c.email}
+  💼 Role           : ${c.role}
+  🔁 Round          : R${r.roundNo} — ${r.type}
+  📅 Date           : ${r.date}
+  🕐 Time           : ${r.time}
+  ⏱  Duration       : ${r.duration}
+  🖥  Mode           : ${r.mode}
+  👤 Interviewer    : ${MANAGER_NAME}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Action Items:
+  ✅ Please update the candidate's status in the HR Portal
+  ✅ Ensure the interview slot is blocked in the calendar
+  ✅ Send any required documents / assessments to the candidate
+
+Please coordinate accordingly and confirm once done.
+
+Best regards,
+${MANAGER_NAME}
+Hiring Manager — RecruitAI`,
   };
 }
 
@@ -137,25 +194,47 @@ function RoundCell({ round, isLoading, onViewFeedback }: {
    PAGE COMPONENT
 ══════════════════════════════════════════════════════════ */
 export default function ManagerInterviewsPage() {
-  const { candidates, setCandidates } = useInterviewStore();
+  const { candidates, setCandidates, refreshKey } = useInterviewStore();
 
   /* ── approved list ── */
-  const [hrApproved,      setHrApproved]    = useState<ApprovedCandidate[]>([]);
+  const [hrApproved,      setHrApproved]      = useState<ApprovedCandidate[]>([]);
   const [approvedLoading, setApprovedLoading] = useState(false);
-  const [fetchError,      setFetchError]    = useState<string | null>(null);
-  const [localDecisions,  setLocalDecisions] = useState<Record<string, "approved" | "rejected">>({});
+  const [fetchError,      setFetchError]      = useState<string | null>(null);
+  /* localDecisions drives the UI — cleared on every refresh for demo mode */
+  const [localDecisions,  setLocalDecisions]  = useState<Record<string, "approved" | "rejected" | "pending">>({});
 
-  /* ── TASK 1 FIX: never throw alert; show inline error banner ── */
-  async function fetchApproved() {
+  /* ── Refresh resets ALL local decisions so manager must re-decide ── */
+  /* ── Demo mode: manual refresh wipes MongoDB + clears UI ─────────────────
+     On manual refresh: DELETE /manager/reset clears all approvals from DB
+     so the page goes empty. Candidates only reappear when HR sends them. ── */
+  async function fetchApproved(isManualRefresh = false) {
     setApprovedLoading(true);
     setFetchError(null);
+
+    if (isManualRefresh) {
+      /* Manual refresh: wipe MongoDB + reset all UI state */
+      try { await fetch(`${MANAGER_API}/manager/reset`, { method: "DELETE" }); } catch { /* ignore */ }
+      setHrApproved([]);
+      setLocalDecisions({});
+      setMailSentIds(new Set());
+      setDecisionError(null);
+      setApprovedLoading(false);
+      return;
+    }
+
+    /* On mount: load candidates sent by HR from MongoDB only */
     try {
       const res = await fetch(`${MANAGER_API}/manager/approved-candidates`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
-      setHrApproved(data.candidates || []);
-    } catch (err) {
-      /* Backend not running or network error — show banner, keep old data */
+      const list: ApprovedCandidate[] = data.candidates || [];
+      setHrApproved(list);
+      const seed: Record<string, "approved" | "rejected" | "pending"> = {};
+      list.forEach(ac => {
+        seed[ac.candidate_id] = (ac.manager_decision as any) || "pending";
+      });
+      setLocalDecisions(seed);
+    } catch {
       setFetchError(
         "Could not reach the Manager Backend (localhost:8001). " +
         "Make sure it is running: python backend/manager_backend/manager_api.py"
@@ -165,18 +244,65 @@ export default function ManagerInterviewsPage() {
     }
   }
 
+  /* ── decision error toast ── */
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+
   async function submitDecision(candidateId: string, decision: "approved" | "rejected") {
     setLocalDecisions(p => ({ ...p, [candidateId]: decision }));
+    setDecisionError(null);
+    const ac = hrApproved.find(c => c.candidate_id === candidateId);
     try {
-      const res = await fetch(
-        `${MANAGER_API}/manager/approved-candidates/${candidateId}/decision`,
-        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision }) }
-      );
-      if (!res.ok) throw new Error("Decision save failed");
-      fetchApproved();
+      const url = `${MANAGER_API}/manager/approved-candidates/${encodeURIComponent(candidateId)}/decision`;
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision }),
+      });
+      if (res.status === 404 && ac) {
+        /* Record was reset — re-create it first */
+        await fetch(`${MANAGER_API}/manager/hr-approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidate_id:    ac.candidate_id,
+            candidate_name:  ac.candidate_name,
+            candidate_email: ac.candidate_email,
+            initials:        ac.initials,
+            color:           ac.color,
+            role:            ac.role,
+            rounds:          ac.rounds || [],
+            overall_rating:  ac.overall_rating,
+            recommendation:  ac.recommendation,
+            hr_note:         ac.hr_note || "",
+          }),
+        });
+        const res2 = await fetch(url, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        });
+        if (!res2.ok) throw new Error(`Server error ${res2.status}`);
+      } else if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.detail || `Server error ${res.status}`);
+      }
+      /* Update the row status in hrApproved so it stays visible with decision */
+      setHrApproved(prev => prev.map(c =>
+        c.candidate_id === candidateId
+          ? { ...c, status: decision, manager_decision: decision }
+          : c
+      ));
+
+      /* When approved: push to HR Offers page via offers endpoint */
+      if (decision === "approved") {
+        fetch(`${MANAGER_API}/manager/offers?candidate_id=${encodeURIComponent(candidateId)}`, {
+          method: "POST",
+        }).catch(err => console.warn("Offers push failed:", err));
+      }
     } catch (err) {
-      setLocalDecisions(p => { const n = { ...p }; delete n[candidateId]; return n; });
-      console.warn("Decision submit failed:", err);
+      const msg = err instanceof Error ? err.message : "Decision save failed";
+      setDecisionError(msg);
+      console.warn("Decision submit error:", msg);
     }
   }
 
@@ -193,6 +319,8 @@ export default function ManagerInterviewsPage() {
   const [hToTouched,        setHToTouched]        = useState(false);
   const [scheduleModal,     setScheduleModal]     = useState<ScheduleModal | null>(null);
   const [rejectId,          setRejectId]          = useState<string | null>(null);
+  /* Track which candidates have had email sent this session — persists after wizard closes */
+  const [mailSentIds,       setMailSentIds]       = useState<Set<string>>(new Set());
 
   /* ── TASK 2: open row-level send email wizard ── */
   function openRowEmail(ac: ApprovedCandidate) {
@@ -218,7 +346,7 @@ export default function ManagerInterviewsPage() {
     setCToTouched(false); setHToTouched(false);
   }
 
-  /* send both emails via HR backend */
+  /* send both emails via manager backend (MS Graph) */
   function sendBoth() {
     if (!wizard) return;
     setCToTouched(true); setHToTouched(true);
@@ -226,22 +354,59 @@ export default function ManagerInterviewsPage() {
     if (!isValidEmail(wizard.hTo)) return;
     setWizLoading(true); setWizError(null);
 
-    const endpoint = wizard.round
-      ? `${API_BASE_URL}/interviews/${wizard.candidate.candidate_id}/round/${wizard.round.roundNo}/send-mail`
-      : `${API_BASE_URL}/send-email`;
+    const round = wizard.round;
 
-    const body = wizard.round
-      ? JSON.stringify({ candidateEmail: wizard.cTo, candidateSubject: wizard.cSub, candidateBody: wizard.cBody, interviewerEmail: wizard.hTo, interviewerSubject: wizard.hSub, interviewerBody: wizard.hBody })
-      : JSON.stringify({ to: wizard.cTo, subject: wizard.cSub, body: wizard.cBody, cc: wizard.hTo, cc_subject: wizard.hSub, cc_body: wizard.hBody });
-
-    fetch(endpoint, { method: "POST", headers: apiHeaders(), body })
+    /* Always use the manager backend's send-round-email endpoint which
+       uses the same Azure MS Graph credentials as the HR backend */
+    fetch(`${MANAGER_API}/manager/send-round-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        candidateEmail:   wizard.cTo,
+        candidateSubject: wizard.cSub,
+        candidateBody:    wizard.cBody,
+        hrEmail:          wizard.hTo,
+        hrSubject:        wizard.hSub,
+        hrBody:           wizard.hBody,
+        candidateName:    wizard.candidate.candidate_name,
+        role:             wizard.candidate.role,
+        roundNo:          round?.roundNo ?? 1,
+        date:             round?.date    ?? "TBD",
+        time:             round?.time    ?? "TBD",
+        duration:         round?.duration ?? "60 min",
+        mode:             round?.mode    ?? "Video Call",
+        candidateId:      wizard.candidate.candidate_id,
+      }),
+    })
       .then(async r => {
-        /* If the backend endpoint doesn't exist yet, treat as best-effort */
-        if (r.status === 404 || r.status === 405) return;
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d?.detail || "Mail failed");
+        return d;
       })
-      .then(() => { setWizSent(true); setTimeout(() => setWizard(null), 1600); })
+      .then((data: { teamsLink?: string }) => {
+        setWizSent(true);
+        /* Mark email as sent for this candidate */
+        setMailSentIds(prev => new Set([...prev, wizard.candidate.candidate_id]));
+
+        /* Store Teams link on the new round so Join Meeting button activates */
+        const teamsLink = data?.teamsLink || "";
+        if (teamsLink && round) {
+          setHrApproved(prev => prev.map(ac =>
+            ac.candidate_id === wizard.candidate.candidate_id
+              ? {
+                  ...ac,
+                  rounds: (ac.rounds || []).map(r =>
+                    r.roundNo === round.roundNo
+                      ? { ...r, teamsLink } as any
+                      : r
+                  ),
+                }
+              : ac
+          ));
+        }
+
+        setTimeout(() => setWizard(null), 1600);
+      })
       .catch(err => setWizError(err instanceof Error ? err.message : "Failed to send emails."))
       .finally(() => setWizLoading(false));
   }
@@ -254,6 +419,15 @@ export default function ManagerInterviewsPage() {
     setHrApproved(prev => prev.map(ac =>
       ac.candidate_id === candidate.backendId ? { ...ac, rounds: [...(ac.rounds || []), newRound] } : ac
     ));
+    /* Persist "new round added" status to backend so HR Feedback page can show it */
+    const candidateId = candidate.backendId ?? "";
+    if (candidateId) {
+      fetch(`${MANAGER_API}/manager/approved-candidates/${encodeURIComponent(candidateId)}/decision`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: "new_round", note: `Manager added new round: R${nextNo} on ${date} at ${time}` }),
+      }).catch(() => {/* non-blocking */});
+    }
     setScheduleModal(null);
   }
 
@@ -279,9 +453,11 @@ export default function ManagerInterviewsPage() {
       <div className="mi-header">
         <div>
           <h1 className="mi-title">Interviews</h1>
-          <p className="mi-subtitle">{hrApproved.length} candidate{hrApproved.length !== 1 ? "s" : ""} sent for review</p>
+          <p className="mi-subtitle">
+          {hrApproved.length} candidate{hrApproved.length !== 1 ? "s" : ""} pending your review
+        </p>
         </div>
-        <button className="mi-refresh-btn" onClick={fetchApproved} disabled={approvedLoading}>
+        <button className="mi-refresh-btn" onClick={() => fetchApproved(true)} disabled={approvedLoading}>
           <RefreshCw size={13} className={approvedLoading ? "mi-spin" : ""} />
           {approvedLoading ? "Loading…" : "Refresh"}
         </button>
@@ -297,6 +473,20 @@ export default function ManagerInterviewsPage() {
           </div>
           <button className="mi-btn mi-btn--outline mi-retry-btn" onClick={fetchApproved}>
             <RefreshCw size={11} /> Retry
+          </button>
+        </div>
+      )}
+
+      {/* Decision error toast */}
+      {decisionError && (
+        <div className="mi-fetch-error" style={{ background: "rgba(220,53,69,0.07)", borderColor: "rgba(220,53,69,0.2)" }}>
+          <AlertCircle size={15} style={{ flexShrink: 0, color: "#b02030" }} />
+          <div>
+            <strong style={{ color: "#b02030" }}>Decision failed</strong>
+            <p style={{ color: "#b02030" }}>{decisionError}</p>
+          </div>
+          <button className="mi-btn mi-btn--outline mi-retry-btn" onClick={() => setDecisionError(null)}>
+            Dismiss
           </button>
         </div>
       )}
@@ -329,7 +519,8 @@ export default function ManagerInterviewsPage() {
             </div>
 
             {hrApproved.map(ac => {
-              const dec = localDecisions[ac.candidate_id] ?? ac.status;
+              /* Demo mode: always use localDecision — starts as "pending" after refresh */
+              const dec = localDecisions[ac.candidate_id] ?? "pending";
               const asCandidate: Candidate = { id: 0, backendId: ac.candidate_id, name: ac.candidate_name, initials: ac.initials, color: ac.color || "#6366f1", email: ac.candidate_email, role: ac.role, rounds: ac.rounds || [] };
               const rowBg = dec === "approved" ? "rgba(240,253,244,0.6)" : dec === "rejected" ? "rgba(254,242,242,0.5)" : "#fff";
 
@@ -388,24 +579,21 @@ export default function ManagerInterviewsPage() {
                       <Plus size={11} /> Add Another Round
                     </button>
 
-                    {/* Send Email — lives under Add Another Round, enabled only after a new round is created */}
+                    {/* Join Meeting — shown below Add Another Round */}
                     {(() => {
-                      const newRound = (ac.rounds || []).find(r => r.type === "New Round");
-                      const canSend  = !!newRound && dec !== "approved" && dec !== "rejected";
-                      return (
-                        <button
-                          className="mi-btn mi-btn--mail"
-                          disabled={!canSend}
-                          title={
-                            !newRound
-                              ? "Add a new round first to enable this"
-                              : dec === "approved" || dec === "rejected"
-                              ? "Decision already made"
-                              : undefined
-                          }
-                          onClick={() => newRound && openRoundEmail(ac, newRound)}
-                        >
-                          <Mail size={11} /> Send Email
+                      const newRound  = (ac.rounds || []).find(r => r.type === "New Round");
+                      const teamsLink = (newRound as any)?.teamsLink || "";
+                      const canJoin   = !!newRound && dec !== "approved" && dec !== "rejected";
+
+                      return teamsLink ? (
+                        <a href={teamsLink} target="_blank" rel="noopener noreferrer" className="mi-btn mi-btn--primary" style={{ textDecoration:"none", justifyContent:"center" }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink:0 }}><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                          Join Meeting
+                        </a>
+                      ) : (
+                        <button className="mi-btn mi-btn--primary" disabled={!canJoin} style={{ opacity: canJoin ? 0.55 : 0.3 }} title={!newRound ? "Add a new round first" : "Send email to generate meeting link"}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink:0 }}><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                          Join Meeting
                         </button>
                       );
                     })()}
@@ -446,12 +634,57 @@ export default function ManagerInterviewsPage() {
               <button className="mi-close" onClick={() => setScheduleModal(null)}><X size={16}/></button>
             </div>
             <div className="mi-modal-body">
-              {([["Date","date","e.g. 10 Jun 2026"],["Time","time","e.g. 10:00 AM"],["Duration","duration","e.g. 60 min"]] as const).map(([label,key,ph]) => (
-                <div key={key} className="mi-form-group">
-                  <label className="mi-form-label">{label}</label>
-                  <input className="mi-input" placeholder={ph} value={scheduleModal[key]} onChange={e => setScheduleModal({ ...scheduleModal, [key]: e.target.value })}/>
-                </div>
-              ))}
+              {/* Date picker */}
+              <div className="mi-form-group">
+                <label className="mi-form-label">Date</label>
+                <input
+                  className="mi-input"
+                  type="date"
+                  value={scheduleModal.date ? (() => {
+                    try {
+                      const d = new Date(scheduleModal.date);
+                      return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+                    } catch { return ""; }
+                  })() : ""}
+                  onChange={e => {
+                    const d = e.target.value ? new Date(e.target.value) : null;
+                    const fmt = d ? d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" }) : "";
+                    setScheduleModal({ ...scheduleModal, date: fmt });
+                  }}
+                />
+                {scheduleModal.date && <span style={{ fontSize:11, color:"#6366f1", marginTop:2 }}>{scheduleModal.date}</span>}
+              </div>
+
+              {/* Time picker */}
+              <div className="mi-form-group">
+                <label className="mi-form-label">Time</label>
+                <input
+                  className="mi-input"
+                  type="time"
+                  value={scheduleModal.time ? (() => {
+                    try {
+                      const t = scheduleModal.time.replace(/\s?(AM|PM)/i, "");
+                      const [h, m] = t.split(":");
+                      return `${h.padStart(2,"0")}:${(m||"00").padStart(2,"0")}`;
+                    } catch { return ""; }
+                  })() : ""}
+                  onChange={e => {
+                    if (!e.target.value) return;
+                    const [h, m] = e.target.value.split(":");
+                    const hour = parseInt(h);
+                    const ampm = hour >= 12 ? "PM" : "AM";
+                    const h12  = hour % 12 || 12;
+                    setScheduleModal({ ...scheduleModal, time: `${h12}:${m} ${ampm}` });
+                  }}
+                />
+                {scheduleModal.time && <span style={{ fontSize:11, color:"#6366f1", marginTop:2 }}>{scheduleModal.time}</span>}
+              </div>
+
+              {/* Duration */}
+              <div className="mi-form-group">
+                <label className="mi-form-label">Duration</label>
+                <input className="mi-input" placeholder="e.g. 60 min" value={scheduleModal.duration} onChange={e => setScheduleModal({ ...scheduleModal, duration: e.target.value })}/>
+              </div>
               <div className="mi-form-group">
                 <label className="mi-form-label">Mode</label>
                 <div style={{ display:"flex", gap:8 }}>
@@ -464,21 +697,43 @@ export default function ManagerInterviewsPage() {
               </div>
               <div style={{ display:"flex", gap:8, justifyContent:"flex-end", marginTop:14 }}>
                 <button className="mi-btn mi-btn--outline" onClick={() => setScheduleModal(null)}>Cancel</button>
-                <button className="mi-btn mi-btn--primary" onClick={confirmSchedule} disabled={!scheduleModal.date||!scheduleModal.time}><Plus size={13}/> Add Round</button>
+                <button
+                  className="mi-btn mi-btn--mail"
+                  disabled={!scheduleModal.date || !scheduleModal.time}
+                  onClick={() => {
+                    /* 1. Save the new round */
+                    confirmSchedule();
+                    /* 2. Find the candidate approval and open email wizard for the new round */
+                    const ac = hrApproved.find(a => a.candidate_id === scheduleModal.candidate.backendId);
+                    if (ac) {
+                      const nextNo = (scheduleModal.candidate.rounds.length || 0) + 1;
+                      const newRound = {
+                        roundNo: nextNo, type: "New Round",
+                        date: scheduleModal.date, time: scheduleModal.time,
+                        interviewer: MANAGER_NAME, interviewerEmail: HR_EMAIL,
+                        mode: scheduleModal.mode, duration: scheduleModal.duration,
+                        status: "pending" as const, mailSent: false,
+                      };
+                      setTimeout(() => openRoundEmail(ac, newRound), 50);
+                    }
+                  }}
+                >
+                  <Mail size={13} /> Send Email
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── TASK 2: 2-step Email Wizard (row-level OR round-level) ── */}
+      {/* ── Email Wizard with live preview ── */}
       {wizard && (
         <div className="mi-overlay" onClick={() => { if (!wizLoading) setWizard(null); }}>
-          <div className="mi-modal mi-modal--wide" onClick={e => e.stopPropagation()}>
+          <div className="mi-modal mi-modal--wide" onClick={e => e.stopPropagation()} style={{ maxWidth: 780 }}>
             <div className="mi-modal-header">
               <span style={{ fontWeight:700, color:"#1e1b4b", display:"flex", alignItems:"center", gap:6 }}>
                 <Mail size={15} color="#6366f1"/>
-                {wizard.candidate.candidate_name} — Send Email
+                {wizard.candidate.candidate_name} — Send Interview Email
               </span>
               <button className="mi-close" onClick={() => { if (!wizLoading) setWizard(null); }} disabled={wizLoading}><X size={17}/></button>
             </div>
@@ -488,62 +743,119 @@ export default function ManagerInterviewsPage() {
               {([1,2] as const).map(n => (
                 <span key={n} className={`mi-step ${wizard.step===n?"mi-step--active":wizard.step>n?"mi-step--done":""}`}>
                   <span className="mi-step-circle">{wizard.step>n?<CheckCircle size={12}/>:n}</span>
-                  <span className="mi-step-label">{n===1?"Candidate":"HR"}</span>
+                  <span className="mi-step-label">{n===1?"📧 Candidate Email":"👤 HR Notification"}</span>
                 </span>
               ))}
             </div>
 
-            <div className="mi-modal-body">
-              {wizSent && (
-                <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(16,185,129,0.1)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:9, fontSize:13, color:"#065f46", fontWeight:600 }}>
-                  <CheckCircle size={15}/> Emails sent successfully!
-                </div>
-              )}
-              {wizError && (
-                <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(220,53,69,0.08)", border:"1px solid rgba(220,53,69,0.2)", borderRadius:9, fontSize:12, color:"#b02030" }}>
-                  <AlertCircle size={13}/> {wizError}
-                </div>
-              )}
+            {/* two-column: form + live preview */}
+            <div style={{ display:"flex", gap:0, flex:1, overflow:"hidden", minHeight:420 }}>
 
-              {/* Step 1 — Candidate email */}
-              {wizard.step === 1 && (
-                <>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">To (Candidate)</label>
-                    <input className={`mi-input ${cToTouched && !isValidEmail(wizard.cTo) ? "mi-input--error" : ""}`}
-                      value={wizard.cTo} onChange={e => { setWizard({...wizard, cTo:e.target.value}); setCToTouched(true); }}/>
-                    {cToTouched && !isValidEmail(wizard.cTo) && <span className="mi-err">Enter a valid email</span>}
-                  </div>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">Subject</label>
-                    <input className="mi-input" value={wizard.cSub} onChange={e => setWizard({...wizard, cSub:e.target.value})}/>
-                  </div>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">Message</label>
-                    <textarea className="mi-textarea" rows={8} value={wizard.cBody} onChange={e => setWizard({...wizard, cBody:e.target.value})}/>
-                  </div>
-                </>
-              )}
+              {/* ── Left: editable form ── */}
+              <div className="mi-modal-body" style={{ flex:"0 0 52%", borderRight:"1px solid rgba(221,208,232,0.3)", overflowY:"auto" }}>
 
-              {/* Step 2 — HR email */}
-              {wizard.step === 2 && (
-                <>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">To (HR)</label>
-                    <input className={`mi-input ${hToTouched && !isValidEmail(wizard.hTo) ? "mi-input--error" : ""}`}
-                      value={wizard.hTo} onChange={e => { setWizard({...wizard, hTo:e.target.value}); setHToTouched(true); }}/>
-                    {hToTouched && !isValidEmail(wizard.hTo) && <span className="mi-err">Enter a valid email</span>}
+                {wizSent && (
+                  <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(16,185,129,0.1)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:9, fontSize:13, color:"#065f46", fontWeight:600 }}>
+                    <CheckCircle size={15}/> Emails sent successfully!
                   </div>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">Subject</label>
-                    <input className="mi-input" value={wizard.hSub} onChange={e => setWizard({...wizard, hSub:e.target.value})}/>
+                )}
+                {wizError && (
+                  <div style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", background:"rgba(220,53,69,0.08)", border:"1px solid rgba(220,53,69,0.2)", borderRadius:9, fontSize:12, color:"#b02030" }}>
+                    <AlertCircle size={13}/> {wizError}
                   </div>
-                  <div className="mi-form-group">
-                    <label className="mi-form-label">Message</label>
-                    <textarea className="mi-textarea" rows={8} value={wizard.hBody} onChange={e => setWizard({...wizard, hBody:e.target.value})}/>
+                )}
+
+                {wizard.step === 1 && (
+                  <>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:".06em", marginBottom:10 }}>
+                      ✏️ Edit Candidate Email
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">To (Candidate)</label>
+                      <input className={`mi-input ${cToTouched && !isValidEmail(wizard.cTo) ? "mi-input--error" : ""}`}
+                        value={wizard.cTo} onChange={e => { setWizard({...wizard, cTo:e.target.value}); setCToTouched(true); }}/>
+                      {cToTouched && !isValidEmail(wizard.cTo) && <span className="mi-err">Enter a valid email</span>}
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">Subject</label>
+                      <input className="mi-input" value={wizard.cSub} onChange={e => setWizard({...wizard, cSub:e.target.value})}/>
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">Message</label>
+                      <textarea className="mi-textarea" rows={12} value={wizard.cBody} onChange={e => setWizard({...wizard, cBody:e.target.value})}/>
+                    </div>
+                  </>
+                )}
+
+                {wizard.step === 2 && (
+                  <>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:".06em", marginBottom:10 }}>
+                      ✏️ Edit HR Notification Email
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">To (HR)</label>
+                      <input className={`mi-input ${hToTouched && !isValidEmail(wizard.hTo) ? "mi-input--error" : ""}`}
+                        value={wizard.hTo} onChange={e => { setWizard({...wizard, hTo:e.target.value}); setHToTouched(true); }}/>
+                      {hToTouched && !isValidEmail(wizard.hTo) && <span className="mi-err">Enter a valid email</span>}
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">Subject</label>
+                      <input className="mi-input" value={wizard.hSub} onChange={e => setWizard({...wizard, hSub:e.target.value})}/>
+                    </div>
+                    <div className="mi-form-group">
+                      <label className="mi-form-label">Message</label>
+                      <textarea className="mi-textarea" rows={12} value={wizard.hBody} onChange={e => setWizard({...wizard, hBody:e.target.value})}/>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* ── Right: live email preview ── */}
+              <div style={{ flex:"0 0 48%", background:"#f8f7ff", overflowY:"auto", padding:"18px 20px" }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#9ca3af", textTransform:"uppercase", letterSpacing:".06em", marginBottom:12, display:"flex", alignItems:"center", gap:5 }}>
+                  <Eye size={11}/> Live Preview
+                </div>
+
+                {/* email card */}
+                <div style={{ background:"#fff", border:"1px solid rgba(221,208,232,0.4)", borderRadius:12, overflow:"hidden", fontSize:12 }}>
+                  {/* email header */}
+                  <div style={{ background:"linear-gradient(135deg,#6366f1,#818cf8)", padding:"14px 18px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <div style={{ width:32, height:32, borderRadius:"50%", background:"rgba(255,255,255,0.25)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <Mail size={15} color="#fff"/>
+                      </div>
+                      <div>
+                        <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>RecruitAI</div>
+                        <div style={{ color:"rgba(255,255,255,0.75)", fontSize:11 }}>noreply@recruitai.app</div>
+                      </div>
+                    </div>
                   </div>
-                </>
-              )}
+
+                  {/* to / subject */}
+                  <div style={{ padding:"12px 18px", borderBottom:"1px solid rgba(221,208,232,0.3)", background:"#fdf9ff" }}>
+                    <div style={{ display:"flex", gap:6, marginBottom:4, alignItems:"flex-start" }}>
+                      <span style={{ fontSize:10, fontWeight:700, color:"#9ca3af", minWidth:44, paddingTop:1 }}>TO</span>
+                      <span style={{ fontSize:12, color:"#4f46e5", fontWeight:600 }}>{wizard.step===1 ? wizard.cTo : wizard.hTo}</span>
+                    </div>
+                    <div style={{ display:"flex", gap:6, alignItems:"flex-start" }}>
+                      <span style={{ fontSize:10, fontWeight:700, color:"#9ca3af", minWidth:44, paddingTop:1 }}>SUBJECT</span>
+                      <span style={{ fontSize:12, color:"#1e1b4b", fontWeight:600, lineHeight:1.4 }}>{wizard.step===1 ? wizard.cSub : wizard.hSub}</span>
+                    </div>
+                  </div>
+
+                  {/* body */}
+                  <div style={{ padding:"14px 18px" }}>
+                    <pre style={{ fontFamily:"inherit", fontSize:12, color:"#374151", whiteSpace:"pre-wrap", wordBreak:"break-word", margin:0, lineHeight:1.7 }}>
+                      {wizard.step===1 ? wizard.cBody : wizard.hBody}
+                    </pre>
+                  </div>
+
+                  {/* footer */}
+                  <div style={{ padding:"10px 18px", borderTop:"1px solid rgba(221,208,232,0.2)", background:"#fdf9ff", fontSize:10, color:"#9ca3af" }}>
+                    This email was sent from RecruitAI Manager Portal · {new Date().toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" })}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mi-modal-footer">
@@ -551,7 +863,7 @@ export default function ManagerInterviewsPage() {
                 <>
                   <button className="mi-btn mi-btn--outline" onClick={() => setWizard(null)} disabled={wizLoading}>Cancel</button>
                   <button className="mi-btn mi-btn--primary" onClick={() => { setCToTouched(true); if (!isValidEmail(wizard.cTo)) return; setWizard({...wizard,step:2}); }}>
-                    Next — HR <ChevronRight size={13}/>
+                    Next — HR Notification <ChevronRight size={13}/>
                   </button>
                 </>
               ) : (

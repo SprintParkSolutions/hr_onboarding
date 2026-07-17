@@ -146,6 +146,9 @@ type StoreCtx = {
   managerDecisions: Record<number, "approved" | "rejected" | undefined>;
   approveManagerFeedback: (candidateId: number) => void;
   rejectManagerFeedback: (candidateId: number) => void;
+  /* ── Global refresh signal ── */
+  refreshKey: number;
+  refreshAll: () => void;
 };
 
 const Ctx = createContext<StoreCtx | null>(null);
@@ -223,6 +226,29 @@ export function normalizeCandidate(raw: any): Candidate {
 export function InterviewStoreProvider({ children }: { children: React.ReactNode }) {
   const [candidates, setCandidates] = useState<Candidate[]>(seed);
   const [managerDecisions, setManagerDecisions] = useState<Record<number, "approved" | "rejected" | undefined>>({});
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  /* refreshAll: increment key → every dependent page's useEffect fires */
+  function refreshAll() {
+    const MANAGER_API = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
+    /* 1. Reset candidates to seed immediately for visual feedback */
+    setCandidates(seed);
+    setManagerDecisions({});
+    /* 2. Wipe manager backend — approvals AND offers */
+    fetch(`${MANAGER_API}/manager/reset`, { method: "DELETE" }).catch(() => {});
+    fetch(`${MANAGER_API}/manager/offers/reset`, { method: "DELETE" }).catch(() => {});
+    /* 3. Re-fetch candidates from HR backend */
+    fetch(`${API_BASE_URL}/interviews/`, { cache: "no-store", headers: apiHeaders() })
+      .then(async res => {
+        if (!res.ok) return;
+        const data = await res.json();
+        const loaded = (data.candidates || []).map(normalizeCandidate);
+        if (loaded.length > 0) setCandidates(loaded);
+      })
+      .catch(() => { /* keep seed on error */ });
+    /* 4. Signal all pages to reset via refreshKey */
+    setRefreshKey(k => k + 1);
+  }
 
   function approveManagerFeedback(candidateId: number) {
     setManagerDecisions(prev => ({ ...prev, [candidateId]: "approved" }));
@@ -310,7 +336,7 @@ export function InterviewStoreProvider({ children }: { children: React.ReactNode
   }
 
   return (
-    <Ctx.Provider value={{ candidates, setCandidates, updateCandidate, addRound, removeRound, managerDecisions, approveManagerFeedback, rejectManagerFeedback }}>
+    <Ctx.Provider value={{ candidates, setCandidates, updateCandidate, addRound, removeRound, managerDecisions, approveManagerFeedback, rejectManagerFeedback, refreshKey, refreshAll }}>
       {children}
     </Ctx.Provider>
   );

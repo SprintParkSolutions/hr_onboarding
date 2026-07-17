@@ -1,10 +1,10 @@
 "use client";
 import "./InterviewsPage.css";
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Calendar, Video, Monitor, Plus, Bell, Send,
   X, ChevronRight, ChevronLeft, CheckCircle, Mail, Lock,
-  Search, User, Pencil, Trash2, Clock, Briefcase,
+  Search, User, Pencil, Trash2, Clock, Briefcase, RefreshCw,
 } from "lucide-react";
 import {
   useInterviewStore,
@@ -114,7 +114,7 @@ type EditTarget =
 
 /* ════════════════════════════════════════════════════════ */
 export default function InterviewsPage() {
-  const { candidates, setCandidates, addRound, removeRound } = useInterviewStore();
+  const { candidates, setCandidates, addRound, removeRound, refreshAll, refreshKey } = useInterviewStore();
 
   const [search,       setSearch]       = useState("");
   const [roleFilter,   setRoleFilter]   = useState("All");
@@ -126,9 +126,24 @@ export default function InterviewsPage() {
   const [resultTarget, setResultTarget] = useState<ResultTarget>(null);
   const [cToTouched,   setCToTouched]   = useState(false);
   const [iToTouched,   setIToTouched]   = useState(false);
+  const [editTarget,   setEditTarget]   = useState<EditTarget | null>(null);
+  const [editValue,    setEditValue]    = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
-  const [editValue,  setEditValue]  = useState("");
+  /* Reset all local state when global refresh fires */
+  React.useEffect(() => {
+    setSearch(""); setRoleFilter("All"); setStageFilter("All");
+    setExpandedId(null); setSelectedCand(null); setWizard(null);
+    setResultTarget(null); setEditTarget(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    refreshAll();   /* resets candidates + signals all dependent pages */
+    await new Promise(r => setTimeout(r, 600));
+    setIsRefreshing(false);
+  }
 
   /* ── Edit helpers ─────────────────────────────────────── */
   function startRoundEdit(
@@ -201,6 +216,71 @@ export default function InterviewsPage() {
       editTarget.field       === field;
 
     if (active) {
+      /* Date field — native calendar picker */
+      if (field === "date") {
+        const toISO = (v: string) => {
+          try {
+            const d = new Date(v);
+            return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+          } catch { return ""; }
+        };
+        const fromISO = (v: string) => {
+          if (!v) return "";
+          const d = new Date(v);
+          return isNaN(d.getTime()) ? v : d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+        };
+        return (
+          <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+            <input
+              type="date"
+              className="exp-field-input"
+              value={toISO(editValue)}
+              autoFocus
+              onChange={e => setEditValue(fromISO(e.target.value))}
+              onBlur={commitEdit}
+              onKeyDown={handleKeyDown}
+              onClick={e => e.stopPropagation()}
+            />
+            {editValue && <span style={{ fontSize:10, color:"#6366f1" }}>{editValue}</span>}
+          </div>
+        );
+      }
+
+      /* Time field — native time picker */
+      if (field === "time") {
+        const toHHMM = (v: string) => {
+          try {
+            const clean = (v || "").replace(/\s?(AM|PM)/i, "").trim();
+            const [h, m] = clean.split(":");
+            return `${h.padStart(2,"0")}:${(m||"00").padStart(2,"0")}`;
+          } catch { return ""; }
+        };
+        const from24 = (v: string) => {
+          if (!v) return "";
+          const [h, m] = v.split(":");
+          const hour = parseInt(h);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const h12  = hour % 12 || 12;
+          return `${h12}:${m} ${ampm}`;
+        };
+        return (
+          <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+            <input
+              type="time"
+              className="exp-field-input"
+              value={toHHMM(editValue)}
+              autoFocus
+              onChange={e => setEditValue(from24(e.target.value))}
+              onBlur={commitEdit}
+              onKeyDown={handleKeyDown}
+              onClick={e => e.stopPropagation()}
+            />
+            {editValue && <span style={{ fontSize:10, color:"#6366f1" }}>{editValue}</span>}
+          </div>
+        );
+      }
+
+      /* All other fields — plain text input */
       return (
         <input
           className={`exp-field-input ${wide ? "exp-field-input-wide" : ""}`}
@@ -214,6 +294,7 @@ export default function InterviewsPage() {
         />
       );
     }
+
     return (
       <button
         className="exp-field-btn"
@@ -401,12 +482,13 @@ export default function InterviewsPage() {
       });
   }
 
-  /* ── Mark result ──────────────────────────────────────── */
+  /* ── Mark result — persists to backend AND updates local store ── */
   function markResult(
     candidateId: number,
     roundNo: number,
     result: "passed" | "failed" | "on-hold",
   ) {
+    /* Optimistic local update */
     setCandidates(prev =>
       prev.map(c => c.id !== candidateId ? c : {
         ...c,
@@ -419,6 +501,26 @@ export default function InterviewsPage() {
       })
     );
     setResultTarget(null);
+
+    /* Persist to backend so Manager Candidates page reflects live status */
+    const candidate = candidates.find(c => c.id === candidateId);
+    const backendId = candidate?.backendId;
+    if (!backendId) return; /* seed data only — skip */
+
+    fetch(`${API_BASE_URL}/interviews/${backendId}/round/${roundNo}`, {
+      method: "PATCH",
+      headers: apiHeaders(),
+      body: JSON.stringify({ status: result }),
+    }).catch(err => console.warn("markResult persist failed:", err));
+
+    /* If passed, unlock the next round in the backend too */
+    if (result === "passed") {
+      fetch(`${API_BASE_URL}/interviews/${backendId}/round/${roundNo + 1}`, {
+        method: "PATCH",
+        headers: apiHeaders(),
+        body: JSON.stringify({ status: "active" }),
+      }).catch(() => { /* next round may not exist — ok */ });
+    }
   }
 
   const activeCount = candidates.flatMap(c => c.rounds).filter(r => r.status === "active").length;
@@ -435,7 +537,18 @@ export default function InterviewsPage() {
             {candidates.length} candidates · {activeCount} active rounds today
           </p>
         </div>
-        <button className="btn-primary"><Plus size={14} /> Schedule</button>
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"7px 14px", background:"rgba(99,102,241,0.08)", border:"1px solid rgba(99,102,241,0.22)", borderRadius:9, fontSize:12, fontWeight:600, color:"#4f46e5", cursor:"pointer", fontFamily:"inherit", opacity: isRefreshing ? 0.6 : 1 }}
+          >
+            <RefreshCw size={12} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none" }}/>
+            {isRefreshing ? "Resetting…" : "Refresh"}
+          </button>
+          <button className="btn-primary"><Plus size={14} /> Schedule</button>
+        </div>
+        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       </div>
 
       {/* ── Filter bar ── */}
