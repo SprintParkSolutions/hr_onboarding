@@ -1,246 +1,374 @@
 ﻿"use client";
 import "./DashboardPage.css";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { TrendingUp, TrendingDown, Users, Briefcase, Clock, Sparkles, ArrowRight, ChevronDown } from "lucide-react";
-import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
+import { Search, ChevronDown, Filter, RefreshCw } from "lucide-react";
 
-const FunnelChart = dynamic(() => import("./FunnelChart"), {
-  ssr: false,
-  loading: () => <div style={{ height: 180, background: "#f8faff", borderRadius: 8 }} />,
-});
+// ─────────────────────────────────────────────────────────────────────────────
+// Backend connections — this page merges data from BOTH services
+// ─────────────────────────────────────────────────────────────────────────────
+// HR backend (hr_agent.py) — candidates, interview rounds, stage. Defaults to
+// uvicorn's default port 8000. Override with NEXT_PUBLIC_HR_API_BASE_URL.
+const HR_API_BASE = process.env.NEXT_PUBLIC_HR_API_BASE_URL || "http://localhost:8000";
 
-type FunnelRow = { stage: string; value: number; prev: number; color: string; conv: string | null };
+// Only needed if you've set API_KEY in the HR backend's .env — /interviews is
+// guarded by require_api_key, which accepts this header.
+const HR_API_KEY = process.env.NEXT_PUBLIC_HR_API_KEY || "";
 
-const roleFunnels: Record<string, FunnelRow[]> = {
-  "All Roles": [
-    { stage: "Sourced",     value: 1284, prev: 1100, color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 796,  prev: 680,  color: "#9EC8FF", conv: "62%" },
-    { stage: "Interviewed", value: 358,  prev: 310,  color: "#BA9FE7", conv: "45%" },
-    { stage: "Offered",     value: 142,  prev: 120,  color: "#C8A8F0", conv: "40%" },
-    { stage: "Hired",       value: 89,   prev: 74,   color: "#9E74D0", conv: "63%" },
-  ],
-  "Senior Backend Engineer": [
-    { stage: "Sourced",     value: 142, prev: 120, color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 98,  prev: 82,  color: "#9EC8FF", conv: "69%" },
-    { stage: "Interviewed", value: 41,  prev: 35,  color: "#BA9FE7", conv: "42%" },
-    { stage: "Offered",     value: 12,  prev: 9,   color: "#C8A8F0", conv: "29%" },
-    { stage: "Hired",       value: 7,   prev: 5,   color: "#9E74D0", conv: "58%" },
-  ],
-  "Product Designer": [
-    { stage: "Sourced",     value: 87,  prev: 70,  color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 54,  prev: 44,  color: "#9EC8FF", conv: "62%" },
-    { stage: "Interviewed", value: 22,  prev: 18,  color: "#BA9FE7", conv: "41%" },
-    { stage: "Offered",     value: 8,   prev: 6,   color: "#C8A8F0", conv: "36%" },
-    { stage: "Hired",       value: 5,   prev: 4,   color: "#9E74D0", conv: "63%" },
-  ],
-  "Frontend Engineer": [
-    { stage: "Sourced",     value: 203, prev: 175, color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 134, prev: 110, color: "#9EC8FF", conv: "66%" },
-    { stage: "Interviewed", value: 58,  prev: 48,  color: "#BA9FE7", conv: "43%" },
-    { stage: "Offered",     value: 19,  prev: 15,  color: "#C8A8F0", conv: "33%" },
-    { stage: "Hired",       value: 11,  prev: 9,   color: "#9E74D0", conv: "58%" },
-  ],
-  "Data Scientist": [
-    { stage: "Sourced",     value: 56,  prev: 48,  color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 32,  prev: 26,  color: "#9EC8FF", conv: "57%" },
-    { stage: "Interviewed", value: 14,  prev: 11,  color: "#BA9FE7", conv: "44%" },
-    { stage: "Offered",     value: 5,   prev: 4,   color: "#C8A8F0", conv: "36%" },
-    { stage: "Hired",       value: 3,   prev: 2,   color: "#9E74D0", conv: "60%" },
-  ],
-  "DevOps Engineer": [
-    { stage: "Sourced",     value: 34,  prev: 28,  color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 22,  prev: 18,  color: "#9EC8FF", conv: "65%" },
-    { stage: "Interviewed", value: 10,  prev: 8,   color: "#BA9FE7", conv: "45%" },
-    { stage: "Offered",     value: 4,   prev: 3,   color: "#C8A8F0", conv: "40%" },
-    { stage: "Hired",       value: 3,   prev: 2,   color: "#9E74D0", conv: "75%" },
-  ],
-  "Product Manager": [
-    { stage: "Sourced",     value: 119, prev: 100, color: "#80B2FF", conv: null },
-    { stage: "Screened",    value: 74,  prev: 62,  color: "#9EC8FF", conv: "62%" },
-    { stage: "Interviewed", value: 31,  prev: 26,  color: "#BA9FE7", conv: "42%" },
-    { stage: "Offered",     value: 9,   prev: 7,   color: "#C8A8F0", conv: "29%" },
-    { stage: "Hired",       value: 6,   prev: 5,   color: "#9E74D0", conv: "67%" },
-  ],
+// Manager backend (manager_api.py) — HR→manager approval status. Defaults to
+// MANAGER_API_PORT's default of 8001. Override with NEXT_PUBLIC_MANAGER_API_BASE_URL.
+const MANAGER_API_BASE = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
+
+type Feedback = {
+  rating?: number;
+  summary?: string;
+  interviewer_name?: string;
+} | null;
+
+type Round = {
+  roundNo: number;
+  type: string;
+  date: string;
+  time: string;
+  interviewer: string;
+  status: "active" | "passed" | "failed" | "on-hold" | "pending" | string;
+  mailSent: boolean;
+  feedback: Feedback;
 };
 
-const roles = Object.keys(roleFunnels);
+type Candidate = {
+  id: string;
+  name: string;
+  email: string;
+  initials: string;
+  color: string;
+  role: string;
+  stage: string; // "Screening" | "Interview" | "Shortlisted" (from candidates_col / interview_details)
+  rounds: Round[];
+  skills: string;
+  tags: string[];
+  yoe: string;
+  summary: string;
+  // populated from the manager backend after merge
+  managerStatus: "not_sent" | "pending_manager" | "approved" | "rejected";
+  managerDecidedAt: string | null;
+  // ASSUMPTION: these aren't in the schema you've shared yet. See
+  // offer_letter_backend_patch.py for the exact interview_details fields +
+  // /interviews/{id}/offer-letter/send endpoint this reads from and posts to.
+  offerLetterSent: boolean;
+  offerLetterSentAt: string | null;
+  joiningDate: string | null; // no backend for this yet — always shows "—"
+};
 
-const agents = [
-  { name: "Resume Screener",       status: "Parsing 12 resumes",   active: true },
-  { name: "Scheduling Agent",      status: "3 slots booked",        active: true },
-  { name: "Feedback Analyzer",     status: "Idle",                  active: false },
-  { name: "Offer Letter Agent",    status: "Drafting 2 offers",     active: true },
-  { name: "Background Verification", status: "5 checks running",   active: true },
-  { name: "Onboarding Agent",      status: "2 day-1 checklists",    active: true },
-];
+type ManagerStatusRow = {
+  candidate_id: string;
+  status: "pending_manager" | "approved" | "rejected";
+  manager_decision: string | null;
+  manager_decided_at: string | null;
+};
 
-const approvals = [
-  { initials: "SM", color: "#8b5cf6", name: "Sarah Mitchell", role: "Senior Backend Engineer", detail: "AI match score 94% · 8 yrs Python, Kafka, AWS · Submitted by Resume Screener Agent", actions: ["Reject", "Approve"] },
-  { initials: "RK", color: "#f59e0b", name: "Rohan Kapoor",   role: "Product Designer",        detail: "AI suggested band ₹28L–32L · Manager approved · Drafted by Offer Letter Agent",    actions: ["Edit", "Send"] },
-  { initials: "YT", color: "#10b981", name: "Yuki Tanaka",    role: "Tomorrow 11am",           detail: "Interviewer conflict detected · 3 alternative slots proposed by Reschedule Agent",  actions: ["View slots", "Auto pick"] },
-];
+const STAGE_STYLE: Record<string, { color: string; bg: string }> = {
+  Screening:   { color: "#5A7EC9", bg: "#EEF3FF" },
+  Interview:   { color: "#8B5FC9", bg: "#F2ECFB" },
+  Shortlisted: { color: "#2F9E5C", bg: "#E7F8EE" },
+};
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState("All Roles");
+const ROUND_STATUS_STYLE: Record<string, { color: string; label: string }> = {
+  passed:   { color: "#2F9E5C", label: "Passed" },
+  failed:   { color: "#C24545", label: "Failed" },
+  active:   { color: "#4A78C4", label: "In progress" },
+  "on-hold":{ color: "#C98A2E", label: "On hold" },
+  pending:  { color: "#9AA8B8", label: "Pending" },
+};
+
+const MANAGER_STATUS_STYLE: Record<Candidate["managerStatus"], { color: string; bg: string; label: string }> = {
+  not_sent:        { color: "#9AA8B8", bg: "#F1F4F7", label: "Not sent to manager" },
+  pending_manager: { color: "#C98A2E", bg: "#FBF1E1", label: "Pending manager review" },
+  approved:        { color: "#2F9E5C", bg: "#E7F8EE", label: "Approved" },
+  rejected:        { color: "#C24545", bg: "#FBEAEA", label: "Rejected" },
+};
+
+const OFFER_LETTER_STYLE = {
+  sent:    { color: "#2F9E5C", bg: "#E7F8EE", label: "Sent" },
+  not_sent:{ color: "#9AA8B8", bg: "#F1F4F7", label: "Not sent" },
+};
+
+function hrHeaders() {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (HR_API_KEY) headers["x-api-key"] = HR_API_KEY;
+  return headers;
+}
+
+export default function CandidatesPipelinePage() {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [stageFilter, setStageFilter] = useState("All");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const funnelData = roleFunnels[selectedRole];
-  const totalSourced = funnelData[0].value;
-  const totalHired   = funnelData[funnelData.length - 1].value;
-  const overallConv  = ((totalHired / totalSourced) * 100).toFixed(1);
+  async function loadCandidates() {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1) GET /interviews (HR backend) — every candidate merged with their
+      //    full interview_details doc (rounds, stage, feedback...).
+      const hrRes = await fetch(`${HR_API_BASE}/interviews/`, { headers: hrHeaders() });
+      if (!hrRes.ok) throw new Error(`HR backend returned ${hrRes.status}`);
+      const hrData = await hrRes.json();
+      const hrCandidates: any[] = hrData.candidates || [];
 
-  const stats = [
-    { label: "Open roles",        value: "42",    trend: "+6 this week",    up: true,  icon: Briefcase, link: "/jobs" },
-    { label: "Active candidates", value: "1,284", trend: "218 in pipeline", up: null,  icon: Users,     link: "/candidates" },
-    { label: "Avg time to hire",  value: "18 days",trend: "4d faster vs Q4",up: true,  icon: Clock,     link: null },
-    { label: "AI shortlisted",    value: "94",    trend: "12 pending review",up: null, icon: Sparkles,  link: "/candidates" },
-  ];
+      // 2) GET /manager/candidates-status (Manager backend) — bulk lookup of
+      //    HR→manager approval status for every candidate id we just got.
+      let statusMap = new Map<string, ManagerStatusRow>();
+      if (hrCandidates.length > 0) {
+        try {
+          const ids = hrCandidates.map((c) => c.id).join(",");
+          const mgrRes = await fetch(
+            `${MANAGER_API_BASE}/manager/candidates-status?ids=${encodeURIComponent(ids)}`
+          );
+          if (mgrRes.ok) {
+            const mgrData = await mgrRes.json();
+            statusMap = new Map((mgrData.statuses || []).map((s: ManagerStatusRow) => [s.candidate_id, s]));
+          } else {
+            console.warn(`Manager backend returned ${mgrRes.status}; showing HR data only`);
+          }
+        } catch {
+          // Manager backend unreachable — don't block the HR data from showing,
+          // just fall back to "not_sent" for everyone.
+          console.warn(`Can't reach manager backend at ${MANAGER_API_BASE}; showing HR data only`);
+        }
+      }
+
+      // 3) Merge
+      const merged: Candidate[] = hrCandidates.map((c) => {
+        const mgr: any = statusMap.get(c.id) || {};
+        return {
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          initials: c.initials,
+          color: c.color,
+          role: c.role,
+          stage: c.stage,
+          rounds: c.rounds || [],
+          skills: c.skills,
+          tags: c.tags || [],
+          yoe: c.yoe,
+          summary: c.summary,
+          managerStatus: (mgr?.status as Candidate["managerStatus"]) || "not_sent",
+          managerDecidedAt: mgr?.manager_decided_at || null,
+          offerLetterSent: Boolean(c.offer_letter_sent),
+          offerLetterSentAt: c.offer_letter_sent_at || null,
+          joiningDate: null, // no backend field for this yet
+        };
+      });
+
+      setCandidates(merged);
+    } catch (err: any) {
+      setError(
+        err.message === "Failed to fetch"
+          ? `Can't reach the HR backend at ${HR_API_BASE}. Is hr_agent.py running on that port?`
+          : err.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCandidates();
+  }, []);
+
+  const stageOptions = useMemo(() => {
+    const set = new Set(candidates.map((c) => c.stage).filter(Boolean));
+    return ["All", ...Array.from(set)];
+  }, [candidates]);
+
+  const filtered = useMemo(() => {
+    return candidates.filter((c) => {
+      if (stageFilter !== "All" && c.stage !== stageFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.name.toLowerCase().includes(q) && !c.email.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [candidates, search, stageFilter]);
+
+  const summary = useMemo(() => {
+    const byStage: Record<string, number> = {};
+    let managerApproved = 0;
+    let managerPending = 0;
+    candidates.forEach((c) => {
+      byStage[c.stage] = (byStage[c.stage] || 0) + 1;
+      if (c.managerStatus === "approved") managerApproved++;
+      if (c.managerStatus === "pending_manager") managerPending++;
+    });
+    return { byStage, managerApproved, managerPending };
+  }, [candidates]);
 
   return (
-    <div className="dashboard">
-      <div className="dash-header">
+    <div className="pipeline-page">
+      <div className="pipeline-header">
         <div>
-          <h1 className="dash-greeting">Good afternoon, Priya</h1>
-          <p className="dash-sub">12 approvals pending · 7 AI agents active · 4 interviews today</p>
+          <h1 className="pipeline-title">Candidate Pipeline</h1>
+          <p className="pipeline-sub">
+            {candidates.length} candidates · {summary.byStage["Interview"] || 0} in interviews ·{" "}
+            {summary.managerPending} pending manager review · {summary.managerApproved} manager-approved
+          </p>
         </div>
-        <div className="dash-actions">
-          <button className="btn-primary">+ New job</button>
+        <button className="pipeline-refresh-btn" onClick={loadCandidates} disabled={loading}>
+          <RefreshCw size={14} className={loading ? "spin" : ""} /> Refresh
+        </button>
+      </div>
+
+      <div className="pipeline-toolbar">
+        <div className="pipeline-search">
+          <Search size={15} color="#9aa8b8" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div style={{ position: "relative" }}>
+          <button className="pipeline-filter-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <Filter size={13} /> {stageFilter} <ChevronDown size={13} />
+          </button>
+          {dropdownOpen && (
+            <>
+              <div onClick={() => setDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+              <div className="pipeline-dropdown">
+                {stageOptions.map((s) => (
+                  <div
+                    key={s}
+                    className={`pipeline-dropdown-item ${s === stageFilter ? "active" : ""}`}
+                    onClick={() => {
+                      setStageFilter(s);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="stat-grid">
-        {stats.map((s) => (
-          <div key={s.label} className={`stat-card ${s.link ? "stat-card-link" : ""}`} onClick={() => s.link && router.push(s.link)}>
-            <div className="stat-top"><span className="stat-label">{s.label}</span><s.icon size={16} color="#8aaabb" /></div>
-            <div className="stat-value">{s.value}</div>
-            <div className={`stat-trend ${s.up === true ? "up" : s.up === false ? "down" : ""}`}>
-              {s.up === true && <TrendingUp size={12} />}{s.up === false && <TrendingDown size={12} />}{s.trend}
-            </div>
-            {s.link && <span className="stat-cta">View all →</span>}
-          </div>
-        ))}
-      </div>
+      <div className="pipeline-card">
+        {error && <div className="pipeline-error">{error}</div>}
 
-      <div className="mid-grid">
-        {/* HIRING FUNNEL */}
-        <div className="card funnel-card">
-          <div className="card-header">
-            <span className="card-title">Hiring Funnel</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span className="card-meta">Last 30 days</span>
-              {/* Role Dropdown */}
-              <div style={{ position: "relative" }}>
-                <button className="funnel-role-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                  {selectedRole} <ChevronDown size={13} />
-                </button>
-                {dropdownOpen && (
-                  <>
-                    <div onClick={() => setDropdownOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-                    <div className="funnel-dropdown">
-                      {roles.map(r => (
-                        <div key={r} className={`funnel-dropdown-item ${r === selectedRole ? "active" : ""}`}
-                          onClick={() => { setSelectedRole(r); setDropdownOpen(false); }}>
-                          {r}
+        {loading ? (
+          <div className="pipeline-loading">Loading candidates…</div>
+        ) : filtered.length === 0 ? (
+          <div className="pipeline-empty">No candidates match this view.</div>
+        ) : (
+          <table className="pipeline-table">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Role</th>
+                <th>HR stage</th>
+                <th>Interview rounds</th>
+                <th>Current round</th>
+                <th>Manager status</th>
+                <th>Offer letter</th>
+                <th>Joining date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((c) => {
+                const stageStyle = STAGE_STYLE[c.stage] || { color: "#5A7EC9", bg: "#EEF3FF" };
+                const rounds = c.rounds || [];
+                const roundsDone = rounds.filter((r) => r.status === "passed" || r.status === "failed").length;
+                const currentRound =
+                  rounds.find((r) => r.status === "active") ||
+                  rounds.find((r) => r.status === "pending") ||
+                  rounds[rounds.length - 1];
+                const currentStyle = currentRound
+                  ? ROUND_STATUS_STYLE[currentRound.status] || ROUND_STATUS_STYLE.pending
+                  : null;
+
+                return (
+                  <tr key={c.id}>
+                    <td>
+                      <div className="pipeline-candidate-cell">
+                        <div className="pipeline-avatar" style={{ background: c.color + "22", color: c.color }}>
+                          {c.initials}
                         </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Summary strip */}
-          <div className="funnel-summary">
-            <div className="funnel-summary-item">
-              <span className="fs-val">{totalSourced.toLocaleString()}</span>
-              <span className="fs-label">Total sourced</span>
-            </div>
-            <ArrowRight size={14} color="#c8d8e8" />
-            <div className="funnel-summary-item">
-              <span className="fs-val">{totalHired}</span>
-              <span className="fs-label">Hired</span>
-            </div>
-            <ArrowRight size={14} color="#c8d8e8" />
-            <div className="funnel-summary-item">
-              <span className="fs-val" style={{ color: "#9E74D0" }}>{overallConv}%</span>
-              <span className="fs-label">Overall conv.</span>
-            </div>
-          </div>
-
-          {/* Bar chart */}
-          <div style={{ height: 180, marginBottom: 16 }}>
-            <FunnelChart data={funnelData} />
-          </div>
-
-          {/* Column headers */}
-          <div className="funnel-col-header">
-            <div className="funnel-dot" style={{ opacity: 0 }} />
-            <span className="funnel-stage-name" />
-            <div style={{ flex: 1 }} />
-            <span className="funnel-col-label">Count</span>
-            <span className="funnel-col-label">Conv %</span>
-            <span className="funnel-col-label">vs Prev</span>
-          </div>
-
-          {/* Detail rows */}
-          {funnelData.map((f) => (
-            <div key={f.stage} className="funnel-detail-row">
-              <div className="funnel-dot" style={{ background: f.color }} />
-              <span className="funnel-stage-name">{f.stage}</span>
-              <div className="funnel-bar-wrap">
-                <div className="funnel-bar" style={{ width: `${(f.value / totalSourced) * 100}%`, background: f.color }} />
-              </div>
-              <span className="funnel-count">{f.value.toLocaleString()}</span>
-              {f.conv
-                ? <span className="funnel-conv">{f.conv}</span>
-                : <span className="funnel-conv funnel-conv-base">Base</span>}
-              <span className={`funnel-delta ${f.value > f.prev ? "pos" : "neg"}`}>
-                {f.value > f.prev ? "▲" : "▼"} {Math.abs(f.value - f.prev)}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* LIVE AI AGENTS */}
-        <div className="card agents-card">
-          <div className="card-header">
-            <span className="card-title">Live AI agents</span>
-            <span className="agents-badge">● 7 active</span>
-          </div>
-          {agents.map((a) => (
-            <div key={a.name} className="agent-row">
-              <div className="agent-icon" />
-              <div className="agent-info">
-                <span className="agent-name">{a.name}</span>
-                <span className="agent-status">{a.status}</span>
-              </div>
-              <span className={`agent-dot ${a.active ? "active" : "idle"}`} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="card approvals-card">
-        <div className="card-header">
-          <span className="card-title">Pending your approval</span>
-          <a href="#" className="view-all">View all 12 →</a>
-        </div>
-        {approvals.map((a) => (
-          <div key={a.name} className="approval-row">
-            <div className="approval-avatar" style={{ background: a.color }}>{a.initials}</div>
-            <div className="approval-info">
-              <div className="approval-name">{a.name} · <span className="approval-role">{a.role}</span></div>
-              <div className="approval-detail">{a.detail}</div>
-            </div>
-            <div className="approval-btns">
-              <button className="btn-outline-sm">{a.actions[0]}</button>
-              <button className="btn-primary-sm">{a.actions[1]}</button>
-            </div>
-          </div>
-        ))}
+                        <div>
+                          <div className="pipeline-name">{c.name}</div>
+                          <div className="pipeline-email">{c.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{c.role || "—"}</td>
+                    <td>
+                      <span className="pipeline-stage-badge" style={{ color: stageStyle.color, background: stageStyle.bg }}>
+                        {c.stage}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="pipeline-rounds-dots">
+                        {rounds.map((r) => {
+                          const st = ROUND_STATUS_STYLE[r.status] || ROUND_STATUS_STYLE.pending;
+                          return (
+                            <span
+                              key={r.roundNo}
+                              className="pipeline-round-dot"
+                              style={{ background: st.color }}
+                              title={`Round ${r.roundNo} · ${r.type} · ${st.label}`}
+                            />
+                          );
+                        })}
+                        <span className="pipeline-rounds-text">
+                          {roundsDone} / {rounds.length} completed
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      {currentRound ? (
+                        <span className="pipeline-round-badge" style={{ color: currentStyle!.color }}>
+                          R{currentRound.roundNo} · {currentRound.type} · {currentStyle!.label}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        className="pipeline-stage-badge"
+                        style={{
+                          color: MANAGER_STATUS_STYLE[c.managerStatus].color,
+                          background: MANAGER_STATUS_STYLE[c.managerStatus].bg,
+                        }}
+                      >
+                        {MANAGER_STATUS_STYLE[c.managerStatus].label}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="pipeline-stage-badge"
+                        style={{
+                          color: (c.offerLetterSent ? OFFER_LETTER_STYLE.sent : OFFER_LETTER_STYLE.not_sent).color,
+                          background: (c.offerLetterSent ? OFFER_LETTER_STYLE.sent : OFFER_LETTER_STYLE.not_sent).bg,
+                        }}
+                        title={c.offerLetterSentAt ? `Sent ${new Date(c.offerLetterSentAt).toLocaleString()}` : undefined}
+                      >
+                        {(c.offerLetterSent ? OFFER_LETTER_STYLE.sent : OFFER_LETTER_STYLE.not_sent).label}
+                      </span>
+                    </td>
+                    <td>{c.joiningDate ? new Date(c.joiningDate).toLocaleDateString() : "—"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
