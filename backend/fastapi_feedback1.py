@@ -7,7 +7,7 @@ Integrates:
   - Interviews management (rounds, mail, results, feedback)
 
 MongoDB collections:
-  - job_descriptions    (all jobs - Salesforce + LinkedIn sourced)
+  - job_descriptions    (all jobs — Salesforce + LinkedIn sourced)
   - candidates          (resume-scored candidates; also used by interviews)
   - linkedin_profiles   (profiles fetched from LinkedIn search)
   - interview_details   (dedicated interview rounds collection)
@@ -140,7 +140,7 @@ candidates_col      = db["candidates"]
 li_col              = db["linkedin_profiles"]
 interview_details_col = db["interview_details"]   # ← sync handle (for indexes)
 
-# Async client - used by the interviews router (motor)
+# Async client — used by the interviews router (motor)
 async_motor_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
 async_db           = async_motor_client["hr_recruitment"]
 interviews_col     = async_db["interview_details"]  # ← dedicated interview_details collection
@@ -359,14 +359,14 @@ async def create_teams_meeting_async(
         start_dt = datetime.now() + timedelta(hours=1)
 
     end_dt  = start_dt + timedelta(minutes=duration_minutes)
-    subject = f"Round {round_no} - {role} Interview | {candidate_name}"
+    subject = f"Round {round_no} — {role} Interview | {candidate_name}"
 
     event_payload = {
         "subject": subject,
         "body": {
             "contentType": "HTML",
             "content": f"""
-            <h2>Interview Invitation - Round {round_no}</h2>
+            <h2>Interview Invitation — Round {round_no}</h2>
             <p>Dear {candidate_name},</p>
             <p>Your <b>Round {round_no}</b> interview for <b>{role}</b> has been scheduled.</p>
             <table border='1' cellpadding='5'>
@@ -572,7 +572,10 @@ class RoundPatch(BaseModel):
     mode:             Optional[str]  = None
     status:           Optional[str]  = None
     mailSent:         Optional[bool] = None
-
+class OfferLetterMailBody(BaseModel):
+    candidateEmail: str
+    subject:        str
+    body:            str   # HTML body — you build this on the frontend or here
 class SendMailBody(BaseModel):
     # ── email content ──────────────────────────────────────────────────────────
     candidateEmail:     str
@@ -643,7 +646,7 @@ async def get_all_interviews():
         iv_doc = await interviews_col.find_one({"candidate_id": cand_id})
 
         if iv_doc is None:
-            # First time - create a fresh, fully-enriched interview_details record
+            # First time — create a fresh, fully-enriched interview_details record
             default_round = make_default_round(round_no=1, status="active")
             iv_doc = {
                 "candidate_id": cand_id,
@@ -659,7 +662,7 @@ async def get_all_interviews():
             await interviews_col.insert_one(iv_doc)
 
         else:
-            # Doc exists - refresh profile fields + ensure rounds is non-empty
+            # Doc exists — refresh profile fields + ensure rounds is non-empty
             update_set: dict = {
                 **profile_fields,            # keep candidate profile in sync
                 "updated_at": datetime.now(timezone.utc),
@@ -691,6 +694,8 @@ async def get_all_interviews():
             "tags":         iv_doc.get("tags",    []),
             "yoe":          iv_doc.get("yoe",     cand.get("yoe", "N/A")),
             "summary":      iv_doc.get("summary", cand.get("summary", "")),
+            "offer_letter_sent":    iv_doc.get("offer_letter_sent", False),
+            "offer_letter_sent_at": iv_doc.get("offer_letter_sent_at"),
         }
         result.append(merged)
 
@@ -957,6 +962,7 @@ async def send_mail(id: str, round_no: int, body: SendMailBody):
         feedback_block = f"""
 <br>
 <p><b>📝 After the interview, please submit your feedback here:</b><br>
+
 <a href="{feedback_link}">Submit Feedback Form</a></p>
 """
 
@@ -1025,6 +1031,44 @@ async def send_mail(id: str, round_no: int, body: SendMailBody):
     }
 
 
+
+@interviews_router.post("/{id}/offer-letter/send")
+async def send_offer_letter(id: str, body: OfferLetterMailBody):
+    candidate_email = (body.candidateEmail or "").strip()
+    if not is_valid_email(candidate_email):
+        raise HTTPException(status_code=400, detail="A valid candidate email is required.")
+ 
+    iv_doc = await interviews_col.find_one({"candidate_id": id})
+    if not iv_doc:
+        raise HTTPException(status_code=404, detail="Interview record not found")
+ 
+    async with httpx.AsyncClient() as http:
+        try:
+            token = await get_graph_token_async(http)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Azure token failed: {e}")
+        try:
+            await send_graph_email_async(
+                http, token,
+                to_email=candidate_email,
+                subject=body.subject,
+                body=body.body,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Offer letter email failed: {e}")
+ 
+    now = datetime.now(timezone.utc)
+    await interviews_col.update_one(
+        {"candidate_id": id},
+        {"$set": {
+            "offer_letter_sent": True,
+            "offer_letter_sent_at": now,
+            "updated_at": now,
+        }},
+    )
+ 
+    logger.info(f"Offer letter sent + persisted for candidate={id}")
+    return {"success": True, "offer_letter_sent": True, "offer_letter_sent_at": now.isoformat()}
 # ── API 7: POST /interviews/feedback ──────────────────────────────────────────
 
 @interviews_router.post("/feedback")
@@ -1124,7 +1168,7 @@ async def test_mail_config(to_email: str):
             await send_graph_email_async(
                 http, token,
                 to_email=to_email,
-                subject="HR Agent - Mail Config Test",
+                subject="HR Agent — Mail Config Test",
                 body="<p>If you received this, your MS Graph mail config is working correctly.</p>",
             )
         except Exception as e:
@@ -1205,6 +1249,8 @@ async def get_interview_by_id(id: str):
         "tags":           iv_doc.get("tags",    []),
         "yoe":            iv_doc.get("yoe",     cand_doc.get("yoe", "N/A")),
         "summary":        iv_doc.get("summary", cand_doc.get("summary", "")),
+        "offer_letter_sent":    iv_doc.get("offer_letter_sent", False),
+        "offer_letter_sent_at": iv_doc.get("offer_letter_sent_at"),
         "job_offer_id":   iv_doc.get("job_offer_id",   cand_doc.get("job_offer_id", "")),
         "job_offer_name": iv_doc.get("job_offer_name", cand_doc.get("job_offer_name", "")),
         "position_name":  iv_doc.get("position_name",  cand_doc.get("position_name", "")),
@@ -1216,129 +1262,238 @@ async def get_interview_by_id(id: str):
 @interviews_router.get("/{id}/feedback-report")
 async def get_feedback_report(id: str):
     """
-    Returns feedback built from the database - no AI/OpenAI call.
-    Works even if no feedback has been submitted yet.
+    Fetches all rounds with feedback from interview_details, sends them
+    to GPT-4o for analysis, and returns a structured AI-generated report.
+ 
+    Called by the frontend when the user clicks "View Feedback" on a
+    candidate who has at least one completed round with feedback.
     """
-    report = await build_ai_feedback_report(id)
-    report_to_save = {k: v for k, v in report.items()
-                      if k not in ("_rounds_with_feedback", "_all_rounds")}
-    await interviews_col.update_one(
-        {"candidate_id": id},
-        {"$set": {"last_report": report_to_save, "updated_at": datetime.now(timezone.utc)}},
+    # ── 1. Load interview + candidate docs ────────────────────────────────────
+    iv_doc = await interviews_col.find_one({"candidate_id": id})
+    if not iv_doc:
+        raise HTTPException(status_code=404, detail="Interview record not found")
+ 
+    cand_doc = await async_candidates.find_one({"_id": to_object_id(id)})
+    if not cand_doc:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+ 
+    candidate_name = iv_doc.get("name") or cand_doc.get("name", "Candidate")
+    role           = iv_doc.get("role") or cand_doc.get("role", "Position")
+ 
+    # ── 2. Collect rounds that have feedback ──────────────────────────────────
+    rounds_with_feedback = [
+        r for r in iv_doc.get("rounds", [])
+        if r.get("feedback") and r["feedback"].get("rating")
+    ]
+ 
+    if not rounds_with_feedback:
+        raise HTTPException(
+            status_code=422,
+            detail="No completed feedback found for this candidate yet.",
+        )
+ 
+    # ── 3. Build the GPT-4o prompt ────────────────────────────────────────────
+    feedback_blocks = []
+    for r in rounds_with_feedback:
+        f = r["feedback"]
+        feedback_blocks.append(f"""
+Round {r['roundNo']} ({r.get('type', 'Interview')}):
+- Rating: {f.get('rating')}/5
+- Summary: {f.get('summary', '')}
+- Skills assessed: {f.get('skills', '')}
+- Strengths: {f.get('strengths', '')}
+- Communication: {f.get('communication', 'N/A')}
+- Cultural Fit: {f.get('cultural_fit', 'N/A')}
+- Adaptability: {f.get('adaptability', 'N/A')}
+- Interviewer: {f.get('interviewer_name', r.get('interviewer', 'Unknown'))}
+""".strip())
+ 
+    feedback_text = "\n\n".join(feedback_blocks)
+ 
+    prompt = f"""You are an expert HR analyst. Analyze the following interview feedback for {candidate_name} applying for the role of {role}.
+ 
+{feedback_text}
+ 
+Generate a structured JSON report with:
+1. "overall_rating": number with 1 decimal (weighted average across rounds)
+2. "recommendation": one of "Strong Hire", "Hire", "Hold", "No Hire"
+3. "executive_summary": 2-3 sentence overall assessment of fit for the role
+4. "top_strengths": array of 3-4 specific strengths as concise phrases
+5. "growth_areas": array of 2-3 specific development areas as concise phrases
+6. "aggregated_skills": array of {{"skill": str, "avg_score": float}} sorted by avg_score descending, combining all rounds
+7. "round_highlights": array of {{"round_no": int, "type": str, "rating": float, "key_insight": str}} — one sentence insight per completed round
+8. "hiring_confidence": "High", "Medium", or "Low"
+9. "culture_fit_score": float 1-5 (average of all cultural fit ratings)
+10. "communication_score": float 1-5 (average of all communication ratings)
+ 
+Return ONLY valid JSON. No markdown fences. No explanation."""
+ 
+    # ── 4. Call GPT-4o ────────────────────────────────────────────────────────
+    try:
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert HR analyst that outputs structured JSON reports. Return only valid JSON, no markdown.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+        )
+        report = json.loads(response.choices[0].message.content)
+    except Exception as e:
+        logger.error(f"GPT-4o feedback analysis failed: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI analysis failed: {str(e)}",
+        )
+ 
+    # ── 5. Enrich report with live round metadata ─────────────────────────────
+    report["candidate_id"]   = id
+    report["candidate_name"] = candidate_name
+    report["role"]           = role
+    report["rounds_reviewed"] = len(rounds_with_feedback)
+    report["generated_at"]   = datetime.now(timezone.utc).isoformat()
+ 
+    # Attach per-round interviewer info from live store
+    interviewer_map = {
+        r["roundNo"]: {
+            "interviewer":      r.get("interviewer", ""),
+            "interviewer_email": r.get("interviewerEmail", ""),
+            "date":             r.get("date", ""),
+        }
+        for r in rounds_with_feedback
+    }
+    for h in report.get("round_highlights", []):
+        meta = interviewer_map.get(h.get("round_no", 0), {})
+        h["interviewer"]  = meta.get("interviewer", "")
+        h["date"]         = meta.get("date", "")
+ 
+    logger.info(
+        "✅ AI feedback report generated | candidate=%s rounds=%d rec=%s",
+        id, len(rounds_with_feedback), report.get("recommendation"),
     )
-    report.pop("_rounds_with_feedback", None)
-    report.pop("_all_rounds", None)
+ 
     return MongoResponse(200, content=report)
-
+# ── ADD 1: Helper functions (after existing get_feedback_report) ──────────────
 
 async def build_ai_feedback_report(id: str) -> dict:
-    """Builds feedback report from DB only - no OpenAI. Works even without feedback."""
+    """Shared report builder used by both GET and POST email endpoints."""
     iv_doc = await interviews_col.find_one({"candidate_id": id})
     if not iv_doc:
         raise HTTPException(status_code=404, detail="Interview record not found")
 
     cand_doc = await async_candidates.find_one({"_id": to_object_id(id)})
-    candidate_name = iv_doc.get("name") or (cand_doc or {}).get("name", "Candidate")
-    role           = iv_doc.get("role") or (cand_doc or {}).get("role", "Position")
-    all_rounds     = iv_doc.get("rounds", [])
+    if not cand_doc:
+        raise HTTPException(status_code=404, detail="Candidate not found")
 
-    def parse_score(val):
-        if val is None: return None
-        if isinstance(val, (int, float)): return float(val)
-        try: return float(str(val).split("/")[0])
-        except Exception: return None
+    candidate_name = iv_doc.get("name") or cand_doc.get("name", "Candidate")
+    role           = iv_doc.get("role") or cand_doc.get("role", "Position")
 
-    ratings, comm_scores, culture_scores = [], [], []
-    skills_map: dict = {}
-    strengths_list, round_highlights = [], []
+    rounds_with_feedback = [
+        r for r in iv_doc.get("rounds", [])
+        if r.get("feedback") and r["feedback"].get("rating")
+    ]
+    if not rounds_with_feedback:
+        raise HTTPException(status_code=422, detail="No completed feedback found for this candidate yet.")
 
-    for r in all_rounds:
-        f = r.get("feedback") or {}
-        rv = parse_score(f.get("rating"))
-        if rv: ratings.append(rv)
-        c  = parse_score(f.get("communication"))
-        cf = parse_score(f.get("cultural_fit"))
-        if c  is not None: comm_scores.append(c)
-        if cf is not None: culture_scores.append(cf)
+    feedback_blocks = []
+    for r in rounds_with_feedback:
+        f = r["feedback"]
+        feedback_blocks.append(f"""
+Round {r['roundNo']} ({r.get('type', 'Interview')}):
+- Rating: {f.get('rating')}/5
+- Summary: {f.get('summary', '')}
+- Skills assessed: {f.get('skills', '')}
+- Strengths: {f.get('strengths', '')}
+- Communication: {f.get('communication', 'N/A')}
+- Cultural Fit: {f.get('cultural_fit', 'N/A')}
+- Adaptability: {f.get('adaptability', 'N/A')}
+- Interviewer: {f.get('interviewer_name', r.get('interviewer', 'Unknown'))}
+""".strip())
 
-        raw_skills = f.get("skills", "")
-        if isinstance(raw_skills, str):
-            for part in raw_skills.split(","):
-                if ":" in part:
-                    sn, _, sv = part.strip().partition(":")
-                    s = parse_score(sv.strip())
-                    if s is not None: skills_map.setdefault(sn.strip(), []).append(s)
-        elif isinstance(raw_skills, list):
-            for sk in raw_skills:
-                if isinstance(sk, dict):
-                    sn = sk.get("name", sk.get("skill", ""))
-                    sv = parse_score(sk.get("score", sk.get("level")))
-                    if sn and sv is not None: skills_map.setdefault(sn, []).append(sv)
+    feedback_text = "\n\n".join(feedback_blocks)
+    prompt = f"""You are an expert HR analyst. Analyze the following interview feedback for {candidate_name} applying for the role of {role}.
 
-        raw_str = f.get("strengths", "")
-        if isinstance(raw_str, str) and raw_str:
-            strengths_list.extend([s.strip() for s in raw_str.split(",") if s.strip()])
-        elif isinstance(raw_str, list):
-            strengths_list.extend(raw_str)
+{feedback_text}
 
-        round_highlights.append({
-            "round_no":    r.get("roundNo", 0),
-            "type":        r.get("type", "Interview"),
-            "status":      r.get("status", "pending"),
-            "rating":      rv or 0.0,
-            "key_insight": (f.get("summary", "") or "")[:120] or f"Round {r.get('roundNo')} - {r.get('status','pending')}.",
-            "interviewer": f.get("interviewer_name") or r.get("interviewer", ""),
-            "date":        r.get("date", ""),
-        })
+Generate a structured JSON report with:
+1. "overall_rating": number with 1 decimal (weighted average across rounds)
+2. "recommendation": one of "Strong Hire", "Hire", "Hold", "No Hire"
+3. "executive_summary": 2-3 sentence overall assessment of fit for the role
+4. "top_strengths": array of 3-4 specific strengths as concise phrases
+5. "growth_areas": array of 2-3 specific development areas as concise phrases
+6. "aggregated_skills": array of {{"skill": str, "avg_score": float}} sorted by avg_score descending
+7. "round_highlights": array of {{"round_no": int, "type": str, "rating": float, "key_insight": str}}
+8. "hiring_confidence": "High", "Medium", or "Low"
+9. "culture_fit_score": float 1-5
+10. "communication_score": float 1-5
 
-    overall_rating    = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
-    recommendation    = ("Strong Hire" if overall_rating >= 4.5 else "Hire" if overall_rating >= 3.5
-                         else "Hold" if overall_rating >= 2.5 else "No Hire" if overall_rating > 0 else "Pending")
-    hiring_confidence = ("High" if overall_rating >= 4.0 else "Medium" if overall_rating >= 3.0
-                         else "Low" if overall_rating > 0 else "Pending")
+Return ONLY valid JSON. No markdown fences. No explanation."""
 
-    aggregated_skills = sorted(
-        [{"skill": k, "avg_score": round(sum(v)/len(v), 1)} for k, v in skills_map.items()],
-        key=lambda x: x["avg_score"], reverse=True,
-    )
-    seen, top_strengths = set(), []
-    for s in strengths_list:
-        if s not in seen:
-            seen.add(s); top_strengths.append(s)
-        if len(top_strengths) >= 4: break
+    try:
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an expert HR analyst that outputs structured JSON reports. Return only valid JSON, no markdown."},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+        )
+        report = json.loads(response.choices[0].message.content)
+    except Exception as e:
+        logger.error(f"GPT-4o feedback analysis failed: {e}")
+        raise HTTPException(status_code=502, detail=f"AI analysis failed: {str(e)}")
 
-    summaries = [r.get("feedback", {}).get("summary", "") for r in all_rounds if r.get("feedback", {}).get("summary")]
-    rounds_with_feedback = [r for r in all_rounds if r.get("feedback") and r["feedback"].get("rating")]
-    executive_summary = (" | ".join(summaries[:3]) if summaries
-                         else f"{candidate_name} has been approved for manager review. {len(all_rounds)} round(s) scheduled.")
+    report["candidate_id"]    = id
+    report["candidate_name"]  = candidate_name
+    report["role"]            = role
+    report["rounds_reviewed"] = len(rounds_with_feedback)
+    report["generated_at"]    = datetime.now(timezone.utc).isoformat()
 
-    return {
-        "candidate_id":        id,
-        "candidate_name":      candidate_name,
-        "candidate_email":     iv_doc.get("email", ""),
-        "role":                role,
-        "rounds_total":        len(all_rounds),
-        "rounds_reviewed":     len(rounds_with_feedback),
-        "generated_at":        datetime.now(timezone.utc).isoformat(),
-        "overall_rating":      overall_rating,
-        "recommendation":      recommendation,
-        "executive_summary":   executive_summary,
-        "top_strengths":       top_strengths,
-        "growth_areas":        [],
-        "aggregated_skills":   aggregated_skills,
-        "round_highlights":    round_highlights,
-        "hiring_confidence":   hiring_confidence,
-        "culture_fit_score":   round(sum(culture_scores)/len(culture_scores), 1) if culture_scores else "N/A",
-        "communication_score": round(sum(comm_scores)/len(comm_scores), 1) if comm_scores else "N/A",
-        "_rounds_with_feedback": rounds_with_feedback,
-        "_all_rounds":           all_rounds,
+    interviewer_map = {
+        r["roundNo"]: {
+            "interviewer":       r.get("interviewer", ""),
+            "interviewer_email": r.get("interviewerEmail", ""),
+            "date":              r.get("date", ""),
+        }
+        for r in rounds_with_feedback
     }
+    for h in report.get("round_highlights", []):
+        meta = interviewer_map.get(h.get("round_no", 0), {})
+        h["interviewer"] = meta.get("interviewer", "")
+        h["date"]        = meta.get("date", "")
+
+    report["_rounds_with_feedback"] = rounds_with_feedback
+    return report
 
 
-# ── Email rendering helpers ───────────────────────────────────────────────────
+# ── ADD 2: Email rendering helpers ────────────────────────────────────────────
 
 class SendFeedbackMailRequest(BaseModel):
-    manager_email: EmailStr
+    manager_email: EmailStr   # EmailStr already imported via pydantic
+
+
+def _rating_color(rating) -> str:
+    try:
+        r = float(rating)
+    except (TypeError, ValueError):
+        return "#6b7280"
+    if r >= 4: return "#16a34a"
+    if r >= 3: return "#d97706"
+    return "#dc2626"
+
+
+def _recommendation_color(rec: str) -> str:
+    return {
+        "Strong Hire": "#16a34a",
+        "Hire":        "#2563eb",
+        "Hold":        "#d97706",
+        "No Hire":     "#dc2626",
+    }.get(rec, "#6b7280")
 
 
 def render_feedback_email_html(report: dict) -> str:
@@ -1416,11 +1571,31 @@ def render_feedback_email_html(report: dict) -> str:
 </div>"""
 
 
-# ── send-feedback-mail ────────────────────────────────────────────────────────
+# ── ADD 3: New routes (BEFORE app = FastAPI(...)) ─────────────────────────────
+
+# Replace the existing get_feedback_report route with this refactored version:
+@interviews_router.get("/{id}/feedback-report")
+async def get_feedback_report(id: str):
+    report = await build_ai_feedback_report(id)
+    report_to_save = {k: v for k, v in report.items() if k != "_rounds_with_feedback"}
+
+    # ── Persist the generated report snapshot into interview_details ──────────
+    await interviews_col.update_one(
+        {"candidate_id": id},
+        {"$set": {
+            "last_ai_report": report_to_save,
+            "updated_at":     datetime.now(timezone.utc),
+        }},
+    )
+
+    report.pop("_rounds_with_feedback", None)
+    return MongoResponse(200, content=report)
+
+
 @interviews_router.post("/{id}/send-feedback-mail")
 async def send_feedback_mail(id: str, body: SendFeedbackMailRequest):
     report    = await build_ai_feedback_report(id)
-    subject   = f"Interview Feedback Report - {report.get('candidate_name')} ({report.get('role')})"
+    subject   = f"Interview Feedback Report — {report.get('candidate_name')} ({report.get('role')})"
     html_body = render_feedback_email_html(report)
 
     async with httpx.AsyncClient() as http:
@@ -1864,13 +2039,13 @@ RESUME:
 {resume_text}
 
 Extract:
-1. Candidate Name - usually at the top of the resume. Default: "Unknown Candidate"
-2. Candidate Email - any email address. Default: "no-email@unknown.com"
+1. Candidate Name — usually at the top of the resume. Default: "Unknown Candidate"
+2. Candidate Email — any email address. Default: "no-email@unknown.com"
 3. Short Summary (1-2 sentences about fit for the role)
 4. Matching Score (0-100, score 70+ if there is reasonable skill overlap)
 5. Key Skills (comma-separated, max 3-4 skills matching the JD)
 6. Role/Position Title (from JD that best matches)
-7. Years of Experience (e.g. "5 yrs" - estimate from resume, default "2 yrs" if unclear)
+7. Years of Experience (e.g. "5 yrs" — estimate from resume, default "2 yrs" if unclear)
 
 Return ONLY valid JSON:
 {{
@@ -2085,7 +2260,7 @@ class AddJobRequest(BaseModel):
 # FASTAPI APP
 # ══════════════════════════════════════════════════════════════════════════════
 
-app = FastAPI(title="HR Recruitment AI Agent - Salesforce + LinkedIn + Interviews")
+app = FastAPI(title="HR Recruitment AI Agent — Salesforce + LinkedIn + Interviews")
 
 app.add_middleware(
     CORSMiddleware,
@@ -2132,7 +2307,7 @@ async def analyze_salesforce(score_threshold: int = 80):
             offer_name = job["job_offer_name"]
 
             if not jd_text:
-                print(f"⚠️  Skipping {offer_name} - no JD text")
+                print(f"⚠️  Skipping {offer_name} — no JD text")
                 continue
 
             print(f"\n📄 Job Offer : {offer_name}")
@@ -2146,7 +2321,7 @@ async def analyze_salesforce(score_threshold: int = 80):
                 files    = app["resume_files"]
 
                 if not files:
-                    print(f"  ⚠️  {app_name} - no resume attached")
+                    print(f"  ⚠️  {app_name} — no resume attached")
                     continue
 
                 best_score  = 0
@@ -2467,6 +2642,11 @@ async def get_candidates(min_score: int = 80):
 
 @app.post("/candidates/send-email")
 async def send_email(candidate_email: str):
+    # Validate email format first
+    from email_validation import is_valid_email
+    if not is_valid_email(candidate_email):
+        return MongoResponse(400, content={"error": "Invalid email address format."})
+
     candidate = candidates_col.find_one({"email": candidate_email}, {"_id": 0})
     if not candidate:
         candidate = next(
@@ -2574,19 +2754,8 @@ async def get_linkedin_candidates_for_job(job_offer_id: str):
 if __name__ == "__main__":
     import uvicorn
     import sys
-    import socket
 
-    # Use port from args, or find a free port starting at 8000
-    if len(sys.argv) > 2:
-        port = int(sys.argv[2])
-    else:
-        port = 8000
-        # If 8000 is taken, try 8002 (8001 is reserved for manager backend)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(("localhost", port)) == 0:
-                port = 8002
-                print(f"⚠  Port 8000 is in use — using port {port} instead.")
-
+    port = int(sys.argv[2]) if len(sys.argv) > 2 else 8000
     print(f"\n🚀 Starting HR Recruitment AI Agent on port {port}")
     print(f"   Salesforce + LinkedIn + Interviews edition")
     print(f"📚 Docs: http://localhost:{port}/docs")

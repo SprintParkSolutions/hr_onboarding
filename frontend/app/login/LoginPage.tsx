@@ -1,19 +1,24 @@
 "use client";
 import "./LoginPage.css";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircle, Users, Briefcase } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircle, Users, Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
+import { isValidEmail, isValidPublicEmail } from "@/lib/emailValidation";
 
-type Role = "hr" | "manager";
+type Role = "hr" | "manager" | "candidate";
 
 const HR_CREDS = [
-  { email: "priya.r@recruitai.app",  password: "recruitai123", name: "Priya R.",  title: "HR Manager",       initials: "PR", color: "#B875A0" },
-  { email: "sneha.m@recruitai.app",  password: "recruitai123", name: "Sneha M.", title: "Talent Acquisition", initials: "SM", color: "#0EA5E9" },
+  { email: "yernig@sprintpark.com", password: "yerni1234", name: "Yerni G.", title: "HR Manager", initials: "YG", color: "#B875A0" },
 ];
 
 const MANAGER_CREDS = [
-  { email: "arjun.k@recruitai.app",  password: "recruitai123", name: "Arjun K.", title: "Engineering Lead",   initials: "AK", color: "#6366F1" },
-  { email: "rahul.d@recruitai.app",  password: "recruitai123", name: "Rahul D.", title: "Analytics Manager",  initials: "RD", color: "#10b981" },
+  { email: "akhilag@sprintpark.com", password: "akhila123", name: "Akhila G.", title: "Engineering Lead", initials: "AG", color: "#6366F1" },
+];
+
+const CANDIDATE_CREDS = [
+  { email: "laxman.k@candidate.app",  password: "candidate123", name: "Laxman Kosana",   title: "Salesforce Developer",  initials: "LK", color: "#8b5cf6" },
+  { email: "naresh.p@candidate.app",  password: "candidate123", name: "Naresh Punagani", title: "Full Stack Developer",   initials: "NP", color: "#f59e0b" },
+  { email: "edurupaka.b@candidate.app", password: "candidate123", name: "Edurupaka Bhavana", title: "AI Engineer",        initials: "EB", color: "#10b981" },
 ];
 
 function RecruitAILogo({ size = 18 }: { size?: number }) {
@@ -42,9 +47,9 @@ export default function LoginPage() {
   const [error,       setError]       = useState("");
   const [signedUp,    setSignedUp]    = useState(false);
 
-  const demoCreds = role === "hr" ? HR_CREDS : MANAGER_CREDS;
-  const allCreds  = [...HR_CREDS, ...MANAGER_CREDS];
-  const roleLabel = role === "hr" ? "HR / Recruiter" : "Hiring Manager";
+  const demoCreds = role === "hr" ? HR_CREDS : role === "manager" ? MANAGER_CREDS : CANDIDATE_CREDS;
+  const allCreds  = [...HR_CREDS, ...MANAGER_CREDS, ...CANDIDATE_CREDS];
+  const roleLabel = role === "hr" ? "HR / Recruiter" : role === "manager" ? "Hiring Manager" : "Candidate";
 
   function switchRole(r: Role) {
     setRole(r); setEmail(""); setPassword(""); setError("");
@@ -56,10 +61,12 @@ export default function LoginPage() {
     if (!email.trim() || !password.trim()) { setError("Please enter your email and password."); return; }
     setLoading(true);
     setTimeout(() => {
-      const hrMatch  = HR_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
-      const mgrMatch = MANAGER_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
-      if (hrMatch)       { window.location.href = "/hr_portal/dashboard"; }
-      else if (mgrMatch) { window.location.href = "/Manager_Portal/dashboard"; }
+      const hrMatch        = HR_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      const mgrMatch       = MANAGER_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      const candidateMatch = CANDIDATE_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      if (hrMatch)             { window.location.href = "/hr_portal/dashboard"; }
+      else if (mgrMatch)       { window.location.href = "/Manager_Portal/dashboard"; }
+      else if (candidateMatch) { window.location.href = "/candidate_portal/dashboard"; }
       else { setError("Invalid email or password. Try a demo account below."); setLoading(false); }
     }, 900);
   }
@@ -69,6 +76,16 @@ export default function LoginPage() {
     setError("");
     if (!name.trim())           { setError("Please enter your name."); return; }
     if (!email.trim())          { setError("Please enter your email."); return; }
+    /* Candidates must use a public provider; HR/Manager can use work email */
+    if (role === "candidate") {
+      if (!isValidPublicEmail(email.trim())) {
+        setError("Please use a valid email from Gmail, Outlook, Yahoo, iCloud or similar."); return;
+      }
+    } else {
+      if (!isValidEmail(email.trim())) {
+        setError("Please enter a valid work email address."); return;
+      }
+    }
     if (password.length < 8)    { setError("Password must be at least 8 characters."); return; }
     if (password !== confirmPw) { setError("Passwords don't match."); return; }
     setLoading(true);
@@ -96,13 +113,16 @@ export default function LoginPage() {
       <main className="lp-auth-main">
         <div className="lp-auth-card">
 
-          {/* Role switcher */}
+          {/* Role switcher — 3 roles */}
           <div className="lp-role-switcher">
             <button type="button" className={`lp-role-btn${role === "hr" ? " active" : ""}`} onClick={() => switchRole("hr")}>
               <Users size={15} /> HR / Recruiter
             </button>
             <button type="button" className={`lp-role-btn${role === "manager" ? " active" : ""}`} onClick={() => switchRole("manager")}>
               <Briefcase size={15} /> Hiring Manager
+            </button>
+            <button type="button" className={`lp-role-btn${role === "candidate" ? " active" : ""}`} onClick={() => switchRole("candidate")}>
+              <GraduationCap size={15} /> Candidate
             </button>
           </div>
 
@@ -122,10 +142,11 @@ export default function LoginPage() {
 
               <form onSubmit={handleSignIn} noValidate className="lp-auth-form">
                 <div className="lp-auth-field">
-                  <label className="lp-auth-label" htmlFor="email">Work email</label>
+                  <label className="lp-auth-label" htmlFor="email">{role === "candidate" ? "Email" : "Work email"}</label>
                   <div className="lp-auth-input-wrap">
                     <Mail size={15} className="lp-auth-input-icon" />
-                    <input id="email" type="email" className="lp-auth-input" placeholder="you@recruitai.app"
+                    <input id="email" type="email" className="lp-auth-input"
+                      placeholder={role === "candidate" ? "you@candidate.app" : "you@recruitai.app"}
                       value={email} onChange={e => { setEmail(e.target.value); setError(""); }} autoComplete="email" autoFocus />
                   </div>
                 </div>
