@@ -1,7 +1,7 @@
 ﻿"use client";
 import "./DashboardPage.css";
 import { useEffect, useMemo, useState } from "react";
-import { Search, ChevronDown, Filter, RefreshCw } from "lucide-react";
+import { Search, ChevronDown, Filter, RefreshCw, Check, X, Clock } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Backend connections — this page merges data from BOTH services
@@ -14,8 +14,9 @@ const HR_API_BASE = process.env.NEXT_PUBLIC_HR_API_BASE_URL || "http://localhost
 // guarded by require_api_key, which accepts this header.
 const HR_API_KEY = process.env.NEXT_PUBLIC_HR_API_KEY || "";
 
-// Manager backend (manager_api.py) — HR→manager approval status. Defaults to
-// MANAGER_API_PORT's default of 8001. Override with NEXT_PUBLIC_MANAGER_API_BASE_URL.
+// Manager backend (manager_api.py) — HR→manager approval status, plus offer
+// data (joining date, candidate acceptance). Defaults to MANAGER_API_PORT's
+// default of 8001. Override with NEXT_PUBLIC_MANAGER_API_BASE_URL.
 const MANAGER_API_BASE = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
 
 type Feedback = {
@@ -35,6 +36,10 @@ type Round = {
   feedback: Feedback;
 };
 
+// Candidate's acceptance decision on their offer. null = no decision recorded
+// yet (or no offer exists at all) — distinct from an explicit "false" decline.
+type AcceptanceStatus = "accepted" | "declined" | "pending";
+
 type Candidate = {
   id: string;
   name: string;
@@ -51,12 +56,12 @@ type Candidate = {
   // populated from the manager backend after merge
   managerStatus: "not_sent" | "pending_manager" | "approved" | "rejected";
   managerDecidedAt: string | null;
-  // ASSUMPTION: these aren't in the schema you've shared yet. See
-  // offer_letter_backend_patch.py for the exact interview_details fields +
-  // /interviews/{id}/offer-letter/send endpoint this reads from and posts to.
   offerLetterSent: boolean;
   offerLetterSentAt: string | null;
-  joiningDate: string | null; // no backend for this yet — always shows "—"
+  // populated from GET /manager/offers-status (manager_offers.doj / candidate_accepted)
+  joiningDate: string | null;      // raw value as stored — ISO "YYYY-MM-DD", "TBD", or null if no offer yet
+  acceptance: AcceptanceStatus;    // derived from manager_offers.candidate_accepted
+  hasOffer: boolean;               // whether a manager_offers record exists at all (controls whether the toggle is clickable)
 };
 
 type ManagerStatusRow = {
@@ -64,6 +69,14 @@ type ManagerStatusRow = {
   status: "pending_manager" | "approved" | "rejected";
   manager_decision: string | null;
   manager_decided_at: string | null;
+};
+
+type OfferStatusRow = {
+  candidate_id: string;
+  doj?: string | null;
+  candidate_accepted?: boolean | null;
+  status?: string;
+  band?: string;
 };
 
 const STAGE_STYLE: Record<string, { color: string; bg: string }> = {
@@ -92,6 +105,25 @@ const OFFER_LETTER_STYLE = {
   not_sent:{ color: "#9AA8B8", bg: "#F1F4F7", label: "Not sent" },
 };
 
+const ACCEPTANCE_STYLE: Record<AcceptanceStatus, { color: string; bg: string; label: string }> = {
+  accepted: { color: "#2F9E5C", bg: "#E7F8EE", label: "Accepted" },
+  declined: { color: "#C24545", bg: "#FBEAEA", label: "Declined" },
+  pending:  { color: "#9AA8B8", bg: "#F1F4F7", label: "Pending" },
+};
+
+/* Formats a stored joining-date value for display. Handles ISO "YYYY-MM-DD"
+   (what OffersPage's date picker saves), the literal "TBD" placeholder, and
+   null (no offer record exists for this candidate yet at all). */
+function formatJoiningDate(value: string | null): string {
+  if (!value) return "—";
+  if (value.toUpperCase() === "TBD") return "TBD";
+  const isoMatch = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (!isoMatch) return value;
+  const d = new Date(`${value}T00:00:00`);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function hrHeaders() {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (HR_API_KEY) headers["x-api-key"] = HR_API_KEY;
@@ -106,6 +138,11 @@ export default function CandidatesPipelinePage() {
   const [stageFilter, setStageFilter] = useState("All");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Tracks which candidate_id's acceptance toggle is mid-save, so we can
+  // disable it and avoid double-clicks while the PATCH is in flight.
+  const [savingAcceptance, setSavingAcceptance] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
   async function loadCandidates() {
     setLoading(true);
     setError(null);
@@ -117,12 +154,15 @@ export default function CandidatesPipelinePage() {
       const hrData = await hrRes.json();
       const hrCandidates: any[] = hrData.candidates || [];
 
-      // 2) GET /manager/candidates-status (Manager backend) — bulk lookup of
-      //    HR→manager approval status for every candidate id we just got.
       let statusMap = new Map<string, ManagerStatusRow>();
+      let offerMap = new Map<string, OfferStatusRow>();
+
       if (hrCandidates.length > 0) {
+        const ids = hrCandidates.map((c) => c.id).join(",");
+
+        // 2) GET /manager/candidates-status (Manager backend) — bulk lookup of
+        //    HR→manager approval status for every candidate id we just got.
         try {
-          const ids = hrCandidates.map((c) => c.id).join(",");
           const mgrRes = await fetch(
             `${MANAGER_API_BASE}/manager/candidates-status?ids=${encodeURIComponent(ids)}`
           );
@@ -137,11 +177,33 @@ export default function CandidatesPipelinePage() {
           // just fall back to "not_sent" for everyone.
           console.warn(`Can't reach manager backend at ${MANAGER_API_BASE}; showing HR data only`);
         }
+
+        // 3) GET /manager/offers-status (Manager backend) — bulk lookup of
+        //    joining date + candidate acceptance for every candidate id.
+        try {
+          const offRes = await fetch(
+            `${MANAGER_API_BASE}/manager/offers-status?ids=${encodeURIComponent(ids)}`
+          );
+          if (offRes.ok) {
+            const offData = await offRes.json();
+            offerMap = new Map((offData.offers || []).map((o: OfferStatusRow) => [o.candidate_id, o]));
+          } else {
+            console.warn(`Manager backend (offers-status) returned ${offRes.status}`);
+          }
+        } catch {
+          console.warn(`Can't reach manager backend for offers-status at ${MANAGER_API_BASE}`);
+        }
       }
 
-      // 3) Merge
+      // 4) Merge
       const merged: Candidate[] = hrCandidates.map((c) => {
         const mgr: any = statusMap.get(c.id) || {};
+        const offer = offerMap.get(c.id);
+
+        let acceptance: AcceptanceStatus = "pending";
+        if (offer?.candidate_accepted === true) acceptance = "accepted";
+        else if (offer?.candidate_accepted === false) acceptance = "declined";
+
         return {
           id: c.id,
           name: c.name,
@@ -159,7 +221,9 @@ export default function CandidatesPipelinePage() {
           managerDecidedAt: mgr?.manager_decided_at || null,
           offerLetterSent: Boolean(c.offer_letter_sent),
           offerLetterSentAt: c.offer_letter_sent_at || null,
-          joiningDate: null, // no backend field for this yet
+          joiningDate: offer?.doj ?? null,
+          acceptance,
+          hasOffer: Boolean(offer),
         };
       });
 
@@ -206,6 +270,98 @@ export default function CandidatesPipelinePage() {
     });
     return { byStage, managerApproved, managerPending };
   }, [candidates]);
+
+  /* Sets or flips a candidate's acceptance decision. `nextAccepted` is the
+     new boolean value to PATCH — true for Accepted, false for Declined.
+     Requires an existing manager_offers record (hasOffer), since there's
+     nothing to toggle on a candidate who was never sent an offer. */
+  async function setAcceptance(candidateId: string, nextAccepted: boolean) {
+    setToggleError(null);
+    setSavingAcceptance(candidateId);
+    try {
+      const res = await fetch(
+        `${MANAGER_API_BASE}/manager/offers/${encodeURIComponent(candidateId)}?accepted=${nextAccepted}`,
+        { method: "PATCH" }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail || `Save failed (${res.status})`);
+      }
+      setCandidates((prev) =>
+        prev.map((c) =>
+          c.id === candidateId ? { ...c, acceptance: nextAccepted ? "accepted" : "declined" } : c
+        )
+      );
+    } catch (err: any) {
+      setToggleError(err.message || "Couldn't save the candidate's acceptance decision.");
+    } finally {
+      setSavingAcceptance(null);
+    }
+  }
+
+  /* Three-way pill toggle: Pending / Accepted / Declined. Only clickable
+     when a manager_offers record exists — a candidate who hasn't been
+     approved-into-an-offer yet has nothing to toggle. */
+  function acceptanceToggle(c: Candidate) {
+    if (!c.hasOffer) {
+      return <span style={{ fontSize: 12, color: "#9AA8B8" }}>No offer yet</span>;
+    }
+    const saving = savingAcceptance === c.id;
+    const base: React.CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 2,
+      padding: 2,
+      borderRadius: 20,
+      background: "#F1F4F7",
+      border: "1px solid rgba(154,168,184,0.25)",
+    };
+    const pillBase: React.CSSProperties = {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      padding: "4px 10px",
+      borderRadius: 16,
+      fontSize: 11,
+      fontWeight: 700,
+      border: "none",
+      cursor: saving ? "not-allowed" : "pointer",
+      opacity: saving ? 0.6 : 1,
+      fontFamily: "inherit",
+    };
+
+    return (
+      <div style={base} title={saving ? "Saving…" : "Click Yes/No to record the candidate's decision"}>
+        <button
+          disabled={saving}
+          onClick={() => setAcceptance(c.id, true)}
+          style={{
+            ...pillBase,
+            background: c.acceptance === "accepted" ? "#2F9E5C" : "transparent",
+            color: c.acceptance === "accepted" ? "#fff" : "#5A6B7A",
+          }}
+        >
+          <Check size={11} /> Yes
+        </button>
+        <button
+          disabled={saving}
+          onClick={() => setAcceptance(c.id, false)}
+          style={{
+            ...pillBase,
+            background: c.acceptance === "declined" ? "#C24545" : "transparent",
+            color: c.acceptance === "declined" ? "#fff" : "#5A6B7A",
+          }}
+        >
+          <X size={11} /> No
+        </button>
+        {c.acceptance === "pending" && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "4px 8px", fontSize: 11, color: "#9AA8B8", fontWeight: 600 }}>
+            <Clock size={11} /> Pending
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="pipeline-page">
@@ -261,6 +417,11 @@ export default function CandidatesPipelinePage() {
 
       <div className="pipeline-card">
         {error && <div className="pipeline-error">{error}</div>}
+        {toggleError && (
+          <div className="pipeline-error" style={{ marginTop: error ? 8 : 0 }}>
+            {toggleError}
+          </div>
+        )}
 
         {loading ? (
           <div className="pipeline-loading">Loading candidates…</div>
@@ -278,6 +439,7 @@ export default function CandidatesPipelinePage() {
                 <th>Manager status</th>
                 <th>Offer letter</th>
                 <th>Joining date</th>
+                <th>Candidate acceptance</th>
               </tr>
             </thead>
             <tbody>
@@ -362,7 +524,8 @@ export default function CandidatesPipelinePage() {
                         {(c.offerLetterSent ? OFFER_LETTER_STYLE.sent : OFFER_LETTER_STYLE.not_sent).label}
                       </span>
                     </td>
-                    <td>{c.joiningDate ? new Date(c.joiningDate).toLocaleDateString() : "—"}</td>
+                    <td>{formatJoiningDate(c.joiningDate)}</td>
+                    <td>{acceptanceToggle(c)}</td>
                   </tr>
                 );
               })}

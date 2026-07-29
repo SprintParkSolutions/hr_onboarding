@@ -544,6 +544,7 @@ async def create_offer(candidate_id: str):
         "band":            "TBD",
         "bonus":           "TBD",
         "doj":             "TBD",
+        "candidate_accepted": None,   # None = pending decision, True = accepted, False = declined
         "status":          "Draft",
         "sent_date":       "—",
         "approved_at":     now,
@@ -567,23 +568,63 @@ async def get_offers():
     return {"offers": results, "total": len(results)}
 
 
-@app.patch("/manager/offers/{candidate_id}", summary="Update offer band, bonus, DOJ, or status")
+@app.patch("/manager/offers/{candidate_id}", summary="Update offer band, bonus, DOJ, status, or candidate acceptance")
 async def update_offer(
     candidate_id: str,
     band: Optional[str] = None,
     bonus: Optional[str] = None,
     status: Optional[str] = None,
     doj: Optional[str] = None,
+    joining_date: Optional[str] = None,
+    accepted: Optional[str] = None,   # "true" | "false" — whether the candidate accepted the offer
 ):
+    """
+    Accepts BOTH `doj` and `joining_date` as the query param name for the
+    joining-date value — see the docstring history for why. `accepted`
+    is new: pass "true" or "false" (string, since query params are always
+    strings) to record whether the candidate has accepted the offer. This
+    is what gates candidate-portal login — see /candidates/login and
+    /candidates/portal-eligible in candidate_documents_backend.py, which
+    now require candidate_accepted == True (not just offer_letter_sent)
+    before letting someone log in.
+    """
     update: dict = {"updated_at": datetime.now(timezone.utc)}
-    if band:   update["band"]   = band
-    if bonus:  update["bonus"]  = bonus
-    if status: update["status"] = status
-    if doj:    update["doj"]    = doj
+    if band:                  update["band"]   = band
+    if bonus:                 update["bonus"]  = bonus
+    if status:                update["status"] = status
+    if doj:                   update["doj"]    = doj
+    if joining_date:          update["doj"]    = joining_date
+    if accepted is not None:
+        update["candidate_accepted"] = accepted.strip().lower() == "true"
     result = await offers_col.update_one({"candidate_id": candidate_id}, {"$set": update})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"No offer for {candidate_id!r}")
     return {"success": True}
+
+
+@app.get("/manager/offers-status", summary="Bulk offer status (joining date + acceptance) for multiple candidates")
+async def offers_status_bulk(ids: str):
+    """
+    Comma-separated candidate_ids, e.g. ?ids=abc123,def456
+
+    Lightweight companion to /manager/candidates-status, used by the
+    Candidate Pipeline page to populate the Joining Date and Candidate
+    Acceptance columns without pulling every field from /manager/offers.
+    Returns candidate_id, doj, candidate_accepted, status, band per match —
+    candidates with no offer record yet simply aren't in the response.
+    """
+    id_list = [i.strip() for i in ids.split(",") if i.strip()]
+    if not id_list:
+        return {"offers": []}
+
+    results = []
+    async for doc in offers_col.find(
+        {"candidate_id": {"$in": id_list}},
+        {"candidate_id": 1, "doj": 1, "candidate_accepted": 1, "status": 1, "band": 1},
+    ):
+        results.append(_safe_id(doc))
+
+    return {"offers": results}
 
 
 # ══════════════════════════════════════════════════════════════════════════════

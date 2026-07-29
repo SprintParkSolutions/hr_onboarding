@@ -1,20 +1,33 @@
 "use client";
 import "./LoginPage.css";
-import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircle, Users, Briefcase } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircle, Users, Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
+import { isValidEmail, isValidPublicEmail } from "@/lib/emailValidation";
 
-type Role = "hr" | "manager";
+// ── Backend base URL — same env var used by the candidate dashboard ──────────
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+type Role = "hr" | "manager" | "candidate";
 
 const HR_CREDS = [
-  { email: "priya.r@recruitai.app",  password: "recruitai123", name: "Priya R.",  title: "HR Manager",       initials: "PR", color: "#B875A0" },
-  { email: "sneha.m@recruitai.app",  password: "recruitai123", name: "Sneha M.", title: "Talent Acquisition", initials: "SM", color: "#0EA5E9" },
+  { email: "yernig@sprintpark.com", password: "yerni1234", name: "Yerni G.", title: "HR Manager", initials: "YG", color: "#B875A0" },
 ];
 
 const MANAGER_CREDS = [
-  { email: "arjun.k@recruitai.app",  password: "recruitai123", name: "Arjun K.", title: "Engineering Lead",   initials: "AK", color: "#6366F1" },
-  { email: "rahul.d@recruitai.app",  password: "recruitai123", name: "Rahul D.", title: "Analytics Manager",  initials: "RD", color: "#10b981" },
+  { email: "akhilag@sprintpark.com", password: "akhila123", name: "Akhila G.", title: "Engineering Lead", initials: "AG", color: "#6366F1" },
 ];
+
+const CANDIDATE_DEMO_PASSWORD = "candidate123"; // must match CANDIDATE_PORTAL_PASSWORD on the backend
+
+type PortalCandidate = {
+  candidate_id: string;
+  name: string;
+  email: string;
+  role: string;
+  initials: string;
+  color: string;
+};
 
 function RecruitAILogo({ size = 18 }: { size?: number }) {
   return (
@@ -42,12 +55,48 @@ export default function LoginPage() {
   const [error,       setError]       = useState("");
   const [signedUp,    setSignedUp]    = useState(false);
 
-  const demoCreds = role === "hr" ? HR_CREDS : MANAGER_CREDS;
+  // ── Candidates who've actually received an offer letter, fetched live
+  // from MongoDB — powers the candidate "demo account" list below.
+  const [portalCandidates,        setPortalCandidates]        = useState<PortalCandidate[]>([]);
+  const [loadingPortalCandidates, setLoadingPortalCandidates] = useState(false);
+
+  useEffect(() => {
+    if (role !== "candidate") return;
+    let cancelled = false;
+    setLoadingPortalCandidates(true);
+    fetch(`${API_BASE}/candidates/portal-eligible`)
+      .then(res => res.json())
+      .then((data: { candidates: PortalCandidate[] }) => {
+        if (!cancelled) setPortalCandidates(data.candidates || []);
+      })
+      .catch(() => { if (!cancelled) setPortalCandidates([]); })
+      .finally(() => { if (!cancelled) setLoadingPortalCandidates(false); });
+    return () => { cancelled = true; };
+  }, [role]);
+
+  const demoCreds = role === "hr" ? HR_CREDS : role === "manager" ? MANAGER_CREDS : [];
   const allCreds  = [...HR_CREDS, ...MANAGER_CREDS];
-  const roleLabel = role === "hr" ? "HR / Recruiter" : "Hiring Manager";
+  const roleLabel = role === "hr" ? "HR / Recruiter" : role === "manager" ? "Hiring Manager" : "Candidate";
 
   function switchRole(r: Role) {
     setRole(r); setEmail(""); setPassword(""); setError("");
+  }
+
+  // ── Candidate sign-in: real backend check, gated on offer_letter_sent.
+  // On success, stores the real MongoDB candidateId + candidateEmail —
+  // every candidate-dashboard API call (uploads, submit, etc.) needs candidateId.
+  async function candidateLogin(candidateEmail: string, candidatePassword: string) {
+    const res = await fetch(`${API_BASE}/candidates/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: candidateEmail, password: candidatePassword }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.detail || "Invalid email or password.");
+    }
+    localStorage.setItem("candidateEmail", data.email);
+    localStorage.setItem("candidateId", data.candidate_id);
   }
 
   function handleSignIn(e: React.FormEvent) {
@@ -55,12 +104,26 @@ export default function LoginPage() {
     setError("");
     if (!email.trim() || !password.trim()) { setError("Please enter your email and password."); return; }
     setLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       const hrMatch  = HR_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
       const mgrMatch = MANAGER_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
-      if (hrMatch)       { window.location.href = "/hr_portal/dashboard"; }
-      else if (mgrMatch) { window.location.href = "/Manager_Portal/dashboard"; }
-      else { setError("Invalid email or password. Try a demo account below."); setLoading(false); }
+
+      if (hrMatch) {
+        window.location.href = "/hr_portal/dashboard";
+      } else if (mgrMatch) {
+        window.location.href = "/Manager_Portal/dashboard";
+      } else if (role === "candidate") {
+        try {
+          await candidateLogin(email.trim().toLowerCase(), password);
+          window.location.href = "/candidate_portal/dashboard";
+        } catch (err: any) {
+          setError(err.message || "Something went wrong signing you in. Please try again.");
+          setLoading(false);
+        }
+      } else {
+        setError("Invalid email or password. Try a demo account below.");
+        setLoading(false);
+      }
     }, 900);
   }
 
@@ -69,6 +132,16 @@ export default function LoginPage() {
     setError("");
     if (!name.trim())           { setError("Please enter your name."); return; }
     if (!email.trim())          { setError("Please enter your email."); return; }
+    /* Candidates must use a public provider; HR/Manager can use work email */
+    if (role === "candidate") {
+      if (!isValidPublicEmail(email.trim())) {
+        setError("Please use a valid email from Gmail, Outlook, Yahoo, iCloud or similar."); return;
+      }
+    } else {
+      if (!isValidEmail(email.trim())) {
+        setError("Please enter a valid work email address."); return;
+      }
+    }
     if (password.length < 8)    { setError("Password must be at least 8 characters."); return; }
     if (password !== confirmPw) { setError("Passwords don't match."); return; }
     setLoading(true);
@@ -77,6 +150,10 @@ export default function LoginPage() {
 
   function fillDemo(cred: typeof allCreds[0]) {
     setEmail(cred.email); setPassword(cred.password); setError(""); setTab("signin");
+  }
+
+  function fillDemoCandidate(cand: PortalCandidate) {
+    setEmail(cand.email); setPassword(CANDIDATE_DEMO_PASSWORD); setError(""); setTab("signin");
   }
 
   return (
@@ -96,13 +173,16 @@ export default function LoginPage() {
       <main className="lp-auth-main">
         <div className="lp-auth-card">
 
-          {/* Role switcher */}
+          {/* Role switcher — 3 roles */}
           <div className="lp-role-switcher">
             <button type="button" className={`lp-role-btn${role === "hr" ? " active" : ""}`} onClick={() => switchRole("hr")}>
               <Users size={15} /> HR / Recruiter
             </button>
             <button type="button" className={`lp-role-btn${role === "manager" ? " active" : ""}`} onClick={() => switchRole("manager")}>
               <Briefcase size={15} /> Hiring Manager
+            </button>
+            <button type="button" className={`lp-role-btn${role === "candidate" ? " active" : ""}`} onClick={() => switchRole("candidate")}>
+              <GraduationCap size={15} /> Candidate
             </button>
           </div>
 
@@ -122,10 +202,11 @@ export default function LoginPage() {
 
               <form onSubmit={handleSignIn} noValidate className="lp-auth-form">
                 <div className="lp-auth-field">
-                  <label className="lp-auth-label" htmlFor="email">Work email</label>
+                  <label className="lp-auth-label" htmlFor="email">{role === "candidate" ? "Email" : "Work email"}</label>
                   <div className="lp-auth-input-wrap">
                     <Mail size={15} className="lp-auth-input-icon" />
-                    <input id="email" type="email" className="lp-auth-input" placeholder="you@recruitai.app"
+                    <input id="email" type="email" className="lp-auth-input"
+                      placeholder={role === "candidate" ? "you@candidate.app" : "you@recruitai.app"}
                       value={email} onChange={e => { setEmail(e.target.value); setError(""); }} autoComplete="email" autoFocus />
                   </div>
                 </div>
@@ -152,22 +233,48 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Demo accounts */}
-              <div className="lp-demo-section">
-                <div className="lp-demo-divider"><span>Try a demo account</span></div>
-                <div className="lp-demo-cards">
-                  {demoCreds.map(c => (
-                    <button key={c.email} type="button" className="lp-demo-card" onClick={() => fillDemo(c)}>
-                      <div className="lp-demo-avatar" style={{ background: c.color }}>{c.initials}</div>
-                      <div className="lp-demo-info">
-                        <span className="lp-demo-name">{c.name}</span>
-                        <span className="lp-demo-role">{c.title}</span>
-                      </div>
-                      <ArrowRight size={13} style={{ color: "#A8919A", flexShrink: 0 }} />
-                    </button>
-                  ))}
+              {/* Demo accounts — HR/Manager static, Candidate fetched live from MongoDB */}
+              {role !== "candidate" ? (
+                <div className="lp-demo-section">
+                  <div className="lp-demo-divider"><span>Try a demo account</span></div>
+                  <div className="lp-demo-cards">
+                    {demoCreds.map(c => (
+                      <button key={c.email} type="button" className="lp-demo-card" onClick={() => fillDemo(c)}>
+                        <div className="lp-demo-avatar" style={{ background: c.color }}>{c.initials}</div>
+                        <div className="lp-demo-info">
+                          <span className="lp-demo-name">{c.name}</span>
+                          <span className="lp-demo-role">{c.title}</span>
+                        </div>
+                        <ArrowRight size={13} style={{ color: "#A8919A", flexShrink: 0 }} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="lp-demo-section">
+                  <div className="lp-demo-divider"><span>Candidates with an active offer</span></div>
+                  {loadingPortalCandidates ? (
+                    <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", margin: "10px 0" }}>Loading…</p>
+                  ) : portalCandidates.length === 0 ? (
+                    <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", margin: "10px 0", lineHeight: 1.6 }}>
+                      No candidates have an active offer letter yet.
+                    </p>
+                  ) : (
+                    <div className="lp-demo-cards">
+                      {portalCandidates.map(c => (
+                        <button key={c.candidate_id} type="button" className="lp-demo-card" onClick={() => fillDemoCandidate(c)}>
+                          <div className="lp-demo-avatar" style={{ background: c.color }}>{c.initials}</div>
+                          <div className="lp-demo-info">
+                            <span className="lp-demo-name">{c.name}</span>
+                            <span className="lp-demo-role">{c.role || "Candidate"}</span>
+                          </div>
+                          <ArrowRight size={13} style={{ color: "#A8919A", flexShrink: 0 }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 

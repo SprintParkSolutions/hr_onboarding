@@ -94,8 +94,8 @@
   .lp-auth-card { padding: 24px 20px; border-radius: 20px; }
 }
 
-/* ── Role switcher ──────────────────────────────────────── */
-.lp-role-switcher { display:flex; gap:8px; margin-bottom:20px; }
-.lp-role-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:10px 14px; border-radius:10px; border:1.5px solid rgba(221,208,232,0.8); background:rgba(255,255,255,0.5); font-size:13px; font-weight:600; color:#9488A8; cursor:pointer; transition:all 0.18s; font-family:inherit; }
+/* ── Role switcher — supports 3 roles ──────────────────── */
+.lp-role-switcher { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.lp-role-btn { flex:1; min-width:90px; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 10px; border-radius:10px; border:1.5px solid rgba(221,208,232,0.8); background:rgba(255,255,255,0.5); font-size:12px; font-weight:600; color:#9488A8; cursor:pointer; transition:all 0.18s; font-family:inherit; }
 .lp-role-btn:hover { background:rgba(255,255,255,0.85); border-color:#B875A0; color:#584878; }
 .lp-role-btn.active { background:linear-gradient(135deg,rgba(184,117,160,0.12),rgba(122,184,216,0.12)); border-color:#B875A0; color:#8A4A78; box-shadow:0 1px 6px rgba(184,117,160,0.18); }

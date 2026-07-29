@@ -10,8 +10,10 @@ import {
   isRoundCompleted,
   pendingPill,
 } from "@/lib/managerFeedback";
-import { CheckCircle, Eye, ThumbsUp, XCircle } from "lucide-react";
+import { CheckCircle, Eye, ThumbsUp, ThumbsDown, XCircle } from "lucide-react";
 import { useState } from "react";
+
+const MANAGER_API = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
 
 function RoundCell({ candidate, roundNo }: { candidate: Candidate; roundNo: number }) {
   const label     = getRoundStatusLabel(candidate, roundNo);
@@ -32,8 +34,45 @@ export default function ManagerFeedback() {
   const { candidates, managerDecisions, approveManagerFeedback, rejectManagerFeedback } = useInterviewStore();
   const awaiting = getCandidatesAwaitingApproval(candidates);
   const [summaryCandidate, setSummaryCandidate] = useState<Candidate | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [submittingId, setSubmittingId] = useState<number | null>(null);
 
   const maxRounds = Math.max(...awaiting.map(c => c.rounds.length), 4);
+
+  /* Persist the decision to the manager backend (not just local state) */
+  async function submitDecision(c: Candidate, decision: "approved" | "rejected") {
+    setDecisionError(null);
+    setSubmittingId(c.id);
+
+    // Optimistic local update so the UI responds immediately
+    if (decision === "approved") approveManagerFeedback(c.id);
+    else rejectManagerFeedback(c.id);
+
+    const backendId = c.backendId;
+    if (!backendId) {
+      setSubmittingId(null);
+      return; // no backend record to persist against — local-only fallback
+    }
+
+    try {
+      const res = await fetch(
+        `${MANAGER_API}/manager/approved-candidates/${backendId}/decision`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision }),
+        }
+      );
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    } catch (err) {
+      console.warn("Failed to persist manager decision:", err);
+      setDecisionError(
+        `Could not save this decision to the server for ${c.name}. It may not persist after a refresh.`
+      );
+    } finally {
+      setSubmittingId(null);
+    }
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -43,6 +82,12 @@ export default function ManagerFeedback() {
           Candidates who have completed all interview rounds · {awaiting.length} awaiting approval
         </p>
       </div>
+
+      {decisionError && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 9, fontSize: 12, color: "#92400e" }}>
+          {decisionError}
+        </div>
+      )}
 
       <div style={{ background: "#fff", border: "1px solid rgba(221,208,232,0.4)", borderRadius: 14, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
@@ -61,6 +106,7 @@ export default function ManagerFeedback() {
               {awaiting.map(c => {
                 const decision = managerDecisions[c.id];
                 const summary  = buildCombinedSummary(c);
+                const isSubmitting = submittingId === c.id;
                 return (
                   <tr
                     key={c.id}
@@ -116,12 +162,22 @@ export default function ManagerFeedback() {
                           <XCircle size={13} /> Rejected
                         </span>
                       ) : (
-                        <button
-                          onClick={() => approveManagerFeedback(c.id)}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#065f46", cursor: "pointer", fontFamily: "inherit" }}
-                        >
-                          <ThumbsUp size={12} /> Approve
-                        </button>
+                        <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                          <button
+                            onClick={() => submitDecision(c, "approved")}
+                            disabled={isSubmitting}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#065f46", cursor: isSubmitting ? "default" : "pointer", fontFamily: "inherit", opacity: isSubmitting ? 0.6 : 1 }}
+                          >
+                            <ThumbsUp size={12} /> {isSubmitting ? "Saving…" : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => submitDecision(c, "rejected")}
+                            disabled={isSubmitting}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#dc2626", cursor: isSubmitting ? "default" : "pointer", fontFamily: "inherit", opacity: isSubmitting ? 0.6 : 1 }}
+                          >
+                            <ThumbsDown size={12} /> {isSubmitting ? "Saving…" : "Reject"}
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

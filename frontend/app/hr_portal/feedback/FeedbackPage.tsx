@@ -710,27 +710,16 @@ export default function FeedbackPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   async function handleRefresh() {
-    setIsRefreshing(true);
-    setApprovalState(
-      Object.fromEntries(candidates.map(c => [c.id, "pending" as const]))
-    );
-    setManagerStatus({});
-    setSentId(null);
-    await new Promise(r => setTimeout(r, 400));
-    setIsRefreshing(false);
-  }
+  setIsRefreshing(true);
+  await refreshManagerStatuses();   // real fetch from MANAGER_API, derives correct state
+  setIsRefreshing(false);
+}
 
   /* ── Sync with global refresh from HR Interviews page ── */
   useEffect(() => {
-    if (refreshKey === 0) return;   /* skip initial mount */
-    setApprovalState(
-      Object.fromEntries(candidates.map(c => [c.id, "pending" as const]))
-    );
-    setManagerStatus({});
-    setSentId(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
-
+  if (refreshKey === 0) return;   // skip initial mount
+  refreshManagerStatuses();       // re-pull real statuses, don't fabricate "pending"
+}, [refreshKey]);
   // Poll manager statuses on mount only (not on every candidates change)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {

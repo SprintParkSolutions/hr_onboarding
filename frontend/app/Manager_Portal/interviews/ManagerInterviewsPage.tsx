@@ -207,43 +207,30 @@ export default function ManagerInterviewsPage() {
   /* ── Demo mode: manual refresh wipes MongoDB + clears UI ─────────────────
      On manual refresh: DELETE /manager/reset clears all approvals from DB
      so the page goes empty. Candidates only reappear when HR sends them. ── */
-  async function fetchApproved(isManualRefresh = false) {
-    setApprovedLoading(true);
-    setFetchError(null);
+  async function fetchApproved() {
+  setApprovedLoading(true);
+  setFetchError(null);
 
-    if (isManualRefresh) {
-      /* Manual refresh: wipe MongoDB + reset all UI state */
-      try { await fetch(`${MANAGER_API}/manager/reset`, { method: "DELETE" }); } catch { /* ignore */ }
-      setHrApproved([]);
-      setLocalDecisions({});
-      setMailSentIds(new Set());
-      setDecisionError(null);
-      setApprovedLoading(false);
-      return;
-    }
-
-    /* On mount: load candidates sent by HR from MongoDB only */
-    try {
-      const res = await fetch(`${MANAGER_API}/manager/approved-candidates`);
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const data = await res.json();
-      const list: ApprovedCandidate[] = data.candidates || [];
-      setHrApproved(list);
-      const seed: Record<string, "approved" | "rejected" | "pending"> = {};
-      list.forEach(ac => {
-        seed[ac.candidate_id] = (ac.manager_decision as any) || "pending";
-      });
-      setLocalDecisions(seed);
-    } catch {
-      setFetchError(
-        "Could not reach the Manager Backend (localhost:8001). " +
-        "Make sure it is running: python backend/manager_backend/manager_api.py"
-      );
-    } finally {
-      setApprovedLoading(false);
-    }
+  try {
+    const res = await fetch(`${MANAGER_API}/manager/approved-candidates`);
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const data = await res.json();
+    const list: ApprovedCandidate[] = data.candidates || [];
+    setHrApproved(list);
+    const seed: Record<string, "approved" | "rejected" | "pending"> = {};
+    list.forEach(ac => {
+      seed[ac.candidate_id] = (ac.manager_decision as any) || "pending";
+    });
+    setLocalDecisions(seed);
+  } catch {
+    setFetchError(
+      "Could not reach the Manager Backend (localhost:8001). " +
+      "Make sure it is running: python backend/manager_backend/manager_api.py"
+    );
+  } finally {
+    setApprovedLoading(false);
   }
-
+}
   /* ── decision error toast ── */
   const [decisionError, setDecisionError] = useState<string | null>(null);
 
@@ -457,7 +444,7 @@ export default function ManagerInterviewsPage() {
           {hrApproved.length} candidate{hrApproved.length !== 1 ? "s" : ""} pending your review
         </p>
         </div>
-        <button className="mi-refresh-btn" onClick={() => fetchApproved(true)} disabled={approvedLoading}>
+        <button className="mi-refresh-btn" onClick={() => fetchApproved()} disabled={approvedLoading}>
           <RefreshCw size={13} className={approvedLoading ? "mi-spin" : ""} />
           {approvedLoading ? "Loading…" : "Refresh"}
         </button>

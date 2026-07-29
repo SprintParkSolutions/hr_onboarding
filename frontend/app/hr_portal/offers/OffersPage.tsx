@@ -1,19 +1,20 @@
 ﻿"use client";
 import "./OffersPage.css";
-import { FileText, Send, Pencil, Check, X, RefreshCw, AlertCircle } from "lucide-react";
+import { FileText, Send, Pencil, Check, X, RefreshCw, AlertCircle, CalendarDays } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useInterviewStore } from "@/lib/interviewStore";
+import { useInterviewStore, API_BASE_URL, apiHeaders } from "@/lib/interviewStore";
 
 type Offer = {
   candidate_id?: string;
-  initials:  string;
-  color:     string;
-  name:      string;
-  role:      string;
-  band:      string;
-  bonus:     string;
-  status:    string;
-  sentDate:  string;
+  email?:       string;
+  initials:     string;
+  color:        string;
+  name:         string;
+  role:         string;
+  band:         string;
+  joiningDate:  string;   // ISO "YYYY-MM-DD" when set, "" / "TBD" when not
+  status:       string;
+  sentDate:     string;
 };
 
 const MANAGER_API = process.env.NEXT_PUBLIC_MANAGER_API_BASE_URL || "http://localhost:8001";
@@ -25,6 +26,18 @@ const statusStyle: Record<string, { bg: string; text: string }> = {
   Declined: { bg: "rgba(255,200,216,0.5)",  text: "#c0506a" },
 };
 
+/* Formats an ISO "YYYY-MM-DD" date as "22-Jul-2026" for display; falls back
+   to whatever raw value was stored if it isn't a clean ISO date (e.g. "TBD"
+   or a free-typed value that didn't parse). */
+function formatJoiningDate(value: string): string {
+  if (!value) return "TBD";
+  const isoMatch = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (!isoMatch) return value;
+  const d = new Date(`${value}T00:00:00`);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export default function OffersPage() {
   const { refreshKey, refreshAll } = useInterviewStore();
 
@@ -32,10 +45,10 @@ export default function OffersPage() {
   const [loading,      setLoading]      = useState(false);
   const [fetchError,   setFetchError]   = useState(false);
 
-  const [editingBand,  setEditingBand]  = useState<number | null>(null);
-  const [bandDraft,    setBandDraft]    = useState("");
-  const [editingBonus, setEditingBonus] = useState<number | null>(null);
-  const [bonusDraft,   setBonusDraft]   = useState("");
+  const [editingBand,        setEditingBand]        = useState<number | null>(null);
+  const [bandDraft,          setBandDraft]          = useState("");
+  const [editingJoiningDate, setEditingJoiningDate] = useState<number | null>(null);
+  const [joiningDateDraft,   setJoiningDateDraft]   = useState("");
 
   async function fetchOffers() {
     setLoading(true);
@@ -48,14 +61,15 @@ export default function OffersPage() {
       const data = await res.json();
       const live: Offer[] = (data.offers || []).map((o: any) => ({
         candidate_id: o.candidate_id,
-        initials:  o.initials || (o.candidate_name?.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() || "?"),
-        color:     o.color           || "#6366f1",
-        name:      o.candidate_name  || "",
-        role:      o.role            || "",
-        band:      o.band            || "TBD",
-        bonus:     o.bonus           || "TBD",
-        status:    o.status          || "Draft",
-        sentDate:  o.sent_date       || "—",
+        email:       o.candidate_email || o.email || "",
+        initials:    o.initials || (o.candidate_name?.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase() || "?"),
+        color:       o.color           || "#6366f1",
+        name:        o.candidate_name  || "",
+        role:        o.role            || "",
+        band:        o.band            || "TBD",
+        joiningDate: o.joining_date    || o.date_of_joining || o.doj || "",
+        status:      o.status          || "Draft",
+        sentDate:    o.sent_date       || "—",
       }));
       setOffers(live);
     } catch {
@@ -68,12 +82,12 @@ export default function OffersPage() {
   /* Auto-fetch on mount */
   useEffect(() => { fetchOffers(); }, []);
 
-  /* Re-fetch whenever global refresh fires — clears offers (DB was wiped by refreshAll) */
+  /* Re-fetch offers whenever global refresh fires (refreshAll re-pulls interview data) */
   useEffect(() => {
-    if (refreshKey === 0) return;   /* skip initial mount */
-    setOffers([]);                  /* clear immediately — backend was wiped */
+    if (refreshKey === 0) return;   /* skip initial mount, fetchOffers() already runs there */
+    fetchOffers();
     setEditingBand(null);
-    setEditingBonus(null);
+    setEditingJoiningDate(null);
     setSendError(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
@@ -81,17 +95,73 @@ export default function OffersPage() {
   const [sending,  setSending]  = useState<string | null>(null);  /* candidate_id being sent */
   const [sendError, setSendError] = useState<string | null>(null);
 
+  /* Build the offer letter email body sent to the candidate */
+  function buildOfferEmail(o: Offer) {
+    return {
+      subject: `Offer Letter — ${o.role}`,
+      body: `
+        <h2>Dear ${o.name},</h2>
+        <p>Congratulations! We are pleased to offer you the position of <b>${o.role}</b>.</p>
+        <table border="1" cellpadding="8">
+          <tr><td><b>Role</b></td><td>${o.role}</td></tr>
+          <tr><td><b>Compensation Band</b></td><td>${o.band}</td></tr>
+          <tr><td><b>Date of Joining</b></td><td>${formatJoiningDate(o.joiningDate)}</td></tr>
+        </table>
+        <p>Please reach out to HR with any questions. We look forward to having you on the team!</p>
+        <br><p>Best regards,<br><b>HR Team</b></p>
+      `,
+    };
+  }
+
   async function handleSend(o: Offer) {
     if (!o.candidate_id) { setSendError("No candidate ID — cannot send."); return; }
     setSending(o.candidate_id);
     setSendError(null);
+
     try {
+      /* 1 ── Tell the manager backend this offer was sent (manager-side tracking) */
       const res = await fetch(
         `${MANAGER_API}/manager/send-offer?candidate_id=${encodeURIComponent(o.candidate_id)}`,
         { method: "POST" },
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.detail || `Error ${res.status}`);
+
+      /* 2 ── Actually send the offer-letter email + persist on the HR backend
+              so HR's dashboard (offer_letter_sent / offer_letter_sent_at) reflects it */
+      if (o.email) {
+        const { subject, body } = buildOfferEmail(o);
+        try {
+          const hrRes = await fetch(
+            `${API_BASE_URL}/interviews/${encodeURIComponent(o.candidate_id)}/offer-letter/send`,
+            {
+              method: "POST",
+              headers: apiHeaders(),
+              body: JSON.stringify({
+                candidateEmail: o.email,
+                subject,
+                body,
+              }),
+            }
+          );
+          if (!hrRes.ok) {
+            const hrData = await hrRes.json().catch(() => ({}));
+            console.warn("HR offer-letter email failed:", hrData?.detail || hrRes.status);
+            setSendError(
+              "Offer marked as sent, but the HR-side email/record update failed. " +
+              "It may not show as sent on the HR dashboard yet."
+            );
+          }
+        } catch (hrErr) {
+          console.warn("HR backend unreachable for offer-letter send:", hrErr);
+          setSendError(
+            "Offer marked as sent, but couldn't reach the HR backend to record it there."
+          );
+        }
+      } else {
+        console.warn("No candidate email available — skipped HR offer-letter send.");
+      }
+
       /* Update status locally so UI reflects Sent immediately */
       const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
       setOffers(prev => prev.map(x =>
@@ -103,6 +173,7 @@ export default function OffersPage() {
       setSending(null);
     }
   }
+
   function commitBandEdit(i: number) {
     const v = bandDraft.trim();
     if (v) {
@@ -114,19 +185,25 @@ export default function OffersPage() {
     setEditingBand(null);
   }
 
-  /* ── Bonus edit ── */
-  function commitBonusEdit(i: number) {
-    const v = bonusDraft.trim();
-    if (v) {
-      const updated = offers.map((o, idx) => idx === i ? { ...o, bonus: v } : o);
-      setOffers(updated);
-      const id = updated[i].candidate_id;
-      if (id) fetch(`${MANAGER_API}/manager/offers/${encodeURIComponent(id)}?bonus=${encodeURIComponent(v)}`, { method: "PATCH" }).catch(() => {});
-    }
-    setEditingBonus(null);
+  /* ── Joining date edit ── */
+  function commitJoiningDateEdit(i: number) {
+    const v = joiningDateDraft.trim();
+    if (!v) { setEditingJoiningDate(null); return; }
+
+    const id = offers[i].candidate_id;
+    if (!id) { setEditingJoiningDate(null); return; }
+
+    fetch(`${MANAGER_API}/manager/offers/${encodeURIComponent(id)}?joining_date=${encodeURIComponent(v)}`, { method: "PATCH" })
+      .then(res => {
+        if (!res.ok) throw new Error(`Save failed (${res.status})`);
+        setOffers(prev => prev.map((o, idx) => idx === i ? { ...o, joiningDate: v } : o));
+      })
+      .catch(() => setSendError("Couldn't save the joining date. Please try again."));
+
+    setEditingJoiningDate(null);
   }
 
-  /* ── Shared inline edit input ── */
+  /* ── Shared inline text edit input (used for Compensation Band) ── */
   const editInput = (
     value: string,
     onChange: (v: string) => void,
@@ -145,9 +222,40 @@ export default function OffersPage() {
     </div>
   );
 
+  /* ── Date-specific inline edit input: native <input type="date"> gives a
+     calendar picker on click AND lets the user type the day/month/year
+     segments directly, so both entry methods work out of the box. ── */
+  const dateEditInput = (
+    value: string,
+    onChange: (v: string) => void,
+    onCommit: () => void,
+    onCancel: () => void,
+  ) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <input
+        type="date"
+        value={/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : ""}
+        autoFocus
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") onCommit(); if (e.key === "Escape") onCancel(); }}
+        style={{ width: 150, padding: "4px 8px", border: "1.5px solid #9E74D0", borderRadius: 6, fontSize: 13, fontWeight: 600, outline: "none", boxShadow: "0 0 0 3px rgba(158,116,208,0.2)", fontFamily: "inherit" }}
+      />
+      <button onClick={onCommit} style={{ width: 26, height: 26, border: "none", borderRadius: 6, background: "rgba(16,185,129,0.15)", color: "#10b981", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={13} /></button>
+      <button onClick={onCancel} style={{ width: 26, height: 26, border: "none", borderRadius: 6, background: "rgba(239,68,68,0.12)", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
+    </div>
+  );
+
   const editableCell = (value: string, onEdit: () => void) => (
     <div onClick={onEdit} title="Click to edit" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", padding: "4px 10px", borderRadius: 6, border: "1.5px dashed #9E74D0", background: "rgba(158,116,208,0.07)" }}>
       <span style={{ fontWeight: 600, color: "var(--text)" }}>{value}</span>
+      <Pencil size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
+    </div>
+  );
+
+  const editableDateCell = (value: string, onEdit: () => void) => (
+    <div onClick={onEdit} title="Click to edit" style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", padding: "4px 10px", borderRadius: 6, border: "1.5px dashed #9E74D0", background: "rgba(158,116,208,0.07)" }}>
+      <CalendarDays size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
+      <span style={{ fontWeight: 600, color: "var(--text)" }}>{formatJoiningDate(value)}</span>
       <Pencil size={12} style={{ color: "#9E74D0", flexShrink: 0 }} />
     </div>
   );
@@ -207,7 +315,7 @@ export default function OffersPage() {
                   <th>Candidate</th>
                   <th>Role</th>
                   <th>Compensation Band</th>
-                  <th>Joining Bonus</th>
+                  <th>Joining Date</th>
                   <th>Status</th>
                   <th>Sent</th>
                   <th>Actions</th>
@@ -236,11 +344,11 @@ export default function OffersPage() {
                         : editableCell(o.band, () => { setEditingBand(i); setBandDraft(o.band); })}
                     </td>
 
-                    {/* Editable bonus */}
+                    {/* Editable joining date — calendar picker + manual typing via <input type="date"> */}
                     <td>
-                      {editingBonus === i
-                        ? editInput(bonusDraft, setBonusDraft, () => commitBonusEdit(i), () => setEditingBonus(null))
-                        : editableCell(o.bonus, () => { setEditingBonus(i); setBonusDraft(o.bonus); })}
+                      {editingJoiningDate === i
+                        ? dateEditInput(joiningDateDraft, setJoiningDateDraft, () => commitJoiningDateEdit(i), () => setEditingJoiningDate(null))
+                        : editableDateCell(o.joiningDate, () => { setEditingJoiningDate(i); setJoiningDateDraft(o.joiningDate); })}
                     </td>
 
                     <td>

@@ -55,53 +55,42 @@ export default function ManagerCandidates() {
   const [q,             setQ]             = useState("");
   const [expanded,      setExpanded]      = useState<number | null>(null);
 
-  const fetchAll = useCallback(async (isManualRefresh = false) => {
-    setLoading(true);
-    if (isManualRefresh) {
-      /* Demo mode: wipe MongoDB approvals + clear UI decisions */
-      try {
-        await fetch(`${MANAGER_API}/manager/reset`, { method: "DELETE" });
-      } catch { /* ignore — clear UI regardless */ }
-      setDecisions({});
-      setLoading(false);
-      setLastRefreshed(new Date());
-      return;
+  const fetchAll = useCallback(async () => {
+  setLoading(true);
+  try {
+    /* 1 ── Fetch same candidates as HR Interviews page */
+    const hrRes = await fetch(`${API_BASE_URL}/interviews/`, { headers: apiHeaders() });
+    if (hrRes.ok) {
+      const data       = await hrRes.json();
+      const normalized = (data.interviews || data.candidates || []).map(normalizeCandidate);
+      if (normalized.length) setCandidates(normalized);
     }
-    /* Auto-fetch on mount */
-    try {
-      /* 1 ── Fetch same candidates as HR Interviews page */
-      const hrRes = await fetch(`${API_BASE_URL}/interviews/`, { headers: apiHeaders() });
-      if (hrRes.ok) {
-        const data       = await hrRes.json();
-        const normalized = (data.interviews || data.candidates || []).map(normalizeCandidate);
-        if (normalized.length) setCandidates(normalized);
-      }
 
-      /* 2 ── Fetch manager decisions to overlay */
-      const mgRes = await fetch(`${MANAGER_API}/manager/approved-candidates`);
-      if (mgRes.ok) {
-        const mgData = await mgRes.json();
-        const map: Record<string, ManagerDecision> = {};
-        for (const ac of (mgData.candidates || [])) {
-          const entry: ManagerDecision = {
-            candidate_id:     ac.candidate_id,
-            status:           ac.status,
-            manager_decision: ac.manager_decision ?? null,
-            overall_rating:   ac.overall_rating ?? null,
-            recommendation:   ac.recommendation ?? "",
-            hr_approved_at:   ac.hr_approved_at ?? "",
-          };
-          map[ac.candidate_id]                  = entry;
-          map[ac.candidate_name?.toLowerCase()] = entry;
-        }
-        setDecisions(map);
+    /* 2 ── Fetch manager decisions to overlay */
+    const mgRes = await fetch(`${MANAGER_API}/manager/approved-candidates`);
+    if (mgRes.ok) {
+      const mgData = await mgRes.json();
+      const map: Record<string, ManagerDecision> = {};
+      for (const ac of (mgData.candidates || [])) {
+        const entry: ManagerDecision = {
+          candidate_id:     ac.candidate_id,
+          status:           ac.status,
+          manager_decision: ac.manager_decision ?? null,
+          overall_rating:   ac.overall_rating ?? null,
+          recommendation:   ac.recommendation ?? "",
+          hr_approved_at:   ac.hr_approved_at ?? "",
+        };
+        map[ac.candidate_id]                  = entry;
+        map[ac.candidate_name?.toLowerCase()] = entry;
       }
-    } catch { /* keep stale data on error */ }
-    finally {
-      setLoading(false);
-      setLastRefreshed(new Date());
+      setDecisions(map);
     }
-  }, []);
+  } catch { /* keep stale data on error */ }
+  finally {
+    setLoading(false);
+    setLastRefreshed(new Date());
+  }
+}, []);
 
   useEffect(() => {
     fetchAll();
@@ -112,7 +101,8 @@ export default function ManagerCandidates() {
   /* Reset decisions when HR Interviews global refresh fires */
   useEffect(() => {
     if (refreshKey === 0) return;
-    setDecisions({});
+    fetchAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   /* resolve manager decision for a candidate */
@@ -162,7 +152,7 @@ export default function ManagerCandidates() {
             {lastRefreshed ? `Updated ${lastRefreshed.toLocaleTimeString()}` : "Loading…"}
           </p>
         </div>
-        <button onClick={() => fetchAll(true)} disabled={loading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: 9, fontSize: 12, fontWeight: 600, color: "#4f46e5", cursor: "pointer", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}>
+        <button onClick={() => fetchAll()} disabled={loading} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: 9, fontSize: 12, fontWeight: 600, color: "#4f46e5", cursor: "pointer", fontFamily: "inherit", opacity: loading ? 0.6 : 1 }}>
           <RefreshCw size={12} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
           {loading ? "Refreshing…" : "Refresh"}
         </button>
