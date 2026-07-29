@@ -31,14 +31,7 @@ const SC: Record<RoundStatus, { bg: string; color: string; label: string; dot: s
   pending:   { bg: "rgba(221,208,232,0.35)", color: "#9090B0", label: "Locked",      dot: "#9090B0" },
 };
 
-function isValidEmail(v: string) {
-  const e = (v || "").trim();
-  if (!e || e.split("@").length !== 2) return false;
-  const [l, d] = e.split("@");
-  return !!l && !!d &&
-    /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(l) &&
-    /^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*$/.test(d);
-}
+import { isValidEmail } from "@/lib/emailValidation";
 
 /* ── Email body builders ──────────────────────────────── */
 function makeCandidateApprovalEmail(c: ApprovedCandidate) {
@@ -761,7 +754,7 @@ export default function ManagerInterviewsPage() {
                       <label className="mi-form-label">To (Candidate)</label>
                       <input className={`mi-input ${cToTouched && !isValidEmail(wizard.cTo) ? "mi-input--error" : ""}`}
                         value={wizard.cTo} onChange={e => { setWizard({...wizard, cTo:e.target.value}); setCToTouched(true); }}/>
-                      {cToTouched && !isValidEmail(wizard.cTo) && <span className="mi-err">Enter a valid email</span>}
+                      {cToTouched && !isValidEmail(wizard.cTo) && <span className="mi-err">Enter a valid email (e.g. name@gmail.com)</span>}
                     </div>
                     <div className="mi-form-group">
                       <label className="mi-form-label">Subject</label>
@@ -783,7 +776,7 @@ export default function ManagerInterviewsPage() {
                       <label className="mi-form-label">To (HR)</label>
                       <input className={`mi-input ${hToTouched && !isValidEmail(wizard.hTo) ? "mi-input--error" : ""}`}
                         value={wizard.hTo} onChange={e => { setWizard({...wizard, hTo:e.target.value}); setHToTouched(true); }}/>
-                      {hToTouched && !isValidEmail(wizard.hTo) && <span className="mi-err">Enter a valid email</span>}
+                      {hToTouched && !isValidEmail(wizard.hTo) && <span className="mi-err">Enter a valid email (e.g. name@outlook.com)</span>}
                     </div>
                     <div className="mi-form-group">
                       <label className="mi-form-label">Subject</label>

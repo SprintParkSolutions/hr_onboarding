@@ -1,13 +1,20 @@
 "use client";
 import "./LoginPage.css";
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
+=======
+import { useState } from "react";
+>>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, CheckCircle, Users, Briefcase, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { isValidEmail, isValidPublicEmail } from "@/lib/emailValidation";
 
+<<<<<<< HEAD
 // ── Backend base URL — same env var used by the candidate dashboard ──────────
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+=======
+>>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 type Role = "hr" | "manager" | "candidate";
 
 const HR_CREDS = [
@@ -16,6 +23,15 @@ const HR_CREDS = [
 
 const MANAGER_CREDS = [
   { email: "akhilag@sprintpark.com", password: "akhila123", name: "Akhila G.", title: "Engineering Lead", initials: "AG", color: "#6366F1" },
+<<<<<<< HEAD
+=======
+];
+
+const CANDIDATE_CREDS = [
+  { email: "laxman.k@candidate.app",  password: "candidate123", name: "Laxman Kosana",   title: "Salesforce Developer",  initials: "LK", color: "#8b5cf6" },
+  { email: "naresh.p@candidate.app",  password: "candidate123", name: "Naresh Punagani", title: "Full Stack Developer",   initials: "NP", color: "#f59e0b" },
+  { email: "edurupaka.b@candidate.app", password: "candidate123", name: "Edurupaka Bhavana", title: "AI Engineer",        initials: "EB", color: "#10b981" },
+>>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 ];
 
 const CANDIDATE_DEMO_PASSWORD = "candidate123"; // must match CANDIDATE_PORTAL_PASSWORD on the backend
@@ -55,6 +71,7 @@ export default function LoginPage() {
   const [error,       setError]       = useState("");
   const [signedUp,    setSignedUp]    = useState(false);
 
+<<<<<<< HEAD
   // ── Candidates who've actually received an offer letter, fetched live
   // from MongoDB — powers the candidate "demo account" list below.
   const [portalCandidates,        setPortalCandidates]        = useState<PortalCandidate[]>([]);
@@ -76,6 +93,10 @@ export default function LoginPage() {
 
   const demoCreds = role === "hr" ? HR_CREDS : role === "manager" ? MANAGER_CREDS : [];
   const allCreds  = [...HR_CREDS, ...MANAGER_CREDS];
+=======
+  const demoCreds = role === "hr" ? HR_CREDS : role === "manager" ? MANAGER_CREDS : CANDIDATE_CREDS;
+  const allCreds  = [...HR_CREDS, ...MANAGER_CREDS, ...CANDIDATE_CREDS];
+>>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
   const roleLabel = role === "hr" ? "HR / Recruiter" : role === "manager" ? "Hiring Manager" : "Candidate";
 
   function switchRole(r: Role) {
@@ -104,6 +125,7 @@ export default function LoginPage() {
     setError("");
     if (!email.trim() || !password.trim()) { setError("Please enter your email and password."); return; }
     setLoading(true);
+<<<<<<< HEAD
     setTimeout(async () => {
       const hrMatch  = HR_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
       const mgrMatch = MANAGER_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
@@ -124,6 +146,16 @@ export default function LoginPage() {
         setError("Invalid email or password. Try a demo account below.");
         setLoading(false);
       }
+=======
+    setTimeout(() => {
+      const hrMatch        = HR_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      const mgrMatch       = MANAGER_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      const candidateMatch = CANDIDATE_CREDS.find(c => c.email === email.trim().toLowerCase() && c.password === password);
+      if (hrMatch)             { window.location.href = "/hr_portal/dashboard"; }
+      else if (mgrMatch)       { window.location.href = "/Manager_Portal/dashboard"; }
+      else if (candidateMatch) { window.location.href = "/candidate_portal/dashboard"; }
+      else { setError("Invalid email or password. Try a demo account below."); setLoading(false); }
+>>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
     }, 900);
   }
 

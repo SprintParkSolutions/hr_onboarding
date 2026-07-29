@@ -3,6 +3,7 @@ import "./FeedbackPage.css";
 import { useState, useMemo, useEffect } from "react";
 import { Star, X, MessageSquare, CheckCircle, Circle, Clock, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useInterviewStore, type Candidate, type Round, type RoundStatus as InterviewRoundStatus, API_BASE_URL, apiHeaders } from "@/lib/interviewStore";
+import { isValidEmail } from "@/lib/emailValidation";
 
 /* ── Types ──────────────────────────────────────────────── */
 type FeedbackStatus = "completed" | "pending" | "scheduled" | "na";
@@ -451,7 +452,7 @@ function ApprovalModal({
   sent: boolean;
 }) {
   const [managerEmail, setManagerEmail] = useState("");
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(managerEmail.trim());
+  const emailValid = isValidEmail(managerEmail.trim());
 
   const allSkills: Record<string, number[]> = {};
   rounds
@@ -597,7 +598,7 @@ function ApprovalModal({
               disabled={sending || sent}
             />
             {managerEmail && !emailValid && (
-              <span className="fm-email-error">Enter a valid email address</span>
+              <span className="fm-email-error">Enter a valid email (e.g. name@gmail.com or name@company.com)</span>
             )}
           </div>
           <div className="fm-footer-actions">

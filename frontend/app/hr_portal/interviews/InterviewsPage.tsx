@@ -15,17 +15,7 @@ import {
   apiHeaders,
 } from "@/lib/interviewStore";
 
-/* ── Email validation ───────────────────────────────────── */
-function isValidEmail(value: string): boolean {
-  const email = (value || "").trim();
-  if (!email || email.split("@").length !== 2) return false;
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return false;
-  const localPattern  = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+)*$/;
-  const domainPattern = /^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*$/;
-  return localPattern.test(local) && domainPattern.test(domain)
-    && !local.startsWith(".") && !local.endsWith(".");
-}
+import { isValidEmail } from "@/lib/emailValidation";
 
 /* ── Status config ──────────────────────────────────────── */
 const SC: Record<RoundStatus, { bg: string; color: string; label: string }> = {
@@ -983,12 +973,12 @@ export default function InterviewsPage() {
                   <input
                     className={`email-input ${cToTouched && !isValidEmail(wizard.cTo) ? "input-error" : ""}`}
                     value={wizard.cTo}
-                    placeholder="candidate@email.com"
+                    placeholder="candidate@gmail.com"
                     onChange={e => { setWizard({ ...wizard, cTo: e.target.value }); setCToTouched(true); }}
                     onBlur={() => setCToTouched(true)}
                   />
                   {cToTouched && !isValidEmail(wizard.cTo) && (
-                    <span className="email-error-msg">Please enter a valid email address</span>
+                    <span className="email-error-msg">Enter a valid email (e.g. name@gmail.com)</span>
                   )}
                 </div>
 
@@ -1039,7 +1029,7 @@ export default function InterviewsPage() {
                     onBlur={() => setIToTouched(true)}
                   />
                   {iToTouched && !isValidEmail(wizard.iTo) && (
-                    <span className="email-error-msg">Please enter a valid email address</span>
+                    <span className="email-error-msg">Enter a valid email (e.g. name@outlook.com)</span>
                   )}
                 </div>
 
