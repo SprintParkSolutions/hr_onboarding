@@ -1055,3 +1055,48 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("MANAGER_API_PORT", "8001"))
     uvicorn.run("manager_api:app", host="0.0.0.0", port=port, reload=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HR ONBOARDING PAGE — accepted candidates
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/hr/onboarding/accepted-candidates", summary="HR Onboarding — candidates who accepted their offer")
+async def hr_onboarding_accepted_candidates():
+    """
+    Returns every candidate whose candidate_accepted flag is True in
+    manager_offers, enriched with interview_details (team lead = round-1 interviewer).
+    Used by HR Portal Onboarding page Section 1.
+    """
+    results = []
+    async for offer in offers_col.find({"candidate_accepted": True}).sort("updated_at", -1):
+        candidate_id = offer.get("candidate_id", "")
+
+        # Enrich with interview_details for team lead
+        interview  = await interviews_col.find_one({"candidate_id": candidate_id})
+        team_lead  = ""
+        if interview:
+            rounds = sorted(interview.get("rounds", []), key=lambda r: r.get("roundNo", 99))
+            r1 = next((r for r in rounds if r.get("interviewer")), None)
+            if r1:
+                team_lead = r1.get("interviewer", "")
+
+        name = offer.get("candidate_name", "")
+        initials = "".join(p[0] for p in (name or "?").split()[:2]).upper()
+
+        results.append({
+            "candidate_id": candidate_id,
+            "name":         name,
+            "email":        offer.get("candidate_email", ""),
+            "role":         offer.get("role", "—"),
+            "dept":         offer.get("dept", offer.get("department", "Engineering")),
+            "joining_date": offer.get("doj", "TBD"),
+            "band":         offer.get("band", "—"),
+            "manager":      offer.get("manager_name", "—"),
+            "team_lead":    team_lead or "—",
+            "status":       offer.get("status", "Accepted"),
+            "initials":     initials,
+            "color":        offer.get("color", "#6366f1"),
+        })
+
+    return {"candidates": results, "total": len(results)}

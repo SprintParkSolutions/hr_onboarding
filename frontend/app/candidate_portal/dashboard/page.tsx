@@ -1,14 +1,9 @@
 "use client";
-<<<<<<< HEAD
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Mail, Phone, Bell, LogOut, Upload, CheckCircle, FileText, X, AlertCircle, Plus, Trash2, Loader2 } from "lucide-react";
 
 // ── Backend base URL — point this at your FastAPI server ─────────────────────
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-=======
-import { useState, useEffect, useRef } from "react";
-import { Mail, Phone, Bell, LogOut, Upload, CheckCircle, FileText, X, AlertCircle, Plus, Trash2 } from "lucide-react";
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 
 const PROFILES: Record<string, { name:string; title:string; initials:string; color:string }> = {
   "laxman.k@candidate.app":    { name:"Laxman Kosana",    title:"Salesforce Developer", initials:"LK", color:"#8b5cf6" },
@@ -56,7 +51,6 @@ const STATIC_DOCS: { key:DocKey; icon:string; label:string; desc:string; require
 ];
 
 const DEGREE_TYPES = ["B.Tech","B.E","BCA","BBA","B.Sc","MBA","M.Tech","MCA","M.Sc","Ph.D","Diploma","Other"];
-<<<<<<< HEAD
 const DEGREE_DOC_KEY = "degree_certificate";
 
 // Shape returned by the backend for every uploaded document (static or degree)
@@ -96,13 +90,11 @@ export default function CandidateDashboard() {
     const email = (typeof window!=="undefined" && localStorage.getItem("candidateEmail")) || "laxman.k@candidate.app";
     setProfile(PROFILES[email] ?? PROFILES["laxman.k@candidate.app"]);
 
-    // Your login flow needs to store the real MongoDB candidate _id here —
-    // e.g. localStorage.setItem("candidateId", loginResponse.candidate_id)
     const id = typeof window!=="undefined" ? localStorage.getItem("candidateId") : null;
     setCandidateId(id);
   }, []);
 
-  // ── Load whatever's already been uploaded, so refresh doesn't lose state ──
+  // ── Load whatever's already been uploaded ──────────────────────────────
   const loadExistingDocuments = useCallback(async () => {
     if (!candidateId) { setLoadingInitial(false); return; }
     try {
@@ -132,14 +124,14 @@ export default function CandidateDashboard() {
 
   useEffect(() => { loadExistingDocuments(); }, [loadExistingDocuments]);
 
-  // ── Client-side pre-checks before we bother hitting the network ──────────
+  // ── Client-side pre-checks ───────────────────────────────────────────────
   function validatePDF(file: File): string | null {
     if (file.type !== "application/pdf") return "Only PDF files accepted.";
     if (file.size > 10 * 1024 * 1024)    return "File must be under 10 MB.";
     return null;
   }
 
-  // ── Upload a static doc immediately on selection ──────────────────────────
+  // ── Upload a static doc immediately on selection ─────────────────────────
   async function setStaticFile(key: DocKey, file: File | null) {
     if (!file) return;
     const err = validatePDF(file);
@@ -159,7 +151,7 @@ export default function CandidateDashboard() {
       });
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
-        throw new Error(detail.detail || "Upload failed.");
+        throw new Error((detail as any).detail || "Upload failed.");
       }
       const uploaded: UploadedDoc = await res.json();
       setUploads(p => ({ ...p, [key]: uploaded }));
@@ -177,12 +169,12 @@ export default function CandidateDashboard() {
       const res = await fetch(`${API_BASE}/candidates/${candidateId}/documents/${existing.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       setUploads(p => { const n = { ...p }; delete n[key]; return n; });
-    } catch (e) {
+    } catch {
       setMsg({ type:"error", text:"Couldn't remove that file. Please try again." });
     }
   }
 
-  // ── Degree rows ────────────────────────────────────────────────────────
+  // ── Degree rows ──────────────────────────────────────────────────────────
   function addDegree() {
     setDegrees(p => [...p, { rowId:`d${Date.now()}`, label:"B.Tech", doc:null, uploading:false }]);
   }
@@ -226,7 +218,7 @@ export default function CandidateDashboard() {
       });
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
-        throw new Error(detail.detail || "Upload failed.");
+        throw new Error((detail as any).detail || "Upload failed.");
       }
       const uploaded: UploadedDoc = await res.json();
       setDegrees(p => p.map(d => d.rowId === rowId ? { ...d, doc: uploaded, uploading:false } : d));
@@ -248,10 +240,9 @@ export default function CandidateDashboard() {
     }
   }
 
-  // ── Final submit — talks to the real backend now ─────────────────────────
+  // ── Final submit ─────────────────────────────────────────────────────────
   async function handleSubmit() {
     if (!candidateId) { setMsg({ type:"error", text:"You're not signed in properly — no candidate id found." }); return; }
-
     if (degrees.length === 0) { setMsg({type:"error",text:"Add at least one degree certificate."}); return; }
     const noFile = degrees.filter(d => !d.doc);
     if (noFile.length) { setMsg({type:"error",text:`Upload PDF for degree: ${noFile.map(d=>d.label).join(", ")}`}); return; }
@@ -270,69 +261,19 @@ export default function CandidateDashboard() {
     } finally {
       setSubmitting(false);
     }
-=======
-type DegreeEntry = { id:string; label:string; file:File|null };
-
-export default function CandidateDashboard() {
-  const [profile,   setProfile]   = useState<typeof PROFILES[string]|null>(null);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [uploads,   setUploads]   = useState<Partial<Record<DocKey,File>>>({});
-  const [degrees,   setDegrees]   = useState<DegreeEntry[]>([{ id:"d1", label:"B.Tech", file:null }]);
-  const [msg,       setMsg]       = useState<{type:"success"|"error";text:string}|null>(null);
-  const staticRefs  = useRef<Partial<Record<DocKey,HTMLInputElement>>>({});
-  const degreeRefs  = useRef<Record<string,HTMLInputElement>>({});
-
-  useEffect(() => {
-    const email = (typeof window!=="undefined" && localStorage.getItem("candidateEmail")) || "laxman.k@candidate.app";
-    setProfile(PROFILES[email] ?? PROFILES["laxman.k@candidate.app"]);
-  }, []);
-
-  function validatePDF(file:File, cb:(f:File)=>void) {
-    if (file.type!=="application/pdf") { setMsg({type:"error",text:"Only PDF files accepted."}); return; }
-    if (file.size>10*1024*1024)        { setMsg({type:"error",text:"File must be under 10 MB."}); return; }
-    setMsg(null); cb(file);
-  }
-
-  function setStaticFile(key:DocKey, file:File|null) { if (file) validatePDF(file, f => setUploads(p=>({...p,[key]:f}))); }
-  function removeStatic(key:DocKey) { setUploads(p=>{const n={...p};delete n[key];return n;}); }
-  function addDegree()    { setDegrees(p=>[...p,{id:`d${Date.now()}`,label:"B.Tech",file:null}]); }
-  function removeDegree(id:string) { setDegrees(p=>p.filter(d=>d.id!==id)); }
-  function setDegLabel(id:string,label:string) { setDegrees(p=>p.map(d=>d.id===id?{...d,label}:d)); }
-  function setDegFile(id:string,file:File|null) { if(file) validatePDF(file,f=>setDegrees(p=>p.map(d=>d.id===id?{...d,file:f}:d))); }
-  function clearDegFile(id:string) { setDegrees(p=>p.map(d=>d.id===id?{...d,file:null}:d)); }
-
-  function handleSubmit() {
-    if (degrees.length===0) { setMsg({type:"error",text:"Add at least one degree certificate."}); return; }
-    const noFile = degrees.filter(d=>!d.file);
-    if (noFile.length) { setMsg({type:"error",text:`Upload PDF for degree: ${noFile.map(d=>d.label).join(", ")}`}); return; }
-    const missingReq = STATIC_DOCS.filter(d=>d.required&&!uploads[d.key]).map(d=>d.label);
-    if (missingReq.length) { setMsg({type:"error",text:`Required: ${missingReq.join(", ")}`}); return; }
-    const total = Object.keys(uploads).length + degrees.length;
-    setMsg({type:"success",text:`${total} document(s) submitted! HR will review and confirm within 2 business days.`});
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
   }
 
   if (!profile) return null;
 
-<<<<<<< HEAD
   const totalUploaded = Object.keys(uploads).length + degrees.filter(d=>d.doc).length;
-  const reqCount = STATIC_DOCS.filter(d=>d.required).length + 1; /* +1 for degrees group */
+  const reqCount = STATIC_DOCS.filter(d=>d.required).length + 1;
   const reqDone  = STATIC_DOCS.filter(d=>d.required&&uploads[d.key]).length + (degrees.length>0&&degrees.every(d=>d.doc)?1:0);
-=======
-  const totalUploaded = Object.keys(uploads).length + degrees.filter(d=>d.file).length;
-  const reqCount = STATIC_DOCS.filter(d=>d.required).length + 1; /* +1 for degrees group */
-  const reqDone  = STATIC_DOCS.filter(d=>d.required&&uploads[d.key]).length + (degrees.length>0&&degrees.every(d=>d.file)?1:0);
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 
   const C = {
     card:  (extra?:React.CSSProperties):React.CSSProperties => ({background:"#fff",border:"1px solid rgba(221,208,232,0.4)",borderRadius:14,...extra}),
     label: ():React.CSSProperties => ({fontSize:11,fontWeight:700,color:"#9ca3af",textTransform:"uppercase" as const,letterSpacing:"0.06em"}),
     req:   ():React.CSSProperties => ({fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:20,background:"rgba(239,68,68,0.1)",color:"#dc2626"}),
     opt:   ():React.CSSProperties => ({fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:20,background:"rgba(221,208,232,0.3)",color:"#9090B0"}),
-<<<<<<< HEAD
-=======
-    chip:  (file:boolean):React.CSSProperties => ({padding:"8px 12px",borderRadius:8,display:"flex",alignItems:"center",gap:7,background:file?"rgba(16,185,129,0.1)":"transparent",border:file?"1px solid rgba(16,185,129,0.25)":"none"}),
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
   };
 
   return (
@@ -368,11 +309,7 @@ export default function CandidateDashboard() {
             <div style={{width:30,height:30,borderRadius:"50%",background:profile.color,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700}}>{profile.initials}</div>
             <div><div style={{fontSize:12,fontWeight:700,color:"#1e1b4b"}}>{profile.name}</div><div style={{fontSize:10,color:"#9ca3af"}}>{profile.title}</div></div>
           </div>
-<<<<<<< HEAD
           <button onClick={()=>{localStorage.removeItem("candidateEmail");localStorage.removeItem("candidateId");window.location.href="/login";}} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 11px",background:"rgba(220,38,38,0.06)",border:"1px solid rgba(220,38,38,0.14)",borderRadius:7,fontSize:11,fontWeight:600,color:"#dc2626",cursor:"pointer",fontFamily:"inherit"}}>
-=======
-          <button onClick={()=>{localStorage.removeItem("candidateEmail");window.location.href="/login";}} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 11px",background:"rgba(220,38,38,0.06)",border:"1px solid rgba(220,38,38,0.14)",borderRadius:7,fontSize:11,fontWeight:600,color:"#dc2626",cursor:"pointer",fontFamily:"inherit"}}>
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
             <LogOut size={12}/> Sign out
           </button>
         </div>
@@ -392,18 +329,15 @@ export default function CandidateDashboard() {
           </div>
         </div>
 
-<<<<<<< HEAD
         {!candidateId && (
           <div style={{display:"flex",gap:10,padding:"11px 15px",background:"rgba(220,38,38,0.06)",border:"1px solid rgba(220,38,38,0.18)",borderRadius:9}}>
             <AlertCircle size={15} color="#dc2626" style={{flexShrink:0,marginTop:1}}/>
             <p style={{margin:0,fontSize:12,color:"#b02030",lineHeight:1.6}}>
-              No candidate account is linked to this session, so uploads can't be saved. Please sign in again.
+              No candidate account is linked to this session, so uploads can&apos;t be saved. Please sign in again.
             </p>
           </div>
         )}
 
-=======
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
         {/* SECTION 1 — POC */}
         <section>
           <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:18}}>
@@ -466,15 +400,12 @@ export default function CandidateDashboard() {
             </div>
           )}
 
-<<<<<<< HEAD
           {loadingInitial ? (
             <div style={{display:"flex",alignItems:"center",gap:8,padding:"20px 0",color:"#9ca3af",fontSize:12}}>
               <Loader2 size={14} className="animate-spin" /> Loading your documents…
             </div>
           ) : (
           <>
-=======
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
           {/* ── Degree Certificates (dynamic) ── */}
           <div style={{...C.card(),padding:"18px 20px",marginBottom:12}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
@@ -490,7 +421,6 @@ export default function CandidateDashboard() {
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:9}}>
               {degrees.map((deg,idx)=>(
-<<<<<<< HEAD
                 <div key={deg.rowId} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:deg.doc?"rgba(240,253,244,0.6)":"rgba(248,247,255,0.7)",border:deg.doc?"1px solid rgba(16,185,129,0.3)":"1px solid rgba(221,208,232,0.4)",borderRadius:10,flexWrap:"wrap"}}>
                   <div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#818cf8)",color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{idx+1}</div>
                   <select value={deg.label} disabled={!!deg.doc} onChange={e=>setDegLabel(deg.rowId,e.target.value)} style={{padding:"6px 10px",border:"1px solid rgba(221,208,232,0.6)",borderRadius:8,fontSize:12,fontWeight:600,color:"#1e1b4b",background:"#fff",cursor:deg.doc?"not-allowed":"pointer",outline:"none",fontFamily:"inherit"}}>
@@ -513,26 +443,6 @@ export default function CandidateDashboard() {
                   )}
                   <input ref={el=>{if(el)degreeRefs.current[deg.rowId]=el;}} type="file" accept="application/pdf" style={{display:"none"}} onChange={e=>setDegFile(deg.rowId,e.target.files?.[0]??null)}/>
                   {degrees.length>1&&<button onClick={()=>removeDegree(deg.rowId)} style={{background:"rgba(220,38,38,0.06)",border:"1px solid rgba(220,38,38,0.15)",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:"#dc2626",display:"flex",alignItems:"center"}}><Trash2 size={12}/></button>}
-=======
-                <div key={deg.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:deg.file?"rgba(240,253,244,0.6)":"rgba(248,247,255,0.7)",border:deg.file?"1px solid rgba(16,185,129,0.3)":"1px solid rgba(221,208,232,0.4)",borderRadius:10,flexWrap:"wrap"}}>
-                  <div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#818cf8)",color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{idx+1}</div>
-                  <select value={deg.label} onChange={e=>setDegLabel(deg.id,e.target.value)} style={{padding:"6px 10px",border:"1px solid rgba(221,208,232,0.6)",borderRadius:8,fontSize:12,fontWeight:600,color:"#1e1b4b",background:"#fff",cursor:"pointer",outline:"none",fontFamily:"inherit"}}>
-                    {DEGREE_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-                  </select>
-                  {deg.file?(
-                    <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",background:"rgba(16,185,129,0.1)",borderRadius:8,border:"1px solid rgba(16,185,129,0.25)",flex:1,minWidth:180}}>
-                      <FileText size={12} color="#10b981" style={{flexShrink:0}}/>
-                      <span style={{fontSize:12,color:"#065f46",fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{deg.file.name}</span>
-                      <button onClick={()=>clearDegFile(deg.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#9ca3af",padding:0}}><X size={12}/></button>
-                    </div>
-                  ):(
-                    <button onClick={()=>degreeRefs.current[deg.id]?.click()} style={{flex:1,minWidth:180,padding:"7px 0",border:"1.5px dashed rgba(99,102,241,0.3)",borderRadius:8,background:"rgba(99,102,241,0.03)",fontSize:12,fontWeight:600,color:"#6366f1",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,fontFamily:"inherit"}}>
-                      <Upload size={12}/> Upload {deg.label} PDF
-                    </button>
-                  )}
-                  <input ref={el=>{if(el)degreeRefs.current[deg.id]=el;}} type="file" accept="application/pdf" style={{display:"none"}} onChange={e=>setDegFile(deg.id,e.target.files?.[0]??null)}/>
-                  {degrees.length>1&&<button onClick={()=>removeDegree(deg.id)} style={{background:"rgba(220,38,38,0.06)",border:"1px solid rgba(220,38,38,0.15)",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:"#dc2626",display:"flex",alignItems:"center"}}><Trash2 size={12}/></button>}
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
                 </div>
               ))}
             </div>
@@ -541,12 +451,8 @@ export default function CandidateDashboard() {
           {/* ── Static documents grid ── */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:11}}>
             {STATIC_DOCS.map(doc=>{
-<<<<<<< HEAD
               const file = uploads[doc.key];
               const isUploading = uploadingKey === doc.key;
-=======
-              const file=uploads[doc.key];
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
               return(
                 <div key={doc.key} style={{...C.card(),padding:"15px 17px",border:file?"1px solid rgba(16,185,129,0.3)":"1px solid rgba(221,208,232,0.4)",background:file?"rgba(240,253,244,0.5)":"#fff",transition:"all .15s"}}>
                   <div style={{display:"flex",alignItems:"flex-start",gap:9,marginBottom:11}}>
@@ -559,7 +465,6 @@ export default function CandidateDashboard() {
                       <div style={{fontSize:11,color:"#9ca3af",marginTop:2,lineHeight:1.4}}>{doc.desc}</div>
                     </div>
                   </div>
-<<<<<<< HEAD
                   {isUploading ? (
                     <div style={{width:"100%",padding:"8px 0",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:11,color:"#6366f1"}}>
                       <Loader2 size={12} className="animate-spin" /> Uploading…
@@ -568,12 +473,6 @@ export default function CandidateDashboard() {
                     <div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 11px",background:"rgba(16,185,129,0.1)",borderRadius:8,border:"1px solid rgba(16,185,129,0.25)"}}>
                       <FileText size={12} color="#10b981" style={{flexShrink:0}}/>
                       <span style={{fontSize:11,color:"#065f46",fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{file.filename}</span>
-=======
-                  {file?(
-                    <div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 11px",background:"rgba(16,185,129,0.1)",borderRadius:8,border:"1px solid rgba(16,185,129,0.25)"}}>
-                      <FileText size={12} color="#10b981" style={{flexShrink:0}}/>
-                      <span style={{fontSize:11,color:"#065f46",fontWeight:600,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{file.name}</span>
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
                       <button onClick={()=>removeStatic(doc.key)} style={{background:"none",border:"none",cursor:"pointer",color:"#9ca3af",padding:0,flexShrink:0}}><X size={12}/></button>
                     </div>
                   ):(
@@ -586,23 +485,15 @@ export default function CandidateDashboard() {
               );
             })}
           </div>
-<<<<<<< HEAD
           </>
           )}
-=======
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
 
           {/* Submit */}
           <div style={{marginTop:20,display:"flex",justifyContent:"flex-end",alignItems:"center",gap:12}}>
             <span style={{fontSize:12,color:"#9ca3af"}}>{reqDone}/{reqCount} required · {totalUploaded} total uploaded</span>
-<<<<<<< HEAD
             <button onClick={handleSubmit} disabled={reqDone<reqCount || submitting || !candidateId} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"11px 26px",background:(reqDone>=reqCount && candidateId)?"linear-gradient(135deg,#6366f1,#818cf8)":"rgba(221,208,232,0.5)",border:"none",borderRadius:10,fontSize:13,fontWeight:700,color:(reqDone>=reqCount && candidateId)?"#fff":"#9ca3af",cursor:(reqDone>=reqCount && candidateId && !submitting)?"pointer":"not-allowed",fontFamily:"inherit",boxShadow:(reqDone>=reqCount && candidateId)?"0 4px 14px rgba(99,102,241,0.3)":"none",transition:"all .15s"}}>
               {submitting ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14}/>}
               {submitting ? "Submitting…" : "Submit Documents to HR"}
-=======
-            <button onClick={handleSubmit} disabled={reqDone<reqCount} style={{display:"inline-flex",alignItems:"center",gap:8,padding:"11px 26px",background:reqDone>=reqCount?"linear-gradient(135deg,#6366f1,#818cf8)":"rgba(221,208,232,0.5)",border:"none",borderRadius:10,fontSize:13,fontWeight:700,color:reqDone>=reqCount?"#fff":"#9ca3af",cursor:reqDone>=reqCount?"pointer":"not-allowed",fontFamily:"inherit",boxShadow:reqDone>=reqCount?"0 4px 14px rgba(99,102,241,0.3)":"none",transition:"all .15s"}}>
-              <Upload size={14}/> Submit Documents to HR
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630
             </button>
           </div>
         </section>
@@ -611,8 +502,4 @@ export default function CandidateDashboard() {
       </main>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630

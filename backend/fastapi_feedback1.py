@@ -2272,6 +2272,10 @@ app.add_middleware(
 
 app.include_router(interviews_router, dependencies=[Depends(require_api_key)])
 
+# ── Candidate documents router (portal upload / HR view) ──────────────────────
+from candidate_documents_backend import router as candidate_docs_router
+app.include_router(candidate_docs_router)
+
 app.get("/interviews/feedback-form", response_class=HTMLResponse)(serve_feedback_form)
 
 # ── Health check ──────────────────────────────────────────────────────────────
