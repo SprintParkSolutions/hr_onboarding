@@ -1,7 +1,7 @@
 ﻿"use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Briefcase, Calendar, FileText, Bot, MessageSquare, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Calendar, FileText, Bot, MessageSquare, Menu, X, ClipboardList } from "lucide-react";
 import { useState } from "react";
 
 const hrNav = [
@@ -11,6 +11,7 @@ const hrNav = [
   { href: "/hr_portal/interviews", label: "Interviews",  icon: Calendar },
   { href: "/hr_portal/feedback",   label: "Feedback",    icon: MessageSquare },
   { href: "/hr_portal/offers",     label: "Offers",      icon: FileText },
+  { href: "/hr_portal/onboarding", label: "Onboarding",  icon: ClipboardList },
   { href: "/hr_portal/copilot",    label: "HR Copilot",  icon: Bot },
 ];
 
@@ -18,7 +19,6 @@ const managerNav = [
   { href: "/Manager_Portal/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
   { href: "/Manager_Portal/candidates", label: "Candidates", icon: Users },
   { href: "/Manager_Portal/interviews", label: "Interviews",  icon: Calendar },
-  { href: "/Manager_Portal/feedback",   label: "Feedback",    icon: MessageSquare },
 ];
 
 const C = {

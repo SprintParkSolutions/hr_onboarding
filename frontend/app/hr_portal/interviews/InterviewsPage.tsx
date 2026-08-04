@@ -536,7 +536,6 @@ export default function InterviewsPage() {
             <RefreshCw size={12} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none" }}/>
             {isRefreshing ? "Resetting…" : "Refresh"}
           </button>
-          <button className="btn-primary"><Plus size={14} /> Schedule</button>
         </div>
         <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       </div>

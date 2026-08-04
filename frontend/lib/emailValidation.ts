@@ -70,8 +70,4 @@ export function emailError(value: string, publicOnly = false): string | null {
     return "Use a valid email from Gmail, Outlook, Yahoo, iCloud, or similar providers.";
   }
   return null;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 12df67162920a7f683b8e7e0f6af756a03efb630

@@ -47,6 +47,7 @@ type SubmittedCandidate = {
   color:        string;
   doc_count:    number;
   submitted_at: string;
+  fully_submitted?: boolean;   // true = clicked "Submit Documents to HR"; false/undefined = still uploading
   documents:    UploadedDoc[];
 };
 
@@ -206,6 +207,8 @@ function fmtSize(bytes: number): string {
 }
 
 // ── PDF Viewer Modal ──────────────────────────────────────────────────────────
+// Uses the default `disposition=inline` behavior of the download endpoint —
+// the browser renders the PDF in place rather than downloading it.
 function PdfModal({ candidateId, doc, onClose }: {
   candidateId: string;
   doc: UploadedDoc;
@@ -295,9 +298,20 @@ function DocRow({ cand }: { cand: SubmittedCandidate }) {
         }}>
           <FileText size={11} /> {cand.doc_count} doc{cand.doc_count !== 1 ? "s" : ""}
         </div>
+        {/* Submission status — distinguishes still-uploading candidates
+            (fully_submitted false/undefined) from ones who clicked the
+            final "Submit Documents to HR" button. */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+          background: cand.fully_submitted ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)",
+          color: cand.fully_submitted ? "#065f46" : "#92400e",
+        }}>
+          {cand.fully_submitted ? "Submitted" : "In progress"}
+        </div>
         {/* Submitted date */}
         <div style={{ fontSize: 11, color: "#9ca3af", minWidth: 90, textAlign: "right" }}>
-          Submitted<br />{fmtDate(cand.submitted_at)}
+          {cand.fully_submitted ? "Submitted" : "Last upload"}<br />{fmtDate(cand.submitted_at)}
         </div>
         {/* Expand toggle */}
         <div style={{ color: "#9ca3af", flexShrink: 0 }}>
@@ -341,8 +355,12 @@ function DocRow({ cand }: { cand: SubmittedCandidate }) {
                   }}>
                   <Eye size={11} /> View
                 </button>
+                {/* disposition=attachment forces a real Save-As download —
+                    the `download` attribute alone doesn't work cross-origin
+                    (frontend on :3000, backend on :8000), so the server-side
+                    Content-Disposition header is what actually does the job. */}
                 <a
-                  href={`${HR_API}/candidates/${cand.candidate_id}/documents/${doc.id}/download`}
+                  href={`${HR_API}/candidates/${cand.candidate_id}/documents/${doc.id}/download?disposition=attachment`}
                   download={doc.filename}
                   title="Download PDF"
                   style={{
@@ -369,7 +387,7 @@ export default function OnboardingPage() {
   const [loadingSub,    setLoadingSub]    = useState(true);
   const [searchAcc,     setSearchAcc]     = useState("");
   const [searchSub,     setSearchSub]     = useState("");
-  const [lastRefresh,   setLastRefresh]   = useState(new Date());
+  const [lastRefresh,   setLastRefresh]   = useState<Date | null>(null);
 
   const fetchAccepted = useCallback(async () => {
     setLoadingAcc(true);
@@ -404,6 +422,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     fetchAccepted();
     fetchSubmitted();
+    setLastRefresh(new Date());   // client-only — safe here, this effect never runs during SSR
   }, [fetchAccepted, fetchSubmitted]);
 
   function handleRefresh() {
@@ -477,7 +496,7 @@ export default function OnboardingPage() {
               </div>
             ))}
             <div style={{ marginLeft: "auto", fontSize: 11, opacity: 0.7, alignSelf: "flex-end" }}>
-              Last refreshed: {lastRefresh.toLocaleTimeString()}
+              {lastRefresh ? `Last refreshed: ${lastRefresh.toLocaleTimeString("en-GB")}` : "Loading…"}
             </div>
           </div>
         </div>
@@ -664,7 +683,7 @@ export default function OnboardingPage() {
               }}>
                 <span style={{ flex: 1 }}>Candidate</span>
                 <span style={{ minWidth: 80, textAlign: "center" }}>Documents</span>
-                <span style={{ minWidth: 90, textAlign: "right" }}>Submitted On</span>
+                <span style={{ minWidth: 90, textAlign: "right" }}>Submitted / Last Upload</span>
                 <span style={{ minWidth: 16 }} />
               </div>
               {filteredSub.map(c => (
