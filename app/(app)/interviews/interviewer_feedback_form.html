@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Form from Interviewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #e8f0f7;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      color: #1f1f1f;
+    }
+
+    .page-wrap { max-width: 560px; margin: 0 auto; }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+      border-top: 6px solid #6264A7;
+      border-radius: 8px 8px 0 0;
+      background: #fff;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card-header h1 { font-size: 20px; font-weight: 600; color: #1f1f1f; margin-bottom: 8px; }
+    .card-header p { font-size: 13px; color: #555; line-height: 1.5; }
+
+    .field { margin-bottom: 1.25rem; }
+    .field:last-child { margin-bottom: 0; }
+
+    .field-label { font-size: 14px; color: #1f1f1f; margin-bottom: 8px; line-height: 1.4; }
+    .field-num { display: inline; margin-right: 4px; }
+    .req { color: #c0392b; margin-left: 2px; }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px 0;
+      font-size: 14px;
+      border: none;
+      border-bottom: 1px solid #bbb;
+      background: transparent;
+      color: #1f1f1f;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, textarea:focus { border-bottom-color: #6264A7; }
+    input[type="text"]::placeholder, textarea::placeholder { color: #aaa; font-size: 13px; }
+    textarea { resize: vertical; min-height: 56px; }
+
+    .radio-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+    .radio-opt { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #1f1f1f; cursor: pointer; }
+    .radio-opt input[type="radio"] { width: 16px; height: 16px; accent-color: #6264A7; cursor: pointer; flex-shrink: 0; }
+
+    .rating-bar {
+      display: flex;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+      width: fit-content;
+    }
+    .rating-bar button {
+      width: 56px; padding: 8px 0; font-size: 14px; border: none;
+      border-right: 1px solid #ddd; background: #fff; color: #555;
+      cursor: pointer; transition: background 0.15s, color 0.15s; text-align: center;
+    }
+    .rating-bar button:last-child { border-right: none; }
+    .rating-bar button.sel { background: #6264A7; color: #fff; font-weight: 600; }
+    .rating-bar button:hover:not(.sel) { background: #f0f0f8; }
+
+    /* Skills table */
+    .skills-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .skills-table th {
+      font-size: 12px; font-weight: 500; color: #555; text-align: center;
+      padding: 6px 4px; border-bottom: 1px solid #e0e0e0;
+    }
+    .skills-table th:first-child { text-align: left; }
+    .skills-table td {
+      padding: 7px 4px; border-bottom: 1px solid #f0f0f0;
+      font-size: 13px; color: #1f1f1f; vertical-align: middle; text-align: center;
+    }
+    .skills-table td:first-child { text-align: left; }
+    .skills-table tr:last-child td { border-bottom: none; }
+    .skills-table input[type="radio"] { width: 16px; height: 16px; accent-color: #6264A7; cursor: pointer; }
+
+    /* Editable skill name */
+    .skill-name-input {
+      width: 100%;
+      font-size: 13px;
+      padding: 3px 0;
+      border: none;
+      border-bottom: 1px dashed #ccc;
+      background: transparent;
+      color: #1f1f1f;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .skill-name-input:focus { border-bottom-color: #6264A7; }
+    .skill-name-input::placeholder { color: #bbb; }
+
+    /* Remove row button */
+    .btn-remove {
+      background: none; border: none; color: #ccc;
+      font-size: 17px; cursor: pointer; padding: 0 2px;
+      line-height: 1; transition: color 0.15s;
+    }
+    .btn-remove:hover { color: #c0392b; }
+
+    /* Add skill button */
+    .btn-add-skill {
+      margin-top: 10px;
+      font-size: 13px; color: #6264A7;
+      background: none; border: none; cursor: pointer;
+      padding: 4px 0; display: inline-flex; align-items: center; gap: 5px;
+      transition: opacity 0.15s;
+    }
+    .btn-add-skill:hover { opacity: 0.7; }
+
+    /* Star ratings */
+    .star-row { display: flex; gap: 4px; margin-top: 4px; }
+    .star-btn { font-size: 22px; background: none; border: none; cursor: pointer; color: #ddd; padding: 0; line-height: 1; transition: color 0.1s; }
+    .star-btn.on { color: #f0a500; }
+
+    .btn-submit {
+      margin-top: 0.5rem; padding: 10px 28px; font-size: 14px; font-weight: 600;
+      background: #6264A7; color: #fff; border: none; border-radius: 4px;
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
+    }
+    .btn-submit:hover { background: #4f5192; }
+    .btn-submit:active { transform: scale(0.98); }
+
+    .err-border { border-bottom-color: #c0392b !important; }
+    .err-outline { outline: 1px solid #c0392b; border-radius: 4px; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(60px); opacity: 0;
+      background: #1D9E75; color: #fff; padding: 10px 24px;
+      border-radius: 6px; font-size: 14px; transition: all 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    @media (max-width: 480px) { .rating-bar button { width: 44px; } }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <div class="card-header">
+    <h1>Feedback Form from Interviewer</h1>
+    <p>When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.</p>
+  </div>
+
+  <!-- 1. Candidate ID -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">1.</span> Candidate ID <span class="req">*</span></div>
+      <input type="text" id="cand-id" placeholder="Enter your answer">
+    </div>
+  </div>
+
+  <!-- 2. Candidate Name -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">2.</span> Candidate Name <span class="req">*</span></div>
+      <input type="text" id="cand-name" placeholder="Enter your answer">
+    </div>
+  </div>
+
+  <!-- 3. Role -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">3.</span> Role <span class="req">*</span></div>
+      <input type="text" id="role" placeholder="Enter your answer">
+    </div>
+  </div>
+
+  <!-- 4. Round Type -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">4.</span> Round Type <span class="req">*</span></div>
+      <div class="radio-list" id="round-group">
+        <label class="radio-opt"><input type="radio" name="round" value="Round 1"> Round 1</label>
+        <label class="radio-opt"><input type="radio" name="round" value="Round 2"> Round 2</label>
+        <label class="radio-opt"><input type="radio" name="round" value="Managerial"> Managerial</label>
+        <label class="radio-opt"><input type="radio" name="round" value="HR"> HR</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Rate the candidate -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">5.</span> Rate the candidate <span class="req">*</span></div>
+      <div class="rating-bar" id="rate-bar">
+        <button type="button" onclick="selectRating(1)">1</button>
+        <button type="button" onclick="selectRating(2)">2</button>
+        <button type="button" onclick="selectRating(3)">3</button>
+        <button type="button" onclick="selectRating(4)">4</button>
+        <button type="button" onclick="selectRating(5)">5</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Summary / Comment -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">6.</span> Summary / Comment about the candidate</div>
+      <textarea id="summary" placeholder="Enter your answer"></textarea>
+    </div>
+  </div>
+
+  <!-- 7. Skills -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">7.</span> Skills <span class="req">*</span></div>
+      <table class="skills-table">
+        <thead>
+          <tr>
+            <th style="width:42%; text-align:left;">Skill</th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+            <th style="width:24px;"></th>
+          </tr>
+        </thead>
+        <tbody id="skills-body"></tbody>
+      </table>
+      <button class="btn-add-skill" type="button" onclick="addSkillRow('')">+ Add skill</button>
+    </div>
+  </div>
+
+  <!-- 8. Strengths -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">8.</span> Strengths of the candidate</div>
+      <textarea id="strengths" placeholder="Enter your answer"></textarea>
+    </div>
+  </div>
+
+  <!-- 9. Communication Skills -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">9.</span> Communication Skills <span class="req">*</span></div>
+      <div class="star-row" id="comm-stars"></div>
+    </div>
+  </div>
+
+  <!-- 10. Cultural Fit & Attitude -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">10.</span> Cultural Fit &amp; Attitude <span class="req">*</span></div>
+      <div class="star-row" id="cult-stars"></div>
+    </div>
+  </div>
+
+  <!-- 11. Adaptability & Flexibility -->
+  <div class="card">
+    <div class="field">
+      <div class="field-label"><span class="field-num">11.</span> Adaptability &amp; Flexibility <span class="req">*</span></div>
+      <div class="star-row" id="adapt-stars"></div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="card">
+    <button class="btn-submit" type="button" onclick="submitForm()">Submit</button>
+    <p style="font-size:12px;color:#888;margin-top:12px;">Never submit passwords. <a href="#" style="color:#6264A7;">Report abuse</a></p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">Form submitted — thank you!</div>
+
+<script>
+  // ── Read URL params injected by the email link ─────────────────────────────
+  // The email link looks like:
+  //   /interviews/feedback-form?candidate_id=<id>&round_no=<n>
+  // Backend also injects window.FEEDBACK_API_BASE_URL and window.FEEDBACK_API_KEY
+  const urlParams   = new URLSearchParams(window.location.search);
+  const URL_CAND_ID = urlParams.get('candidate_id') || '';
+  const URL_ROUND   = parseInt(urlParams.get('round_no') || '0', 10);
+
+  // Auto-fill & lock Candidate ID from URL if present
+  window.addEventListener('DOMContentLoaded', () => {
+    if (URL_CAND_ID) {
+      const el = document.getElementById('cand-id');
+      el.value    = URL_CAND_ID;
+      el.readOnly = true;
+      el.style.color  = '#888';
+      el.style.cursor = 'not-allowed';
+    }
+
+    // Auto-select round radio if round_no came from URL
+    if (URL_ROUND >= 1 && URL_ROUND <= 2) {
+      const radio = document.querySelector(`input[name="round"][value="Round ${URL_ROUND}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    // Pre-fill candidate name + role from API if candidate_id is known
+    if (URL_CAND_ID) {
+      const apiBase = (window.FEEDBACK_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+      const headers = {};
+      if (window.FEEDBACK_API_KEY) headers['x-api-key'] = window.FEEDBACK_API_KEY;
+
+      fetch(`${apiBase}/interviews/${URL_CAND_ID}`, { headers })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data) return;
+          const nameEl = document.getElementById('cand-name');
+          const roleEl = document.getElementById('role');
+          if (data.name && !nameEl.value) nameEl.value = data.name;
+          if (data.role && !roleEl.value) roleEl.value = data.role;
+        })
+        .catch(() => {}); // silently ignore if prefill fails
+    }
+  });
+
+  // ── Default skills list ────────────────────────────────────────────────────
+  const defaultSkills = [
+    "Communication",
+    "Problem Solving",
+    "Adaptability",
+    "Teamwork",
+    "Cultural Fit",
+    "Learning Agility",
+    "Ownership & Accountability",
+    "Leadership Potential",
+    "Emotional Intelligence",
+    "Professionalism"
+  ];
+
+  let rowCounter = 0;
+  const tbody = document.getElementById('skills-body');
+
+  function addSkillRow(skillName) {
+    rowCounter++;
+    const id = 'sk_' + rowCounter;
+    const tr = document.createElement('tr');
+    tr.id = 'row_' + id;
+
+    const radios = [1,2,3,4,5].map(n =>
+      `<td><input type="radio" name="${id}" value="${n}"></td>`
+    ).join('');
+
+    tr.innerHTML = `
+      <td>
+        <input type="text" class="skill-name-input" placeholder="Enter skill name" value="${skillName}">
+      </td>
+      ${radios}
+      <td>
+        <button class="btn-remove" type="button" title="Remove row" onclick="removeSkillRow('row_${id}')">&#x2715;</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function removeSkillRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) row.remove();
+  }
+
+  // Populate default skills on load
+  defaultSkills.forEach(s => addSkillRow(s));
+
+  // ── 1-5 rating bar ─────────────────────────────────────────────────────────
+  let overallRating = 0;
+  function selectRating(n) {
+    overallRating = n;
+    document.querySelectorAll('#rate-bar button').forEach((b, i) => {
+      b.classList.toggle('sel', i < n);
+    });
+    document.getElementById('rate-bar').classList.remove('err-outline');
+  }
+
+  // ── Star ratings helper ────────────────────────────────────────────────────
+  function makeStars(containerId) {
+    const el = document.getElementById(containerId);
+    const state = { value: 0 };
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'star-btn';
+      btn.textContent = '★';
+      btn.dataset.i = i;
+      btn.addEventListener('click', () => {
+        state.value = i;
+        el.querySelectorAll('.star-btn').forEach(s => s.classList.toggle('on', +s.dataset.i <= i));
+        el.classList.remove('err-outline');
+      });
+      el.appendChild(btn);
+    }
+    return state;
+  }
+
+  const commVal  = makeStars('comm-stars');
+  const cultVal  = makeStars('cult-stars');
+  const adaptVal = makeStars('adapt-stars');
+
+  // ── Collect skills from table ──────────────────────────────────────────────
+  function collectSkills() {
+    const rows = tbody.querySelectorAll('tr');
+    const parts = [];
+    rows.forEach(row => {
+      const nameInput = row.querySelector('.skill-name-input');
+      const checked   = row.querySelector('input[type="radio"]:checked');
+      const name = nameInput ? nameInput.value.trim() : '';
+      const val  = checked  ? checked.value           : null;
+      if (name && val) parts.push(`${name}: ${val}/5`);
+    });
+    return parts.join(', '); // e.g. "Python: 4/5, SQL: 3/5"
+  }
+
+  // ── Show toast helper ──────────────────────────────────────────────────────
+  function showToast(msg, color) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.background = color || '#1D9E75';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+
+  // ── Form submission → POST /interviews/feedback ────────────────────────────
+  async function submitForm() {
+    let ok = true;
+
+    // Validate required text fields
+    ['cand-id', 'cand-name', 'role'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) { el.classList.add('err-border'); ok = false; }
+      else el.classList.remove('err-border');
+    });
+
+    // Validate round type
+    if (!document.querySelector('input[name="round"]:checked')) {
+      document.getElementById('round-group').classList.add('err-outline'); ok = false;
+    } else {
+      document.getElementById('round-group').classList.remove('err-outline');
+    }
+
+    // Validate overall rating
+    if (!overallRating) {
+      document.getElementById('rate-bar').classList.add('err-outline'); ok = false;
+    } else {
+      document.getElementById('rate-bar').classList.remove('err-outline');
+    }
+
+    // Validate star ratings
+    ['comm-stars', 'cult-stars', 'adapt-stars'].forEach(id => {
+      const el = document.getElementById(id);
+      const val = id === 'comm-stars' ? commVal.value
+                : id === 'cult-stars' ? cultVal.value
+                : adaptVal.value;
+      if (!val) { el.classList.add('err-outline'); ok = false; }
+      else el.classList.remove('err-outline');
+    });
+
+    if (!ok) return;
+
+    // ── Build payload matching FeedbackBody in fastapi_feedback1_1.py ─────────
+    const candidateId = document.getElementById('cand-id').value.trim();
+    const roundNo     = URL_ROUND || 1; // use URL param; fallback to 1
+
+    const payload = {
+      candidate_id:      candidateId,
+      round_no:          roundNo,
+      candidate_name:    document.getElementById('cand-name').value.trim(),
+      role:              document.getElementById('role').value.trim(),
+      round_type:        document.querySelector('input[name="round"]:checked').value,
+      rating:            overallRating,
+      summary:           document.getElementById('summary').value.trim(),
+      skills:            collectSkills(),
+      strengths:         document.getElementById('strengths').value.trim(),
+      communication:     commVal.value  ? `${commVal.value}/5`  : '',
+      cultural_fit:      cultVal.value  ? `${cultVal.value}/5`  : '',
+      adaptability:      adaptVal.value ? `${adaptVal.value}/5` : '',
+      interviewer_name:  '',   // not collected in this form — filled from email context
+      interviewer_email: '',
+    };
+
+    // ── POST to backend ────────────────────────────────────────────────────────
+    const apiBase = (window.FEEDBACK_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+    const headers = { 'Content-Type': 'application/json' };
+    if (window.FEEDBACK_API_KEY) headers['x-api-key'] = window.FEEDBACK_API_KEY;
+
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.disabled   = true;
+    submitBtn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch(`${apiBase}/interviews/feedback`, {
+        method:  'POST',
+        headers,
+        body:    JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        showToast('✅ Feedback submitted — thank you!', '#1D9E75');
+        submitBtn.textContent = 'Submitted ✓';
+        submitBtn.style.background = '#1D9E75';
+      } else {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.detail || `Error ${res.status}`;
+        showToast(`❌ ${msg}`, '#c0392b');
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Submit';
+      }
+    } catch (e) {
+      showToast('❌ Network error — please try again.', '#c0392b');
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Submit';
+    }
+  }
+</script>
+</body>
+</html>
