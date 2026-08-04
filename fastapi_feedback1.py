@@ -84,7 +84,7 @@ from pydantic import BaseModel, EmailStr   # ← add EmailStr
 from bson import ObjectId
 import motor.motor_asyncio
 import httpx
-
+#from candidate_documents_backend import provision_candidate_portal_access  # ← add near your other imports
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
@@ -130,28 +130,35 @@ JOB_APP   = "Quokka__JobApplication__c"
 POSITION  = "Quokka__Position__c"
 
 # ── MongoDB ────────────────────────────────────────────────────────────────────
+
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-
-mongo_client   = MongoClient(MONGO_URI)
-db             = mongo_client["hr_recruitment"]
-
-jd_col              = db["job_descriptions"]
-candidates_col      = db["candidates"]
-li_col              = db["linkedin_profiles"]
-interview_details_col = db["interview_details"]   # ← sync handle (for indexes)
-
-# Async client — used by the interviews router (motor)
+ 
+# ── Sync client (pymongo) — used for simple queries / index creation ─────────
+mongo_client = MongoClient(MONGO_URI)
+db = mongo_client["hr_recruitment"]
+ 
+jd_col                 = db["job_descriptions"]
+candidates_col         = db["candidates"]
+li_col                 = db["linkedin_profiles"]
+interview_details_col  = db["interview_details"]
+candidate_documents_col = db["candidate_documents"]
+ 
+# ── Async client (motor) — used by the interviews + candidate-documents routers
 async_motor_client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
 async_db           = async_motor_client["hr_recruitment"]
-interviews_col     = async_db["interview_details"]  # ← dedicated interview_details collection
-async_candidates   = async_db["candidates"]          # ← read-only reference for candidate profile
-
-# Create indexes
-jd_col.create_index("job_offer_id",              unique=True, sparse=True)
+ 
+interviews_col            = async_db["interview_details"]
+async_candidates          = async_db["candidates"]
+async_candidate_documents = async_db["candidate_documents"]
+ 
+# ── Indexes (created once, at import time) ────────────────────────────────────
+jd_col.create_index("job_offer_id", unique=True, sparse=True)
 candidates_col.create_index([("email", 1), ("job_offer_id", 1)])
-li_col.create_index("profile_url",               sparse=True)
+li_col.create_index("profile_url", sparse=True)
 li_col.create_index([("job_title", 1), ("name", 1)])
 interview_details_col.create_index("candidate_id", unique=True, sparse=True)
+candidate_documents_col.create_index([("candidate_id", 1), ("doc_key", 1)])
+candidate_documents_col.create_index("candidate_id")
 
 print("✅ MongoDB connected and indexes created")
 
@@ -572,7 +579,10 @@ class RoundPatch(BaseModel):
     mode:             Optional[str]  = None
     status:           Optional[str]  = None
     mailSent:         Optional[bool] = None
-
+class OfferLetterMailBody(BaseModel):
+    candidateEmail: str
+    subject:        str
+    body:            str   # HTML body — you build this on the frontend or here
 class SendMailBody(BaseModel):
     # ── email content ──────────────────────────────────────────────────────────
     candidateEmail:     str
@@ -691,6 +701,8 @@ async def get_all_interviews():
             "tags":         iv_doc.get("tags",    []),
             "yoe":          iv_doc.get("yoe",     cand.get("yoe", "N/A")),
             "summary":      iv_doc.get("summary", cand.get("summary", "")),
+            "offer_letter_sent":    iv_doc.get("offer_letter_sent", False),
+            "offer_letter_sent_at": iv_doc.get("offer_letter_sent_at"),
         }
         result.append(merged)
 
@@ -957,6 +969,7 @@ async def send_mail(id: str, round_no: int, body: SendMailBody):
         feedback_block = f"""
 <br>
 <p><b>📝 After the interview, please submit your feedback here:</b><br>
+
 <a href="{feedback_link}">Submit Feedback Form</a></p>
 """
 
@@ -1025,7 +1038,44 @@ async def send_mail(id: str, round_no: int, body: SendMailBody):
     }
 
 
-# ── API 7: POST /interviews/feedback ──────────────────────────────────────────
+@interviews_router.post("/{id}/offer-letter/send")
+async def send_offer_letter(id: str, body: OfferLetterMailBody):
+    candidate_email = (body.candidateEmail or "").strip()
+    if not is_valid_email(candidate_email):
+        raise HTTPException(status_code=400, detail="A valid candidate email is required.")
+
+    iv_doc = await interviews_col.find_one({"candidate_id": id})
+    if not iv_doc:
+        raise HTTPException(status_code=404, detail="Interview record not found")
+
+    async with httpx.AsyncClient() as http:
+        try:
+            token = await get_graph_token_async(http)
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Azure token failed: {e}")
+        try:
+            await send_graph_email_async(
+                http, token,
+                to_email=candidate_email,
+                subject=body.subject,
+                body=body.body,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Offer letter email failed: {e}")
+
+    now = datetime.now(timezone.utc)
+    await interviews_col.update_one(
+        {"candidate_id": id},
+        {"$set": {
+            "offer_letter_sent": True,
+            "offer_letter_sent_at": now,
+            "updated_at": now,
+        }},
+    )
+
+    logger.info(f"Offer letter sent + persisted for candidate={id}")
+    return {"success": True, "offer_letter_sent": True, "offer_letter_sent_at": now.isoformat()}
+#── API 7: POST /interviews/feedback ──────────────────────────────────────────
 
 @interviews_router.post("/feedback")
 
@@ -1205,6 +1255,8 @@ async def get_interview_by_id(id: str):
         "tags":           iv_doc.get("tags",    []),
         "yoe":            iv_doc.get("yoe",     cand_doc.get("yoe", "N/A")),
         "summary":        iv_doc.get("summary", cand_doc.get("summary", "")),
+        "offer_letter_sent":    iv_doc.get("offer_letter_sent", False),
+        "offer_letter_sent_at": iv_doc.get("offer_letter_sent_at"),
         "job_offer_id":   iv_doc.get("job_offer_id",   cand_doc.get("job_offer_id", "")),
         "job_offer_name": iv_doc.get("job_offer_name", cand_doc.get("job_offer_name", "")),
         "position_name":  iv_doc.get("position_name",  cand_doc.get("position_name", "")),
@@ -2225,7 +2277,12 @@ app.add_middleware(
 )
 
 app.include_router(interviews_router, dependencies=[Depends(require_api_key)])
-
+from candidate_documents_backend import (
+    router as candidate_documents_router,
+    auth_router as candidate_auth_router,
+)
+app.include_router(candidate_documents_router)
+app.include_router(candidate_auth_router)
 app.get("/interviews/feedback-form", response_class=HTMLResponse)(serve_feedback_form)
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -2238,6 +2295,7 @@ async def health_check():
             "candidates":        candidates_col.count_documents({}),
             "linkedin_profiles": li_col.count_documents({}),
             "interview_details": interview_details_col.count_documents({}),
+            "candidate_documents": candidate_documents_col.count_documents({}),
         }
         return MongoResponse(200, content={"status": "healthy", "db_counts": counts})
     except Exception as e:
