@@ -279,7 +279,6 @@ export default function OffersPage() {
             <RefreshCw size={12} style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
             {loading ? "Loading…" : "Refresh"}
           </button>
-          <button className="btn-primary">+ Generate offer</button>
         </div>
       </div>
 

@@ -4,25 +4,17 @@ import { useEffect, useState } from "react";
 import {
   Search, Filter, Star, X, RefreshCw,
   Briefcase, Award, TrendingUp, CheckCircle,
-  Mail, Send, ChevronDown,
+  Mail, Send,
 } from "lucide-react";
-
-type InterviewStatus = "— Select —" | "Shortlisted" | "Scheduled" | "On Hold" | "Rejected" | "Hired";
 
 type Candidate = {
   initials: string; color: string; name: string; role: string; score: number;
   stage: string; tags: string[]; yoe: string; email: string;
-  interviewDone: boolean;
-  interviewStatus: InterviewStatus;
   summary: string;
   experience: { company: string; title: string; duration: string }[];
   skills: { name: string; level: number }[];
   dimensions: { label: string; score: number }[];
 };
-
-const STATUSES: InterviewStatus[] = [
-  "— Select —", "Shortlisted", "Scheduled", "On Hold", "Rejected", "Hired",
-];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -95,8 +87,6 @@ function normalizeCandidate(raw: any): Candidate {
     tags: tags.slice(0, 5),
     yoe: raw.yoe || "N/A",
     email: raw.email || "noreply@example.com",
-    interviewDone: false,
-    interviewStatus: "— Select —",
     summary:
       raw.summary ||
       raw.analysis_summary ||
@@ -118,7 +108,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"SM", color:"#8b5cf6", name:"Sarah Mitchell",  role:"Senior Backend Engineer",
     score:94, stage:"Interview", tags:["Python","Kafka","AWS"],
-    yoe:"8 yrs", email:"sarah.mitchell@email.com", interviewDone:false, interviewStatus:"— Select —",
+    yoe:"8 yrs", email:"sarah.mitchell@email.com",
     summary:"Highly experienced backend engineer with deep expertise in distributed systems. Strong match on all technical dimensions — particularly system design and communication. Recommended for fast-track hiring.",
     experience:[{company:"Stripe",title:"Staff Engineer",duration:"2021 – Present"},{company:"Flipkart",title:"Senior Backend Engineer",duration:"2018 – 2021"},{company:"Infosys",title:"Software Engineer",duration:"2016 – 2018"}],
     skills:[{name:"Python",level:95},{name:"Kafka",level:90},{name:"AWS",level:88},{name:"System Design",level:92},{name:"PostgreSQL",level:80}],
@@ -127,7 +117,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"RK", color:"#f59e0b", name:"Rohan Kapoor",    role:"Product Designer",
     score:88, stage:"Interview", tags:["Figma","UX Research"],
-    yoe:"5 yrs", email:"rohan.kapoor@email.com", interviewDone:true, interviewStatus:"Scheduled",
+    yoe:"5 yrs", email:"rohan.kapoor@email.com",
     summary:"Creative product designer with a strong portfolio in B2B SaaS. Excellent UX research skills and a collaborative working style.",
     experience:[{company:"Razorpay",title:"Senior Product Designer",duration:"2022 – Present"},{company:"Swiggy",title:"UI/UX Designer",duration:"2019 – 2022"}],
     skills:[{name:"Figma",level:97},{name:"UX Research",level:88},{name:"Prototyping",level:85},{name:"Design Systems",level:82},{name:"User Testing",level:80}],
@@ -136,7 +126,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"YT", color:"#10b981", name:"Yuki Tanaka",     role:"Frontend Engineer",
     score:81, stage:"Interview", tags:["React","TypeScript"],
-    yoe:"4 yrs", email:"yuki.tanaka@email.com", interviewDone:false, interviewStatus:"— Select —",
+    yoe:"4 yrs", email:"yuki.tanaka@email.com",
     summary:"Solid frontend engineer with a focus on performance and accessibility. Good TypeScript fundamentals. Interview scheduled for today — technical round pending.",
     experience:[{company:"Atlassian",title:"Frontend Engineer",duration:"2022 – Present"},{company:"Zoho",title:"Junior Developer",duration:"2020 – 2022"}],
     skills:[{name:"React",level:90},{name:"TypeScript",level:85},{name:"CSS/Tailwind",level:82},{name:"Next.js",level:78},{name:"Testing",level:70}],
@@ -145,7 +135,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"AL", color:"#ef4444", name:"Aisha Levi",      role:"Data Scientist",
     score:76, stage:"Interview", tags:["Python","ML","SQL"],
-    yoe:"3 yrs", email:"aisha.levi@email.com", interviewDone:false, interviewStatus:"— Select —",
+    yoe:"3 yrs", email:"aisha.levi@email.com",
     summary:"Promising data scientist with hands-on ML project experience. Needs further evaluation on leadership and communication dimensions.",
     experience:[{company:"Mu Sigma",title:"Data Scientist",duration:"2023 – Present"},{company:"TCS",title:"Data Analyst",duration:"2021 – 2023"}],
     skills:[{name:"Python",level:88},{name:"Machine Learning",level:80},{name:"SQL",level:85},{name:"TensorFlow",level:72},{name:"Data Viz",level:75}],
@@ -154,7 +144,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"MG", color:"#2563eb", name:"Marco Greco",     role:"DevOps Engineer",
     score:91, stage:"Interview", tags:["Kubernetes","Terraform"],
-    yoe:"6 yrs", email:"marco.greco@email.com", interviewDone:true, interviewStatus:"Scheduled",
+    yoe:"6 yrs", email:"marco.greco@email.com",
     summary:"Highly capable DevOps engineer with strong cloud-native expertise. Excellent match on infrastructure skills.",
     experience:[{company:"Thoughtworks",title:"Senior DevOps Engineer",duration:"2021 – Present"},{company:"HCL",title:"DevOps Engineer",duration:"2018 – 2021"}],
     skills:[{name:"Kubernetes",level:94},{name:"Terraform",level:90},{name:"AWS",level:88},{name:"CI/CD",level:92},{name:"Docker",level:95}],
@@ -163,7 +153,7 @@ const initCandidates: Candidate[] = [
   {
     initials:"PS", color:"#0891b2", name:"Priya Sharma",    role:"Product Manager",
     score:85, stage:"Interview", tags:["Roadmapping","Agile"],
-    yoe:"7 yrs", email:"priya.sharma@email.com", interviewDone:false, interviewStatus:"— Select —",
+    yoe:"7 yrs", email:"priya.sharma@email.com",
     summary:"Experienced product manager with a strong track record in B2C and B2B products. Final round interview scheduled with the CEO.",
     experience:[{company:"Meesho",title:"Senior Product Manager",duration:"2020 – Present"},{company:"OYO",title:"Product Manager",duration:"2017 – 2020"}],
     skills:[{name:"Roadmapping",level:90},{name:"Agile / Scrum",level:88},{name:"Data Analysis",level:78},{name:"Stakeholder Mgmt",level:85},{name:"User Research",level:80}],
@@ -203,9 +193,6 @@ export default function CandidatesPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const doneCount = candidates.filter(c => c.interviewDone).length;
-  const pendingCount = candidates.length - doneCount;
-
   async function loadCandidates() {
     setLoading(true);
     setError(null);
@@ -220,7 +207,9 @@ export default function CandidatesPage() {
 
       const nextCandidates = (data.candidates || []).map((item: unknown) => normalizeCandidate(item));
       setCandidates(nextCandidates.length ? nextCandidates : initCandidates);
-      setSelected((current) => current ? nextCandidates.find((item: Candidate) => item.name === current.name) || null : null);
+      setSelected((current) => current
+        ? nextCandidates.find((item: Candidate) => item.name === current.name && item.email === current.email) || null
+        : null);
     } catch (err) {
       console.error("Failed to load candidates", err);
       setError("Could not load data from the backend. Showing sample candidates instead.");
@@ -256,16 +245,6 @@ export default function CandidatesPage() {
   useEffect(() => {
     loadCandidates();
   }, []);
-
-  function toggleDone(name: string) {
-    setCandidates(prev => prev.map(c => c.name === name ? { ...c, interviewDone: !c.interviewDone } : c));
-    setSelected(prev => prev?.name === name ? { ...prev, interviewDone: !prev.interviewDone } : prev);
-  }
-
-  function setStatus(name: string, status: InterviewStatus) {
-    setCandidates(prev => prev.map(c => c.name === name ? { ...c, interviewStatus: status } : c));
-    setSelected(prev => prev?.name === name ? { ...prev, interviewStatus: status } : prev);
-  }
 
   function openEmail(c: Candidate) {
     setEmailModal({
@@ -311,7 +290,7 @@ export default function CandidatesPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Candidates — Interview Stage</h1>
-          <p className="page-sub">{candidates.length} in interview · {doneCount} done · {pendingCount} pending{loading ? " · loading" : ""}</p>
+          <p className="page-sub">{candidates.length} in interview{loading ? " · loading" : ""}</p>
         </div>
         <div className="header-actions">
           <button className="btn-refresh" onClick={() => loadCandidates()} disabled={loading}>
@@ -334,10 +313,6 @@ export default function CandidatesPage() {
         <button className={`btn-filter ${filterOpen ? "active" : ""}`} onClick={() => setFilterOpen(p => !p)}>
           <Filter size={13} /> Filter
         </button>
-        <div className="interview-legend">
-          <span className="legend-done"><CheckCircle size={12} /> Done ({doneCount})</span>
-          <span className="legend-pending">○ Pending ({pendingCount})</span>
-        </div>
       </div>
 
       {/* ── Table + side panel ── */}
@@ -352,14 +327,12 @@ export default function CandidatesPage() {
                   <th>AI Score</th>
                   <th>Stage</th>
                   <th>Tags</th>
-                  <th>Interview<br/>Status</th>
-                  <th>Interview<br/>Done</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(c => (
-                  <tr key={c.name} className={`${selected?.name === c.name ? "row-active" : ""} ${c.interviewDone ? "row-done" : ""}`}>
+                {filtered.map((c, i) => (
+                  <tr key={`${c.email}-${c.role}-${i}`} className={selected === c ? "row-active" : ""}>
 
                     {/* Candidate */}
                     <td>
@@ -390,30 +363,6 @@ export default function CandidatesPage() {
                       <div className="tags">
                         {c.tags.map(t => <span key={t} className="tag">{t}</span>)}
                       </div>
-                    </td>
-
-                    {/* Interview Status dropdown */}
-                    <td>
-                      <div className="status-select-wrap">
-                        <select
-                          className={`status-select ${c.interviewStatus !== "— Select —" ? "status-has-value" : ""}`}
-                          value={c.interviewStatus}
-                          onChange={e => setStatus(c.name, e.target.value as InterviewStatus)}
-                        >
-                          {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <ChevronDown size={11} className="select-chevron" />
-                      </div>
-                    </td>
-
-                    {/* Interview Done checkbox */}
-                    <td>
-                      <label className="interview-check">
-                        <input type="checkbox" checked={c.interviewDone} onChange={() => toggleDone(c.name)} />
-                        <span className={`check-label ${c.interviewDone ? "done" : "pending"}`}>
-                          {c.interviewDone ? "✓ Done" : "○ Pending"}
-                        </span>
-                      </label>
                     </td>
 
                     {/* Actions */}
@@ -452,26 +401,6 @@ export default function CandidatesPage() {
                   {selected.score >= 85 ? "✓ Strong Match" : selected.score >= 75 ? "✓ Good Match" : "~ Fair Match"}
                 </div>
               </div>
-            </div>
-
-            <div className="panel-interview-row">
-              <span className="panel-int-label">Interview Status</span>
-              <div className="status-select-wrap">
-                <select
-                  className={`status-select ${selected.interviewStatus !== "— Select —" ? "status-has-value" : ""}`}
-                  value={selected.interviewStatus}
-                  onChange={e => setStatus(selected.name, e.target.value as InterviewStatus)}
-                >
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <ChevronDown size={11} className="select-chevron" />
-              </div>
-              <label className="interview-check" style={{ marginLeft:"auto" }}>
-                <input type="checkbox" checked={selected.interviewDone} onChange={() => toggleDone(selected.name)} />
-                <span className={`check-label ${selected.interviewDone ? "done" : "pending"}`}>
-                  {selected.interviewDone ? "✓ Done" : "○ Pending"}
-                </span>
-              </label>
             </div>
 
             <div className="panel-section">

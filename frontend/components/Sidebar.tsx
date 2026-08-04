@@ -19,7 +19,6 @@ const managerNav = [
   { href: "/Manager_Portal/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
   { href: "/Manager_Portal/candidates", label: "Candidates", icon: Users },
   { href: "/Manager_Portal/interviews", label: "Interviews",  icon: Calendar },
-  { href: "/Manager_Portal/feedback",   label: "Feedback",    icon: MessageSquare },
 ];
 
 const C = {

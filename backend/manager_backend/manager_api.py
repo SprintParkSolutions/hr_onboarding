@@ -627,6 +627,50 @@ async def offers_status_bulk(ids: str):
     return {"offers": results}
 
 
+@app.get("/hr/onboarding/accepted-candidates", summary="Candidates who accepted their offer — for HR Onboarding page")
+async def get_accepted_candidates():
+    """
+    Every offer with candidate_accepted == True, shaped for the HR
+    Onboarding page's "Accepted Offer Letters" section (the
+    AcceptedCandidate type in OnboardingPage.tsx).
+
+    NOTE: `manager` and `team_lead` aren't tracked anywhere in the current
+    schema (manager_offers / candidates / interview_details both lack a
+    field for "who is this person's future manager/team lead"). Both are
+    returned as "" until that data exists somewhere — e.g. by adding a
+    `manager`/`team_lead` param to the existing PATCH /manager/offers/{id}
+    endpoint, the same way `accepted` was added, and having HR fill it in
+    from the Offers page. Flagging this rather than inventing placeholder
+    names, since fake data here would be actively misleading on an
+    onboarding tracker.
+    """
+    results = []
+    async for offer in offers_col.find({"candidate_accepted": True}).sort("updated_at", -1):
+        candidate_id = offer.get("candidate_id", "")
+        name = offer.get("candidate_name", "")
+
+        # Dept isn't stored on the offer itself — enrich from the fuller
+        # candidates profile where available.
+        profile = await _get_candidate_profile(candidate_id)
+        dept = profile.get("position_name") or profile.get("dept") or ""
+
+        results.append({
+            "candidate_id": candidate_id,
+            "name":         name,
+            "email":        offer.get("candidate_email", ""),
+            "role":         offer.get("role", ""),
+            "dept":         dept,
+            "joining_date": offer.get("doj") or "TBD",
+            "band":         offer.get("band", "TBD"),
+            "manager":      offer.get("manager", ""),      # not yet tracked — see docstring
+            "team_lead":    offer.get("team_lead", ""),    # not yet tracked — see docstring
+            "status":       "Accepted",
+            "initials":     offer.get("initials", ""),
+            "color":        offer.get("color", "#6366f1"),
+        })
+    return {"candidates": results}
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # MS GRAPH HELPERS  (same credentials as HR backend via shared .env)
 # ══════════════════════════════════════════════════════════════════════════════
