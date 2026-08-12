@@ -125,6 +125,44 @@
   overflow: hidden;
 }
 
+.pipeline-table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 480px;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #d0d8e4 transparent;
+}
+
+.pipeline-table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pipeline-table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pipeline-table-wrapper::-webkit-scrollbar-thumb {
+  background: #d0d8e4;
+  border-radius: 4px;
+}
+
+.pipeline-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #b0bcc9;
+}
+
+.pipeline-table-wrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Stick the header while scrolling vertically */
+.pipeline-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .pipeline-loading,
 .pipeline-empty {
   padding: 40px;
@@ -156,6 +194,8 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border-bottom: 1px solid #e9edf2;
+  /* sticky is set above, background must be opaque so rows don't bleed through */
+  background-color: #f8faff;
 }
 
 .pipeline-table tbody tr {

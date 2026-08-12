@@ -428,6 +428,7 @@ export default function CandidatesPipelinePage() {
         ) : filtered.length === 0 ? (
           <div className="pipeline-empty">No candidates match this view.</div>
         ) : (
+          <div className="pipeline-table-wrapper">
           <table className="pipeline-table">
             <thead>
               <tr>
@@ -531,6 +532,7 @@ export default function CandidatesPipelinePage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
